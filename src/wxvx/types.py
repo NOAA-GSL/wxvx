@@ -23,6 +23,7 @@ class Baseline:
     name: str
     url: str
 
+
 class Config:
     def __init__(self, raw: dict):
         paths = raw["paths"]
