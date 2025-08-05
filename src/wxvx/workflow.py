@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import subprocess
+
 import logging
 from collections.abc import Iterator
 from datetime import datetime
@@ -95,8 +97,24 @@ def stats(c: Config):
     reqs: list[Node] = []
     for varname, level in _varnames_and_levels(c):
         reqs.extend(_statreqs(c, varname, level))
+    print(f"stat reqs = {reqs}")
     yield reqs
 
+@tasks
+def pb2nc(c: Config):
+    taskname = "Convert %s to NetCDF for point-stat calculation" % (c.baseline.name)
+    print(taskname)
+    yield taskname
+    reqs: list[Node] = []
+    print(f"reqs = {reqs}")
+    prepbufr_in = "/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/aug5/output/met_output/pb2nc/gdas.20220201.t12z.prepbufr.nr"
+    prepbufr_out = "/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/aug5/output_obs/gdas.20220201.t12z.prepbufr.nc"
+    pointstat_config = "/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/aug5/output/met_output/pb2nc/PB2NCConfig"
+    print(f"point_stat {prepbufr_in} {prepbufr_out} {pointstat_config} -outdir . -v 10")
+    #point_stat prepbufr_in prepbufr_out pointstat_config -outdir . -v 10
+    print(f"point_stat {prepbufr_in} {prepbufr_out} {pointstat_config} -outdir . -v 10 > obs.log 2>&1")
+    subprocess.run(["/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/aug5/output_obs/run.sh"])
+    exit()
 
 # Private tasks
 
