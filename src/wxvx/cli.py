@@ -110,7 +110,6 @@ def _parse_args(argv: list[str]) -> Namespace:
 
 def _show_tasks_and_exit(code: int) -> NoReturn:
     logging.info("Available tasks:")
-    logging.info(print(tasknames(workflow)))
     for taskname in tasknames(workflow):
         logging.info("  %s", taskname)
     sys.exit(code)
