@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import subprocess
-
 import logging
 from collections.abc import Iterator
 from datetime import datetime
