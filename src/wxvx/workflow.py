@@ -38,7 +38,6 @@ if TYPE_CHECKING:
 
 # Public tasks
 
-
 @tasks
 def grids(c: Config, baseline: bool = True, forecast: bool = True):
     if baseline and not forecast:
@@ -89,7 +88,6 @@ def plots(c: Config):
         for stat, width in _stats_and_widths(c, varname)
     ]
 
-
 @tasks
 def stats(c: Config):
     taskname = "Stats for %s vs %s" % (c.forecast.name, c.baseline.name)
@@ -97,27 +95,40 @@ def stats(c: Config):
     reqs: list[Node] = []
     for varname, level in _varnames_and_levels(c):
         reqs.extend(_statreqs(c, varname, level))
-    print(f"stat reqs = {reqs}")
     yield reqs
 
 @tasks
-def pb2nc(c: Config):
+def point_stat(c: Config):
     taskname = "Convert %s to NetCDF for point-stat calculation" % (c.baseline.name)
-    print(taskname)
     yield taskname
-    reqs: list[Node] = []
-    print(f"reqs = {reqs}")
-    prepbufr_in = "/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/aug5/output/met_output/pb2nc/gdas.20220201.t12z.prepbufr.nr"
-    prepbufr_out = "/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/aug5/output_obs/gdas.20220201.t12z.prepbufr.nc"
-    pointstat_config = "/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/aug5/output/met_output/pb2nc/PB2NCConfig"
-    print(f"point_stat {prepbufr_in} {prepbufr_out} {pointstat_config} -outdir . -v 10")
-    #point_stat prepbufr_in prepbufr_out pointstat_config -outdir . -v 10
-    print(f"point_stat {prepbufr_in} {prepbufr_out} {pointstat_config} -outdir . -v 10 > obs.log 2>&1")
-    subprocess.run(["/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/aug5/output_obs/run.sh"])
-    exit()
+    logging.info(taskname)
+## end goal: yield(_pb2nc(pbin, pbout, pbconfig), _point_stat(fcstin, pbout, psconfig, outdir))
+    yield [_pb2nc(c)]
 
 # Private tasks
 
+@task
+def _pb2nc(c):
+    taskname = "Execute pb2nc pbin pbout pbconfig"
+    yield taskname
+    rundir = c.paths.run
+    pre = Path("/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx")
+    pbin = Path(pre / "gdas.20220201.t12z.prepbufr.nr")
+    pbout = Path(rundir / "gdas.20220201.t12z.prepbufr.nc")
+    pbconfig = Path(pre / "PB2NCConfig")
+    yield [asset(pbin, _existing(pbin)), asset(pbout, _existing(pbout)), asset(pbconfig, _existing(pbconfig))]
+    #url = c.baseline.url
+    #urldir = Path("/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/urltestdir")
+    #fetch(taskname, url, urldir)
+    runscript = Path(rundir / "compute").with_suffix(".sh")
+    content = f"""
+    export OMP_NUM_THREADS=1
+    pb2nc -v 4 {pbin} {pbout} {pbconfig}
+    """
+    with atomic(runscript) as tmp:
+        tmp.write_text("#!/usr/bin/env bash\n\n%s\n" % dedent(content).strip())
+    runscript.chmod(runscript.stat().st_mode | S_IEXEC)
+    yield mpexec(str(runscript), rundir, taskname)
 
 @external
 def _existing(path: Path):

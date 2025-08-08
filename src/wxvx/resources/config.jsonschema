@@ -36,12 +36,16 @@
         },
         "url": {
           "type": "string"
+        },
+        "type": {
+          "type": "string"
         }
       },
       "required": [
         "compare",
         "name",
-        "url"
+        "url",
+        "type"
       ],
       "type": "object"
     },

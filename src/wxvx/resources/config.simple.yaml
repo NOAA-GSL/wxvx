@@ -1,0 +1,34 @@
+baseline:
+  compare: true # or false if you don't want to compare GFS-vs-GFS alongside Anemoi-vs-GFS
+  name: PREPBUFR
+  url: https://noaa-reanalyses-pds.s3.amazonaws.com/index.html#observations/reanalysis/conv/prepbufr/2022/02/prepbufr/gdas.20220201.t12z.prepbufr.nr
+  type: point
+cycles:
+  - 2022-02-01T12:00:00
+forecast:
+  coords:
+    latitude: latitude
+    level: level
+    longitude: longitude
+    time:
+      inittime: forecast_reference_time
+      validtime: time
+  name: Res
+  path: /gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/2022_test.nc
+  projection:
+    proj: latlon
+leadtimes: [0]
+meta:
+  grids: "{{ meta.workdir }}/grids"
+  levels: &levels [500]
+  workdir: /gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/aug5/output_po-st
+paths:
+  grids:
+    baseline: "{{ meta.grids }}/baseline"
+    forecast: "{{ meta.grids }}/forecast"
+  run: "{{ meta.workdir }}/run"
+variables:
+  temperature:
+    level_type: isobaricInhPa
+    levels: *levels
+    name: t

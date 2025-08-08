@@ -22,6 +22,7 @@ class Baseline:
     compare: bool
     name: str
     url: str
+    type: str
 
 
 class Config:
