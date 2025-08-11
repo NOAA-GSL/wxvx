@@ -125,5 +125,5 @@ class ShowConfig(Action):
         super().__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):  # noqa: ARG002
-        print(resource("config.yaml").strip())
+        print(resource("config-grid.yaml").strip())
         sys.exit(0)

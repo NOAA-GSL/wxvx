@@ -53,9 +53,9 @@ def test_cli_main_bad_config(fakefs, fs):
 @mark.parametrize("switch", ["-k", "--check"])
 def test_cli_main_check_config(fs, switch):
     fs.add_real_file(resource_path("config.jsonschema"))
-    fs.add_real_file(resource_path("config.yaml"))
+    fs.add_real_file(resource_path("config-grid.yaml"))
     fs.add_real_file(resource_path("info.json"))
-    argv = [pkgname, switch, "-c", str(resource_path("config.yaml")), "-t", "grids"]
+    argv = [pkgname, switch, "-c", str(resource_path("config-grid.yaml")), "-t", "grids"]
     with (
         patch.object(cli.sys, "argv", argv),
         patch.object(cli, "tasknames", return_value=["grids"]),
@@ -68,7 +68,7 @@ def test_cli_main_check_config(fs, switch):
 def test_cli_main_task_list(caplog):
     caplog.set_level(logging.INFO)
     with (
-        patch.object(cli.sys, "argv", [pkgname, "-c", str(resource_path("config.yaml"))]),
+        patch.object(cli.sys, "argv", [pkgname, "-c", str(resource_path("config-grid.yaml"))]),
         patch.object(cli, "use_uwtools_logger"),
     ):
         with raises(SystemExit) as e:
@@ -88,7 +88,7 @@ def test_cli_main_task_list(caplog):
 
 def test_cli_main_task_missing(caplog):
     caplog.set_level(logging.INFO)
-    argv = [pkgname, "-c", str(resource_path("config.yaml")), "-t", "foo"]
+    argv = [pkgname, "-c", str(resource_path("config-grid.yaml")), "-t", "foo"]
     with patch.object(cli.sys, "argv", argv), patch.object(cli, "use_uwtools_logger"):
         with raises(SystemExit) as e:
             cli.main()

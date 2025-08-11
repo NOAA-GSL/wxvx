@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterator
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import cache
 from itertools import chain, pairwise, product
 from pathlib import Path
@@ -112,10 +112,10 @@ def stats(c: Config):
 
 @task
 def netcdf_from_prepbufr(c):  # PM Later: Make private.
-    validtime = datetime(2022, 2, 1, 12)  # PM Later: Supply via arguments.
+    validtime = datetime(2022, 2, 1, 12, tzinfo=timezone.utc)  # PM Later: Supply via arguments.
     taskname = f"netCDF from prepbufr at {validtime}"
     yield taskname
-    pre = Path("/work/point") # /gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx
+    pre = Path("/work/point")  # /gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx
     # PM Later: Get input-file info from baseline.url.
     prepbufr_fn = "gdas.%s.t%sz.prepbufr.nr" % (yyyymmdd(validtime), hh(validtime))
     prepbufr = pre / prepbufr_fn
