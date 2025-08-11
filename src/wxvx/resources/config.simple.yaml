@@ -1,8 +1,9 @@
 baseline:
-  compare: true # or false if you don't want to compare GFS-vs-GFS alongside Anemoi-vs-GFS
+  compare: false
   name: PREPBUFR
   type: point
-  url: https://noaa-reanalyses-pds.s3.amazonaws.com/index.html#observations/reanalysis/conv/prepbufr/2022/02/prepbufr/gdas.20220201.t12z.prepbufr.nr
+  # PM Maybe wxvx should supply generic "cycle" and "leadtime" vars and let users format them as needed...
+  url: https://noaa-reanalyses-pds.s3.amazonaws.com/observations/reanalysis/conv/prepbufr/{yyyymmdd[:4]}/{yyyymmdd[-2:]}/prepbufr/gdas.{yyyymmdd}.t{hh}z.prepbufr.nr
 cycles:
   - 2022-02-01T12:00:00
 forecast:
