@@ -126,11 +126,8 @@ def netcdf_from_prepbufr(c):  # PM Later: Make private.
     # PM Later: Yield a task to *create* config instead of requiring it to exist.
     config = pre / "pb2nc.config"
     yield [_existing(prepbufr), _existing(config)]
-    runscript = Path(rundir / "compute").with_suffix(".sh")
-    # export OMP_NUM_THREADS=1
-    content = f"""
-    pb2nc -v 4 {prepbufr} {netcdf} {config}
-    """
+    runscript = netcdf.with_suffix(".sh")
+    content = f"pb2nc -v 4 {prepbufr} {netcdf} {config} >{netcdf.stem}.log 2>&1"
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
 
@@ -284,7 +281,6 @@ def _stat(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source
     baseline = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
     forecast = _grid_nc(c, varname, tc, var)
     toverify = _grid_grib(c, tc, var) if source == Source.BASELINE else forecast
-    log = f"{path.stem}.log"
     reqs = [toverify, baseline]
     if source == Source.BASELINE:
         reqs.append(forecast)
@@ -298,7 +294,7 @@ def _stat(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source
     runscript = path.with_suffix(".sh")
     content = f"""
     export OMP_NUM_THREADS=1
-    grid_stat -v 4 {toverify.ref} {baseline.ref} {cfgfile} >{log} 2>&1
+    grid_stat -v 4 {toverify.ref} {baseline.ref} {cfgfile} >{path.stem}.log 2>&1
     """
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
