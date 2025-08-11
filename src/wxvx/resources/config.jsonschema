@@ -34,18 +34,18 @@
         "name": {
           "type": "string"
         },
-        "url": {
+        "type": {
           "type": "string"
         },
-        "type": {
+        "url": {
           "type": "string"
         }
       },
       "required": [
         "compare",
         "name",
-        "url",
-        "type"
+        "type",
+        "url"
       ],
       "type": "object"
     },
