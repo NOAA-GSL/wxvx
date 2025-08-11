@@ -111,24 +111,27 @@ def stats(c: Config):
 
 
 @task
-def pb2nc(c):  # PM Change back to private.
-    taskname = "Execute pb2nc pbin pbout pbconfig"  # PM Parameterize for uniqueness.
+def netcdf_from_prepbufr(c):  # PM Later: Make private.
+    validtime = datetime(2022, 2, 1, 12)  # PM Later: Supply via arguments.
+    taskname = f"netCDF from prepbufr at {validtime}"
     yield taskname
+    pre = Path("/work/point") # /gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx
+    # PM Later: Get input-file info from baseline.url.
+    prepbufr_fn = "gdas.%s.t%sz.prepbufr.nr" % (yyyymmdd(validtime), hh(validtime))
+    prepbufr = pre / prepbufr_fn
     rundir = c.paths.run
-    netcdf = rundir / "gdas.20220201.t12z.prepbufr.nc"
+    netcdf = (rundir / prepbufr_fn).with_suffix(".nc")
     yield asset(netcdf, netcdf.is_file)
-    pre = Path("/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx")
-    prepbufr = pre / "gdas.20220201.t12z.prepbufr.nr"
-    config = pre / "PB2NCConfig"
+    # PM Later: Consider yielding a task to fetch prepbufr from remote URL.
+    # PM Later: Yield a task to *create* config instead of requiring it to exist.
+    config = pre / "pb2nc.config"
     yield [_existing(prepbufr), _existing(config)]
     runscript = Path(rundir / "compute").with_suffix(".sh")
     # export OMP_NUM_THREADS=1
     content = f"""
     pb2nc -v 4 {prepbufr} {netcdf} {config}
     """
-    with atomic(runscript) as tmp:
-        tmp.write_text("#!/usr/bin/env bash\n\n%s\n" % dedent(content).strip())
-    runscript.chmod(runscript.stat().st_mode | S_IEXEC)
+    _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
 
 
@@ -297,9 +300,7 @@ def _stat(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source
     export OMP_NUM_THREADS=1
     grid_stat -v 4 {toverify.ref} {baseline.ref} {cfgfile} >{log} 2>&1
     """
-    with atomic(runscript) as tmp:
-        tmp.write_text("#!/usr/bin/env bash\n\n%s\n" % dedent(content).strip())
-    runscript.chmod(runscript.stat().st_mode | S_IEXEC)
+    _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
 
 
@@ -436,3 +437,10 @@ def _vxvars(c: Config) -> dict[Var, str]:
         for varname, attrs in c.variables.items()
         for level in attrs.get("levels", [None])
     }
+
+
+def _write_runscript(path: Path, content: str) -> None:
+    # PM Write unit test for this.
+    with atomic(path) as tmp:
+        tmp.write_text("#!/usr/bin/env bash\n\n%s\n" % dedent(content).strip())
+    path.chmod(path.stat().st_mode | S_IEXEC)
