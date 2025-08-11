@@ -35,7 +35,10 @@
           "type": "string"
         },
         "type": {
-          "type": "string"
+          "enum": [
+            "grid",
+            "point"
+          ]
         },
         "url": {
           "type": "string"

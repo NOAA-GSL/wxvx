@@ -98,44 +98,38 @@ def stats(c: Config):
     yield reqs
 
 
-@tasks
-def point_stat(c: Config):
-    taskname = "Convert %s to NetCDF for point-stat calculation" % (c.baseline.name)
-    yield taskname
-    logging.info(taskname)
-    ## end goal: yield(_pb2nc(pbin, pbout, pbconfig), _point_stat(fcstin, pbout, psconfig, outdir))
-    yield [_pb2nc(c)]
+# @tasks
+# def point_stat(c: Config):
+#     taskname = "Convert %s to NetCDF for point-stat calculation" % (c.baseline.name)
+#     yield taskname
+#     logging.info(taskname)
+#     end goal: yield(_pb2nc(pbin, pbout, pbconfig), _point_stat(fcstin, pbout, psconfig, outdir))
+#     yield [_pb2nc(c)]
 
 
 # Private tasks
 
 
 @task
-def _pb2nc(c):
-    taskname = "Execute pb2nc pbin pbout pbconfig"
+def pb2nc(c):  # PM Change back to private.
+    taskname = "Execute pb2nc pbin pbout pbconfig"  # PM Parameterize for uniqueness.
     yield taskname
     rundir = c.paths.run
+    netcdf = rundir / "gdas.20220201.t12z.prepbufr.nc"
+    yield asset(netcdf, netcdf.is_file)
     pre = Path("/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx")
-    pbin = Path(pre / "gdas.20220201.t12z.prepbufr.nr")
-    pbout = Path(rundir / "gdas.20220201.t12z.prepbufr.nc")
-    pbconfig = Path(pre / "PB2NCConfig")
-    yield [
-        asset(pbin, _existing(pbin)),
-        asset(pbout, _existing(pbout)),
-        asset(pbconfig, _existing(pbconfig)),
-    ]
-    # url = c.baseline.url
-    # urldir = Path("/gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/urltestdir")
-    # fetch(taskname, url, urldir)
+    prepbufr = pre / "gdas.20220201.t12z.prepbufr.nr"
+    config = pre / "PB2NCConfig"
+    yield [_existing(prepbufr), _existing(config)]
     runscript = Path(rundir / "compute").with_suffix(".sh")
+    # export OMP_NUM_THREADS=1
     content = f"""
-    export OMP_NUM_THREADS=1
-    pb2nc -v 4 {pbin} {pbout} {pbconfig}
+    pb2nc -v 4 {prepbufr} {netcdf} {config}
     """
     with atomic(runscript) as tmp:
         tmp.write_text("#!/usr/bin/env bash\n\n%s\n" % dedent(content).strip())
     runscript.chmod(runscript.stat().st_mode | S_IEXEC)
-    yield mpexec(str(runscript), rundir, taskname)
+    mpexec(str(runscript), rundir, taskname)
 
 
 @external

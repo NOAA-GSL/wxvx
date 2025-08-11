@@ -37,6 +37,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │ baseline:          │ Description of the baseline dataset       │
 │   compare:         │   Verify and/or plot forecast?            │
 │   name:            │   Dataset descriptive name                │
+│   type:            │   Either 'grid' or 'point'                │
 │   url:             │   Template for baseline GRIB file URLs    │
 │ cycles:            │ Cycles to verify                          │
 │   start:           │   First cycle                             │
@@ -75,6 +76,14 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │     name:          │     Canonical variable name               │
 └────────────────────┴───────────────────────────────────────────┘
 ```
+
+### baseline.type
+
+One of `grid` or `point`.
+
+For `grid`, `url` should point to GRIB data, and `compare` and `name` are required.
+
+For `point`, `url` should point to prepbufr data, and `compare` and `name` should not be specified.
 
 ### baseline.url
 

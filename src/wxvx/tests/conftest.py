@@ -52,6 +52,7 @@ def config_data():
         "baseline": {
             "compare": True,
             "name": "GFS",
+            "type": "grid",
             "url": "https://some.url/{yyyymmdd}/{hh}/{fh:02}/a.grib2",
         },
         "cycles": {

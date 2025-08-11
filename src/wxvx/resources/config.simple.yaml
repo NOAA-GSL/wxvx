@@ -1,8 +1,8 @@
 baseline:
   compare: true # or false if you don't want to compare GFS-vs-GFS alongside Anemoi-vs-GFS
   name: PREPBUFR
-  url: https://noaa-reanalyses-pds.s3.amazonaws.com/index.html#observations/reanalysis/conv/prepbufr/2022/02/prepbufr/gdas.20220201.t12z.prepbufr.nr
   type: point
+  url: https://noaa-reanalyses-pds.s3.amazonaws.com/index.html#observations/reanalysis/conv/prepbufr/2022/02/prepbufr/gdas.20220201.t12z.prepbufr.nr
 cycles:
   - 2022-02-01T12:00:00
 forecast:
