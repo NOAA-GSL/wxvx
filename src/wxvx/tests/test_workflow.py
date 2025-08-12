@@ -15,11 +15,11 @@ from unittest.mock import ANY, Mock, patch
 import pandas as pd
 import xarray as xr
 from iotaa import Node, asset, external, ready
-from pytest import fixture, mark
+from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
 from wxvx.times import TimeCoords, gen_validtimes
-from wxvx.types import Source
+from wxvx.types import Proximity, Source
 from wxvx.variables import Var
 
 TESTDATA = {
@@ -167,7 +167,20 @@ def test_workflow__grib_index_file(c):
     assert path.exists()
 
 
-def test_workflow__grid_grib(c, tc):
+@mark.parametrize(
+    "template", ["{root}/gfs.t00z.pgrb2.0p25.f000", "file://{root}/gfs.t00z.pgrb2.0p25.f000"]
+)
+def test_workflow__grid_grib_local(template, config_data, gen_config, fakefs, tc):
+    grib_path = fakefs / "gfs.t00z.pgrb2.0p25.f000"
+    grib_path.write_text("foo")
+    config_data["baseline"]["url"] = template.format(root=fakefs)
+    c = gen_config(config_data, fakefs)
+    var = variables.Var(name="t", level_type="isobaricInhPa", level=900)
+    val = workflow._grid_grib(c=c, tc=tc, var=var)
+    assert ready(val)
+
+
+def test_workflow__grid_grib_remote(c, tc):
     idxdata = {
         "gh-isobaricInhPa-0900": variables.HRRR(
             name="HGT", levstr="900 mb", firstbyte=0, lastbyte=0
@@ -286,6 +299,27 @@ def test_workflow__stat(c, fakefs, tc):
 
 
 # Support Tests
+
+
+@mark.parametrize(
+    ("template", "expected_scheme"),
+    [
+        ("http://link/to/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", Proximity.REMOTE),
+        ("file://{root}/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", Proximity.LOCAL),
+        ("{root}/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", Proximity.LOCAL),
+    ],
+)
+def test_workflow__classify_url(template, expected_scheme, fakefs):
+    url = template.format(root=fakefs, hh="00", fh=0)
+    scheme, _ = workflow._classify_url(url)
+    assert scheme == expected_scheme
+
+
+def test_workflow__classify_url_unsupported(fakefs):
+    url = f"foo://{fakefs}/gfs.t00z.pgrb2.0p25.f000"
+    with raises(workflow.WXVXError) as e:
+        workflow._classify_url(url)
+    assert str(e.value) == f"Scheme 'foo' in '{url}' not supported."
 
 
 def test_workflow__grid_stat_config(c, fakefs):

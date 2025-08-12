@@ -25,8 +25,8 @@ from wxvx import variables
 from wxvx.metconf import render
 from wxvx.net import fetch
 from wxvx.times import TimeCoords, gen_validtimes, hh, tcinfo, yyyymmdd
-from wxvx.types import Cycles, Source
-from wxvx.util import LINETYPE, atomic, mpexec
+from wxvx.types import Cycles, Proximity, Source
+from wxvx.util import LINETYPE, WXVXError, atomic, mpexec
 from wxvx.variables import VARMETA, Var, da_construct, da_select, ds_construct, metlevel
 
 if TYPE_CHECKING:
@@ -191,18 +191,25 @@ def _grib_index_file(outdir: Path, url: str):
 @task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
-    path = outdir / f"{var}.grib2"
-    taskname = "Baseline grid %s" % path
-    yield taskname
-    yield asset(path, path.is_file)
     url = c.baseline.url.format(yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime))
-    idxdata = _grib_index_data(c, outdir, tc, url=f"{url}.idx")
-    yield idxdata
-    var_idxdata = idxdata.ref[str(var)]
-    fb, lb = var_idxdata.firstbyte, var_idxdata.lastbyte
-    headers = {"Range": "bytes=%s" % (f"{fb}-{lb}" if lb else fb)}
-    fetch(taskname, url, path, headers)
+    proximity, src = _classify_url(url)
+    if proximity == Proximity.LOCAL:
+        assert isinstance(src, Path)
+        yield "GRIB file %s providing %s grid" % (src, var)
+        yield asset(src, src.is_file)
+        yield None
+    else:
+        outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
+        path = outdir / f"{var}.grib2"
+        taskname = "Baseline grid %s" % path
+        yield taskname
+        yield asset(path, path.is_file)
+        idxdata = _grib_index_data(c, outdir, tc, url=f"{url}.idx")
+        yield idxdata
+        var_idx = idxdata.ref[str(var)]
+        fb, lb = var_idx.firstbyte, var_idx.lastbyte
+        headers = {"Range": "bytes=%s" % (f"{fb}-{lb}" if lb else fb)}
+        fetch(taskname, url, path, headers)
 
 
 @task
@@ -301,6 +308,17 @@ def _stat(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source
 
 
 # Support
+
+
+def _classify_url(url: str) -> tuple[Proximity, str | Path]:
+    p = urlparse(url)
+    scheme = p.scheme
+    if scheme in {"http", "https"}:
+        return Proximity.REMOTE, url
+    if scheme in {"file", ""}:
+        return Proximity.LOCAL, Path(p.path if scheme else url)
+    msg = f"Scheme '{scheme}' in '{url}' not supported."
+    raise WXVXError(msg)
 
 
 def _grid_stat_config(
