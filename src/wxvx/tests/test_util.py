@@ -7,7 +7,7 @@ from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
 
-from pytest import raises
+from pytest import mark, raises
 
 from wxvx import util
 
@@ -30,6 +30,27 @@ def test_util_atomic(fakefs):
     assert not tmp1.is_file()
     assert greeting.read_text() == s1
     assert recipient.read_text() == s2
+
+
+@mark.parametrize(
+    ("template", "expected_scheme"),
+    [
+        ("http://link/to/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.REMOTE),
+        ("file://{root}/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.LOCAL),
+        ("{root}/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.LOCAL),
+    ],
+)
+def test_workflow_classify_url(template, expected_scheme, fakefs):
+    url = template.format(root=fakefs, hh="00", fh=0)
+    scheme, _ = util.classify_url(url)
+    assert scheme == expected_scheme
+
+
+def test_workflow_classify_url_unsupported(fakefs):
+    url = f"foo://{fakefs}/gfs.t00z.pgrb2.0p25.f000"
+    with raises(util.WXVXError) as e:
+        util.classify_url(url)
+    assert str(e.value) == f"Scheme 'foo' in '{url}' not supported."
 
 
 def test_util_expand_basic(utc):
