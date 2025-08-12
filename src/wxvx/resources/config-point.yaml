@@ -15,14 +15,14 @@ forecast:
       inittime: forecast_reference_time
       validtime: time
   name: Res
-  path: /gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/2022_test.nc
+  path: /path/to/forecast.zarr
   projection:
     proj: latlon
 leadtimes: [0]
 meta:
   grids: "{{ meta.workdir }}/grids"
   levels: &levels [500]
-  workdir: /gpfs/f6/bil-fire8/scratch/David.Burrows/wxvx/aug5/output_po-st
+  workdir: /path/to/workdir
 paths:
   grids:
     baseline: "{{ meta.grids }}/baseline"
