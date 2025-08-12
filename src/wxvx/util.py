@@ -73,8 +73,9 @@ def classify_data_format(path: str | Path) -> DataFormat:
     elif path.is_dir():
         try:
             zarr.open(path, mode="r")
-        except zarr.errors.GroupNotFoundError:
-            pass
+        except Exception as e:
+            for line in str(e).split():
+                logging.exception(line)
         else:
             return DataFormat.ZARR
     msg = f"Could not determine format of {path}"

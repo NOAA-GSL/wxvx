@@ -32,6 +32,64 @@ def test_util_atomic(fakefs):
     assert recipient.read_text() == s2
 
 
+def test_util_classify_data_format__file_bad_missing(fakefs):
+    path = fakefs / "no-souch-file"
+    with raises(util.WXVXError) as e:
+        util.classify_data_format(path=path)
+    assert str(e.value) == f"Could not determine format of {path}"
+
+
+def test_util_classify_data_format__file_bad_unknown_format(fakefs):
+    path = fakefs / "datafile"
+    path.touch()
+    with (
+        patch.object(util.magic, "from_file", return_value="What Is This I Don't Even"),
+        raises(util.WXVXError) as e,
+    ):
+        util.classify_data_format(path=path)
+    assert str(e.value) == f"Could not determine format of {path}"
+
+
+@mark.parametrize(
+    ("expected", "inferred"),
+    [
+        (util.DataFormat.BUFR, "Binary Universal Form data (BUFR) Edition 3"),
+        (util.DataFormat.GRIB, "Gridded binary (GRIB) version 2"),
+        (util.DataFormat.NETCDF, "Hierarchical Data Format (version 5) data"),
+    ],
+)
+def test_util_classify_data_format__file_good(expected, fakefs, inferred):
+    path = fakefs / "datafile"
+    path.touch()
+    with patch.object(util.magic, "from_file", return_value=inferred):
+        assert util.classify_data_format(path=path) == expected
+
+
+def test_util_classify_data_format__zarr_bad_missing(fakefs):
+    path = fakefs / "no-such-dir"
+    with raises(util.WXVXError) as e:
+        util.classify_data_format(path=path)
+    assert str(e.value) == f"Could not determine format of {path}"
+
+
+def test_util_classify_data_format__zarr_bad_not_zarr(fakefs):
+    path = fakefs / "datadir"
+    path.mkdir()
+    with (
+        patch.object(util.zarr, "open", side_effect=Exception("failure")),
+        raises(util.WXVXError) as e,
+    ):
+        util.classify_data_format(path=path)
+    assert str(e.value) == f"Could not determine format of {path}"
+
+
+def test_util_classify_data_format__zarr_good(fakefs):
+    path = fakefs / "datadir"
+    path.mkdir()
+    with patch.object(util.zarr, "open"):
+        assert util.classify_data_format(path=path) == util.DataFormat.ZARR
+
+
 @mark.parametrize(
     ("template", "expected_scheme"),
     [
