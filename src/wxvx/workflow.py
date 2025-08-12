@@ -111,15 +111,17 @@ def stats(c: Config):
 
 
 @task
-def netcdf_from_prepbufr(c):  # PM Later: Make private.
-    validtime = datetime(2022, 2, 1, 12, tzinfo=timezone.utc)  # PM Later: Supply via arguments.
-    taskname = f"netCDF from prepbufr at {validtime}"
+def netcdf_from_prepbufr(c: Config):  # PM Later: Make private.
+    for tc in gen_validtimes(c.cycles, c.leadtimes):
+        yyyymmdd, hh, leadtime = tcinfo(tc)
+    taskname = f"netCDF from prepbufr at {yyyymmdd}{hh}"
     yield taskname
-    pre = Path("/work/point")  # /gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input/
+    #pre = Path("/work/point")  # /gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input/
+    pre = Path("/gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input")  # /gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input/
     # PM Later: Get input-file info from baseline.url.
-    prepbufr_fn = "gdas.%s.t%sz.prepbufr.nr" % (yyyymmdd(validtime), hh(validtime))
+    prepbufr_fn = f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nr"
     prepbufr = pre / prepbufr_fn
-    rundir = c.paths.run
+    rundir = c.paths.run / "obs" / yyyymmdd / hh
     netcdf = (rundir / prepbufr_fn).with_suffix(".nc")
     yield asset(netcdf, netcdf.is_file)
     # PM Later: Consider yielding a task to fetch prepbufr from remote URL.
