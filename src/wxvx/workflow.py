@@ -119,20 +119,29 @@ def netcdf_from_prepbufr(c: Config):  # PM Later: Make private.
     #pre = Path("/work/point")  # /gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input/
     pre = Path("/gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input")  # /gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input/
     # PM Later: Get input-file info from baseline.url.
-    prepbufr_fn = f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nr"
-    prepbufr = pre / prepbufr_fn
+    url = c.baseline.url.format(yyyymmdd=yyyymmdd, yyyy=yyyymmdd[:4], mm=yyyymmdd[4:6], hh=hh)
     rundir = c.paths.run / "obs" / yyyymmdd / hh
-    netcdf = (rundir / prepbufr_fn).with_suffix(".nc")
+    netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
     yield asset(netcdf, netcdf.is_file)
     # PM Later: Consider yielding a task to fetch prepbufr from remote URL.
-    # PM Later: Yield a task to *create* config instead of requiring it to exist.
+    # PM Later: Yield a task to *create* config instead of requiring it to exist. 
+    prun = _prepbufr_file(rundir, url)
+    yield [prun]
     config = pre / "pb2nc.config"
-    yield [_existing(prepbufr), _existing(config)]
     runscript = netcdf.with_suffix(".sh")
-    content = f"pb2nc -v 4 {prepbufr} {netcdf} {config} >{netcdf.stem}.log 2>&1"
+    #content = f"pb2nc -v 4 {prepbufr} {netcdf} {config} >{netcdf.stem}.log 2>&1"
+    content = f"pb2nc -v 4 {prun.ref} {netcdf} {config} >{netcdf.stem}.log 2>&1"
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
 
+@task
+def _prepbufr_file(outdir: Path, url: str):
+    path = outdir / Path(urlparse(url).path).name
+    taskname = "prepbufr file %s" % path
+    yield taskname
+    yield asset(path, path.is_file)
+    yield None
+    fetch(taskname, url, path)
 
 @external
 def _existing(path: Path):
