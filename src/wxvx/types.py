@@ -13,9 +13,13 @@ from wxvx.util import LINETYPE, expand, to_datetime, to_timedelta
 _DatetimeT = str | datetime
 _TimedeltaT = str | int
 
-
-Proximity = Enum("Proximity", [("LOCAL", auto()), ("REMOTE", auto())])
-Source = Enum("Source", [("BASELINE", auto()), ("FORECAST", auto())])
+Source = Enum(
+    "Source",
+    [
+        ("BASELINE", auto()),
+        ("FORECAST", auto()),
+    ],
+)
 
 
 @dataclass(frozen=True)

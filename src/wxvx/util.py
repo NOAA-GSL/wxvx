@@ -4,6 +4,7 @@ import logging
 import sys
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from enum import Enum, auto
 from functools import cache
 from importlib import resources
 from multiprocessing.pool import Pool
@@ -11,11 +12,33 @@ from pathlib import Path
 from signal import SIG_IGN, SIGINT, signal
 from subprocess import run
 from typing import TYPE_CHECKING, NoReturn, cast, overload
+from urllib.parse import urlparse
+
+import magic
+import zarr
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
 pkgname = __name__.split(".", maxsplit=1)[0]
+
+DataFormat = Enum(
+    "DataFormat",
+    [
+        ("BUFR", auto()),
+        ("GRIB", auto()),
+        ("NETCDF", auto()),
+        ("ZARR", auto()),
+    ],
+)
+
+Proximity = Enum(
+    "Proximity",
+    [
+        ("LOCAL", auto()),
+        ("REMOTE", auto()),
+    ],
+)
 
 LINETYPE = {
     "FSS": "nbrcnt",
@@ -34,6 +57,39 @@ def atomic(path: Path) -> Iterator[Path]:
     tmp = Path("%s.tmp" % path)
     yield tmp
     tmp.rename(path)
+
+
+def classify_data_format(path: str | Path) -> DataFormat:
+    path = Path(path)
+    if path.is_file():
+        inferred = magic.from_file(path.resolve())
+        for pre, fmt in [
+            ("Binary Universal Form data (BUFR)", DataFormat.BUFR),
+            ("Gridded binary (GRIB)", DataFormat.GRIB),
+            ("Hierarchical Data Format", DataFormat.NETCDF),
+        ]:
+            if inferred.startswith(pre):
+                return fmt
+    elif path.is_dir():
+        try:
+            zarr.open(path, mode="r")
+        except Exception as e:
+            for line in str(e).split():
+                logging.exception(line)
+        else:
+            return DataFormat.ZARR
+    msg = f"Could not determine format of {path}"
+    raise WXVXError(msg)
+
+
+def classify_url(url: str) -> tuple[Proximity, str | Path]:
+    p = urlparse(url)
+    if p.scheme in {"http", "https"}:
+        return Proximity.REMOTE, url
+    if p.scheme in {"file", ""}:
+        return Proximity.LOCAL, Path(p.path if p.scheme else url)
+    msg = f"Scheme '{p.scheme}' in '{url}' not supported."
+    raise WXVXError(msg)
 
 
 @overload

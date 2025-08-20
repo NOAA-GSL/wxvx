@@ -7,7 +7,7 @@ from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
 
-from pytest import raises
+from pytest import mark, raises
 
 from wxvx import util
 
@@ -30,6 +30,85 @@ def test_util_atomic(fakefs):
     assert not tmp1.is_file()
     assert greeting.read_text() == s1
     assert recipient.read_text() == s2
+
+
+@mark.parametrize(
+    ("expected", "inferred"),
+    [
+        (util.DataFormat.BUFR, "Binary Universal Form data (BUFR) Edition 3"),
+        (util.DataFormat.GRIB, "Gridded binary (GRIB) version 2"),
+        (util.DataFormat.NETCDF, "Hierarchical Data Format (version 5) data"),
+    ],
+)
+def test_util_classify_data_format__file(expected, fakefs, inferred):
+    path = fakefs / "datafile"
+    path.touch()
+    with patch.object(util.magic, "from_file", return_value=inferred):
+        assert util.classify_data_format(path=path) == expected
+
+
+def test_util_classify_data_format__file_missing(fakefs):
+    path = fakefs / "no-souch-file"
+    with raises(util.WXVXError) as e:
+        util.classify_data_format(path=path)
+    assert str(e.value) == f"Could not determine format of {path}"
+
+
+def test_util_classify_data_format__file_unrecognized(fakefs):
+    path = fakefs / "datafile"
+    path.touch()
+    with (
+        patch.object(util.magic, "from_file", return_value="What Is This I Don't Even"),
+        raises(util.WXVXError) as e,
+    ):
+        util.classify_data_format(path=path)
+    assert str(e.value) == f"Could not determine format of {path}"
+
+
+def test_util_classify_data_format__zarr(fakefs):
+    path = fakefs / "datadir"
+    path.mkdir()
+    with patch.object(util.zarr, "open"):
+        assert util.classify_data_format(path=path) == util.DataFormat.ZARR
+
+
+def test_util_classify_data_format__zarr_corrupt(fakefs):
+    path = fakefs / "datadir"
+    path.mkdir()
+    with (
+        patch.object(util.zarr, "open", side_effect=Exception("failure")),
+        raises(util.WXVXError) as e,
+    ):
+        util.classify_data_format(path=path)
+    assert str(e.value) == f"Could not determine format of {path}"
+
+
+def test_util_classify_data_format__zarr_missing(fakefs):
+    path = fakefs / "no-such-dir"
+    with raises(util.WXVXError) as e:
+        util.classify_data_format(path=path)
+    assert str(e.value) == f"Could not determine format of {path}"
+
+
+@mark.parametrize(
+    ("template", "expected_scheme"),
+    [
+        ("http://link/to/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.REMOTE),
+        ("file://{root}/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.LOCAL),
+        ("{root}/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.LOCAL),
+    ],
+)
+def test_workflow_classify_url(template, expected_scheme, fakefs):
+    url = template.format(root=fakefs, hh="00", fh=0)
+    scheme, _ = util.classify_url(url)
+    assert scheme == expected_scheme
+
+
+def test_workflow_classify_url_unsupported(fakefs):
+    url = f"foo://{fakefs}/gfs.t00z.pgrb2.0p25.f000"
+    with raises(util.WXVXError) as e:
+        util.classify_url(url)
+    assert str(e.value) == f"Scheme 'foo' in '{url}' not supported."
 
 
 def test_util_expand_basic(utc):

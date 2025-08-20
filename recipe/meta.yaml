@@ -20,6 +20,7 @@ requirements:
     - met2go 11.0.*
     - netcdf4 >=1.7,<2
     - pyproj 3.7.*
+    - python-magic 0.4.*
     - pyyaml 6.0.*
     - requests >=2.32,<3
     - seaborn 0.13.*
