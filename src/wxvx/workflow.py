@@ -119,7 +119,7 @@ def netcdf_from_prepbufr(c: Config):  # PM Later: Make private.
     url = c.baseline.url.format(yyyymmdd=yyyymmdd, yyyy=yyyymmdd[:4], mm=yyyymmdd[4:6], hh=hh)
     rundir = c.paths.run / "obs" / yyyymmdd / hh
     netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
-    # PM Later: Yield a task to *create* config instead of requiring it to exist. 
+    # PM Later: Yield a task to *create* config instead of requiring it to exist.
     pre = Path("/work/point")
     pre = Path("/gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input/")
     config = pre / "pb2nc.config"
@@ -132,24 +132,30 @@ def netcdf_from_prepbufr(c: Config):  # PM Later: Make private.
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
 
-@task
-def pointstat_from_netcdf(c: Config):
-    for tc in gen_validtimes(c.cycles, c.leadtimes):
-        yyyymmdd, hh, leadtime = tcinfo(tc)
-    taskname = f"point stats from fcst and netcdf at {yyyymmdd}{hh}"
-    yield taskname
-    pre = Path("/work/point")
-    pre = Path("/gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input/")
-    fcst = Path(c.forecast.path)
-    rundir = c.paths.run / "obs" / yyyymmdd / hh
-    url = c.baseline.url.format(yyyymmdd=yyyymmdd, yyyy=yyyymmdd[:4], mm=yyyymmdd[4:6], hh=hh)
-    netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
-    config = pre / "pointstat.config"
-    yield [asset(fcst, fcst.is_file), asset(netcdf, netcdf.is_file), asset(config, config.is_file)]
-    runscript = fcst.with_suffix(".sh")
-    content = f"point_stat -v 4 {fcst} {netcdf} {config} -outdir {rundir} >{fcst.stem}.log 2>&1"
-    _write_runscript(runscript, content)
-    yield mpexec(str(runscript), rundir, taskname)
+
+# @task
+# def pointstat_from_netcdf(c: Config):
+#     for tc in gen_validtimes(c.cycles, c.leadtimes):
+#         yyyymmdd, hh, leadtime = tcinfo(tc)
+#     taskname = f"point stats from fcst and netcdf at {yyyymmdd}{hh}"
+#     yield taskname
+#     pre = Path("/work/point")
+#     pre = Path("/gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input/")
+#     fcst = Path(c.forecast.path)
+#     rundir = c.paths.run / "obs" / yyyymmdd / hh
+#     url = c.baseline.url.format(yyyymmdd=yyyymmdd, yyyy=yyyymmdd[:4], mm=yyyymmdd[4:6], hh=hh)
+#     netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
+#     config = pre / "pointstat.config"
+#     yield [
+#         asset(fcst, fcst.is_file),
+#         asset(netcdf, netcdf.is_file),
+#         asset(config, config.is_file),
+#     ]
+#     runscript = fcst.with_suffix(".sh")
+#     content = f"point_stat -v 4 {fcst} {netcdf} {config} -outdir {rundir} >{fcst.stem}.log 2>&1"
+#     _write_runscript(runscript, content)
+#     yield mpexec(str(runscript), rundir, taskname)
+
 
 @task
 def _prepbufr_file(outdir: Path, url: str):
@@ -159,6 +165,7 @@ def _prepbufr_file(outdir: Path, url: str):
     yield asset(path, path.is_file)
     yield None
     fetch(taskname, url, path)
+
 
 @external
 def _existing(path: Path):
