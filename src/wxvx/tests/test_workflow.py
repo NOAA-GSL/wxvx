@@ -143,7 +143,7 @@ def test_workflow__grib_index_data(c, tc):
         yield "mock"
         yield asset(idxfile, idxfile.exists)
 
-    with patch.object(workflow, "_grib_index_file", mock):
+    with patch.object(workflow, "_local_file_from_http", mock):
         val = workflow._grib_index_data(
             c=c, outdir=c.paths.grids_baseline, tc=tc, url=c.baseline.url
         )
@@ -152,19 +152,6 @@ def test_workflow__grib_index_data(c, tc):
             name="HGT", levstr="900 mb", firstbyte=0, lastbyte=0
         )
     }
-
-
-def test_workflow__grib_index_file(c):
-    url = f"{c.baseline.url}.idx"
-    val = workflow._grib_index_file(outdir=c.paths.grids_baseline, url=url)
-    path: Path = val.ref
-    assert not path.exists()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with patch.object(workflow, "fetch") as fetch:
-        fetch.side_effect = lambda taskname, url, path: path.touch()  # noqa: ARG005
-        workflow._grib_index_file(outdir=c.paths.grids_baseline, url=url)
-    fetch.assert_called_once_with(ANY, url, ANY)
-    assert path.exists()
 
 
 @mark.parametrize(
@@ -224,6 +211,19 @@ def test_workflow__grid_nc(c_real_fs, check_cf_metadata, da_with_leadtime, tc):
     val = workflow._grid_nc(c=c_real_fs, varname="HGT", tc=tc, var=var)
     assert ready(val)
     check_cf_metadata(ds=xr.open_dataset(val.ref, decode_timedelta=True), name="HGT", level=level)
+
+
+def test_workflow__local_file_from_http(c):
+    url = f"{c.baseline.url}.idx"
+    val = workflow._local_file_from_http(outdir=c.paths.grids_baseline, url=url, desc="Test")
+    path: Path = val.ref
+    assert not path.exists()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with patch.object(workflow, "fetch") as fetch:
+        fetch.side_effect = lambda taskname, url, path: path.touch()  # noqa: ARG005
+        workflow._local_file_from_http(outdir=c.paths.grids_baseline, url=url, desc="Test")
+    fetch.assert_called_once_with(ANY, url, ANY)
+    assert path.exists()
 
 
 def test_workflow__polyfile(fakefs):

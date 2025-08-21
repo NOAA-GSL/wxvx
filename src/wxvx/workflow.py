@@ -196,7 +196,7 @@ def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
     yield taskname
     idxdata: dict[str, Var] = {}
     yield asset(idxdata, lambda: bool(idxdata))
-    idxfile = _grib_index_file(outdir, url)
+    idxfile = _local_file_from_http(outdir, url, "GRIB index file")
     yield idxfile
     lines = idxfile.ref.read_text(encoding="utf-8").strip().split("\n")
     lines.append(":-1:::::")  # end marker
@@ -211,16 +211,6 @@ def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
         )
         if baseline_var in vxvars:
             idxdata[str(baseline_var)] = baseline_var
-
-
-@task
-def _grib_index_file(outdir: Path, url: str):
-    path = outdir / Path(urlparse(url).path).name
-    taskname = "GRIB index file %s" % path
-    yield taskname
-    yield asset(path, path.is_file)
-    yield None
-    fetch(taskname, url, path)
 
 
 @task
@@ -262,6 +252,16 @@ def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
     with atomic(path) as tmp:
         ds.to_netcdf(tmp, encoding={varname: {"zlib": True, "complevel": 9}})
     logging.info("%s: Wrote %s", taskname, path)
+
+
+@task
+def _local_file_from_http(outdir: Path, url: str, desc: str):
+    path = outdir / Path(urlparse(url).path).name
+    taskname = "%s %s" % (desc, path)
+    yield taskname
+    yield asset(path, path.is_file)
+    yield None
+    fetch(taskname, url, path)
 
 
 @task
