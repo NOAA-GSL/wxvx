@@ -38,7 +38,7 @@ class Config:
         self.cycles = Cycles(raw["cycles"])
         self.forecast = Forecast(**raw["forecast"])
         self.leadtimes = Leadtimes(raw["leadtimes"])
-        self.paths = Paths(grids["baseline"], grids["forecast"], paths["obs"], paths["run"])
+        self.paths = Paths(grids.get("baseline"), grids["forecast"], paths.get("obs"), paths["run"])
         self.regrid = Regrid(**raw.get("regrid", {}))
         self.variables = raw["variables"]
 
@@ -148,10 +148,9 @@ class Paths:
     run: Path
 
     def __post_init__(self):
-        _force(self, "grids_baseline", Path(self.grids_baseline))
-        _force(self, "grids_forecast", Path(self.grids_forecast))
-        _force(self, "obs", Path(self.obs))
-        _force(self, "run", Path(self.run))
+        for key in ["grids_baseline", "grids_forecast", "obs", "run"]:
+            if val := getattr(self, key):
+                _force(self, key, Path(val))
 
 
 @dataclass(frozen=True)
