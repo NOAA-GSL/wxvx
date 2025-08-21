@@ -39,7 +39,10 @@ if TYPE_CHECKING:
 @tasks  # PM REMOVE
 def test(c: Config):
     yield "test"
-    yield [_netcdf_from_prepbufr(c, tc) for tc in gen_validtimes(c.cycles, c.leadtimes)]
+    yield [
+        _stats_vs_obs(*args)
+        for args in _statargs(c=c, varname="temperature", level=500, source=Source.FORECAST)
+    ]
 
 
 @tasks
@@ -303,9 +306,10 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
 
 
 @task
-def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str):
+def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source):
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    taskname = "Stats vs obs for %s %s at %s %sZ %s" % ("forecast", var, yyyymmdd, hh, leadtime)
+    source_name = {Source.BASELINE: "baseline", Source.FORECAST: "forecast"}[source]
+    taskname = "Stats vs obs for %s %s at %s %sZ %s" % (source_name, var, yyyymmdd, hh, leadtime)
     yield taskname
     rundir = c.paths.run / "stats" / yyyymmdd / hh / leadtime
     template = "point_stat_%s_%02d0000L_%s_%s0000V.stat"
