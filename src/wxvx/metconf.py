@@ -99,6 +99,13 @@ def _nbrhd(k: str, v: Any, level: int) -> list[str]:
     _fail(k)
 
 
+def _obs_window(k: str, v: Any, level: int) -> list[str]:
+    match k:
+        case "beg" | "end":
+            return _kvpair(k, _bare(v), level)
+    _fail(k)
+
+
 def _output_flag(k: str, v: str, level: int) -> list[str]:
     match k:
         case "cnt" | "cts" | "nbrcnt":
@@ -108,36 +115,66 @@ def _output_flag(k: str, v: str, level: int) -> list[str]:
 
 def _regrid(k: str, v: Any, level: int) -> list[str]:
     match k:
-        case "method":
+        # Scalar: bare.
+        case "method" | "to_grid":
             return _kvpair(k, _bare(v), level)
-        case "to_grid":
+    _fail(k)
+
+
+def _time_summary(k: str, v: Any, level: int) -> list[str]:
+    match k:
+        # Scalar: bare.
+        case "step" | "width":
             return _kvpair(k, _bare(v), level)
+        # Sequence: quoted.
+        case "obs_var" | "type":
+            return _sequence(k, v, _quoted, level)
     _fail(k)
 
 
 def _top(k: str, v: Any, level: int) -> list[str]:
     match k:
-        # Dictionary: datasets.
+        # Mapping: datasets.
         case "fcst" | "obs":
             return _mapping(k, _collect(_dataset, v, level + 1), level)
-        # Dictionary: mask.
+        # Mapping: mask.
         case "mask":
             return _mapping(k, _collect(_mask, v, level + 1), level)
-        # Dictionary: nbrhd.
+        # Mapping: nbrhd.
         case "nbrhd":
             return _mapping(k, _collect(_nbrhd, v, level + 1), level)
-        # Dictionary: output_flag.
+        # Mapping: obs_window.
+        case "obs_window":
+            return _mapping(k, _collect(_obs_window, v, level + 1), level)
+        # Mapping: output_flag.
         case "output_flag":
             return _mapping(k, _collect(_output_flag, v, level + 1), level)
-        # Dictionary: regrid.
+        # Mapping: regrid.
         case "regrid":
             return _mapping(k, _collect(_regrid, v, level + 1), level)
+        # Mapping: time_summary.
+        case "time_summary":
+            return _mapping(k, _collect(_time_summary, v, level + 1), level)
+        # Scalar: bare.
+        case "quality_mark_thresh":
+            return _kvpair(k, _bare(v), level)
         # Scalar: quoted.
         case "model" | "obtype" | "output_prefix" | "tmp_dir":
             return _kvpair(k, _quoted(v), level)
         # Scalar: bare.
         case "nc_pairs_flag":
             return _kvpair(k, _bare(v), level)
+        # Sequence: quoted.
+        case "message_type" | "obs_bufr_var":
+            return _sequence(k, v, _quoted, level)
+        # Sequence: special.
+        case "obs_prepbufr_map":
+            return _sequence(
+                k,
+                list(v.items()),
+                lambda kvpair: _indent('{ key = "%s"; val = "%s"; }' % kvpair, level),
+                level,
+            )
     _fail(k)
 
 

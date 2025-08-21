@@ -213,26 +213,59 @@ def _netcdf_from_prepbufr(c: Config, tc: TimeCoords):
     yield taskname
     rundir = c.paths.run / "obs" / yyyymmdd / hh
     url = render(c.baseline.url, tc)
-    netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
-    yield asset(netcdf, netcdf.is_file)
-    config = Path("/work/point/pb2nc.config")  # PM GENERATE CONFIG INSTEAD
+    path = (rundir / url.split("/")[-1]).with_suffix(".nc")
+    yield asset(path, path.is_file)
+    cfgfile = _pb2nc_config(path.with_suffix(".config"), rundir)
     prepbufr = _local_file_from_http(c.paths.obs / yyyymmdd / hh, url, "prepbufr file")
-    yield [_existing(config), prepbufr]
-    runscript = netcdf.with_suffix(".sh")
-    content = f"pb2nc -v 4 {prepbufr.ref} {netcdf} {config} >{netcdf.stem}.log 2>&1"
+    yield [cfgfile, prepbufr]
+    runscript = path.with_suffix(".sh")
+    content = f"pb2nc -v 4 {prepbufr.ref} {path} {cfgfile.ref} >{path.stem}.log 2>&1"
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
 
 
 @task
-def _polyfile(path: Path, mask: tuple[tuple[float, float]]):
-    taskname = "Poly file %s" % path
+def _pb2nc_config(path: Path, rundir: Path):
+    taskname = f"pb2nc config {path}"
     yield taskname
     yield asset(path, path.is_file)
     yield None
-    content = "MASK\n%s\n" % "\n".join(f"{lat} {lon}" for lat, lon in mask)
+    config = {
+        "message_type": ["ADPUPA", "AIRCAR", "AIRCFT"],
+        "obs_bufr_var": ["D_RH", "QOB", "TOB", "UOB", "VOB", "ZOB"],
+        "obs_prepbufr_map": {
+            "CEILING": "CEILING",
+            "D_CAPE": "CAPE",
+            "D_MIXR": "MIXR",
+            "D_MLCAPE": "MLCAPE",
+            "D_PBL": "HPBL",
+            "D_RH": "RH",
+            "D_WDIR": "WDIR",
+            "D_WIND": "WIND",
+            "HOVI": "VIS",
+            "MXGS": "GUST",
+            "PMO": "PRMSL",
+            "POB": "PRES",
+            "QOB": "SPFH",
+            "TDO": "DPT",
+            "TOB": "TMP",
+            "TOCC": "TCDC",
+            "UOB": "UGRD",
+            "VOB": "VGRD",
+            "ZOB": "HGT",
+        },
+        "obs_window": {"beg": -1800, "end": 1800},
+        "quality_mark_thresh": 9,
+        "time_summary": {
+            "step": 3600,
+            "width": 3600,
+            "obs_var": [],
+            "type": ["min", "max", "range", "mean", "stdev", "median", "p80"],
+        },
+        "tmp_dir": rundir,
+    }
     with atomic(path) as tmp:
-        tmp.write_text(content)
+        tmp.write_text("%s\n" % render_metconf(config))
 
 
 @task
@@ -267,6 +300,28 @@ def _plot(
     path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(path, bbox_inches="tight")
     plt.close()
+
+
+@task
+def _point_stat_config(path: Path, rundir: Path):
+    taskname = f"point_stat config {path}"
+    yield taskname
+    yield asset(path, path.is_file)
+    yield None
+    assert rundir  # PM REMOVE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.touch()
+
+
+@task
+def _polyfile(path: Path, mask: tuple[tuple[float, float]]):
+    taskname = "Poly file %s" % path
+    yield taskname
+    yield asset(path, path.is_file)
+    yield None
+    content = "MASK\n%s\n" % "\n".join(f"{lat} {lon}" for lat, lon in mask)
+    with atomic(path) as tmp:
+        tmp.write_text(content)
 
 
 @task
@@ -318,13 +373,13 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yield asset(path, path.is_file)
     fcst = _grid_nc(c, varname, tc, var)
     obs = _netcdf_from_prepbufr(c, tc)
-    config = _existing(Path("/work/point/pointstat.config"))  # PM GENERATE CONFIG INSTEAD
-    yield [fcst, obs, config]
+    cfgfile = _point_stat_config(path.with_suffix(".config"), rundir)
+    yield [fcst, obs, cfgfile]
     runscript = fcst.ref.with_suffix(".sh")
-    cmd = "point_stat -v 4 {fcst} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
-        fcst=fcst.ref, obs=obs.ref, config=config.ref, rundir=rundir, log=f"{fcst.ref.stem}.log"
+    content = "point_stat -v 4 {fcst} {obs} {cfgfile} -outdir {rundir} >{log} 2>&1".format(
+        fcst=fcst.ref, obs=obs.ref, cfgfile=cfgfile.ref, rundir=rundir, log=f"{path.stem}.log"
     )
-    _write_runscript(runscript, cmd)
+    _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
 
 
@@ -379,45 +434,6 @@ def _grid_stat_config(
 
 def _meta(c: Config, varname: str) -> VarMeta:
     return VARMETA[c.variables[varname]["name"]]
-
-
-def _pb2nc_config(path: Path, rundir: Path) -> None:
-    config = {
-        "message_type": ["ADPUPA", "AIRCAR", "AIRCFT"],
-        "obs_bufr_var": ["D_RH", "QOB", "TOB", "UOB", "VOB", "ZOB"],
-        "obs_prepbufr_map": {
-            "CEILING": "CEILING",
-            "D_CAPE": "CAPE",
-            "D_MIXR": "MIXR",
-            "D_MLCAPE": "MLCAPE",
-            "D_PBL": "HPBL",
-            "D_RH": "RH",
-            "D_WDIR": "WDIR",
-            "D_WIND": "WIND",
-            "HOVI": "VIS",
-            "MXGS": "GUST",
-            "PMO": "PRMSL",
-            "POB": "PRES",
-            "QOB": "SPFH",
-            "TDO": "DPT",
-            "TOB": "TMP",
-            "TOCC": "TCDC",
-            "UOB": "UGRD",
-            "VOB": "VGRD",
-            "ZOB": "HGT",
-        },
-        "obs_window": {"beg": -1800, "end": 1800},
-        "quality_mark_thresh": 9,
-        "time_summary": {
-            "step": 3600,
-            "width": 3600,
-            "obs_var": [],
-            "type": ["min", "max", "range", "mean", "stdev", "median", "p80"],
-        },
-        "tmp_dir": rundir,
-    }
-    with atomic(path) as tmp:
-        tmp.write_text("%s\n" % render_metconf(config))
 
 
 def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd.DataFrame:
