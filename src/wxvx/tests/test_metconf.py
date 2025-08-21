@@ -76,9 +76,9 @@ tmp_dir = "/path/to/dir";
 """
 
 
-def test_metconf__fcst_or_obs_fail():
+def test_metconf__dataset_fail():
     with raises(ValueError, match="Unsupported key: foo"):
-        metconf._fcst_or_obs(k="foo", v=[], level=0)
+        metconf._dataset(k="foo", v=[], level=0)
 
 
 def test_metconf__field_mapping_kvpairs():

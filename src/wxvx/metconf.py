@@ -48,7 +48,7 @@ def _sequence(k: str, v: list, handler: Callable, level: int) -> list[str]:
 # Item-specific:
 
 
-def _fcst_or_obs(k: str, v: list[dict], level: int) -> list[str]:
+def _dataset(k: str, v: list[dict], level: int) -> list[str]:
     match k:
         case "field":
             return _field_sequence(k, v, level)
@@ -66,16 +66,15 @@ def _field_mapping(d: dict, level: int) -> str:
 
 def _field_mapping_kvpairs(k: str, v: Any, level: int) -> list[str]:
     match k:
-        case "cat_thresh":
+        # Scalar: quoted.
+        case "name" | "set_attr_level":
+            return _kvpair(k, _quoted(v), level)
+        # Sequence: bare.
+        case "cat_thresh" | "cnt_thresh":
             return _sequence(k, v, _bare, level)
-        case "cnt_thresh":
-            return _sequence(k, v, _bare, level)
+        # Sequence: quoted.
         case "level":
             return _sequence(k, v, _quoted, level)
-        case "name":
-            return _kvpair(k, _quoted(v), level)
-        case "set_attr_level":
-            return _kvpair(k, _quoted(v), level)
     _fail(k)
 
 
@@ -118,20 +117,27 @@ def _regrid(k: str, v: Any, level: int) -> list[str]:
 
 def _top(k: str, v: Any, level: int) -> list[str]:
     match k:
+        # Dictionary: datasets.
         case "fcst" | "obs":
-            return _mapping(k, _collect(_fcst_or_obs, v, level + 1), level)
-        case "model" | "obtype" | "output_prefix" | "tmp_dir":
-            return _kvpair(k, _quoted(v), level)
+            return _mapping(k, _collect(_dataset, v, level + 1), level)
+        # Dictionary: mask.
         case "mask":
             return _mapping(k, _collect(_mask, v, level + 1), level)
+        # Dictionary: nbrhd.
         case "nbrhd":
             return _mapping(k, _collect(_nbrhd, v, level + 1), level)
-        case "nc_pairs_flag":
-            return _kvpair(k, _bare(v), level)
+        # Dictionary: output_flag.
         case "output_flag":
             return _mapping(k, _collect(_output_flag, v, level + 1), level)
+        # Dictionary: regrid.
         case "regrid":
             return _mapping(k, _collect(_regrid, v, level + 1), level)
+        # Scalar: quoted.
+        case "model" | "obtype" | "output_prefix" | "tmp_dir":
+            return _kvpair(k, _quoted(v), level)
+        # Scalar: bare.
+        case "nc_pairs_flag":
+            return _kvpair(k, _bare(v), level)
     _fail(k)
 
 
