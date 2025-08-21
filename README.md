@@ -78,7 +78,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 
 ### baseline.url
 
-The `baseline.url` value may include Python string-template expressions, processed at run-time with [`str.format()`](https://docs.python.org/3/library/stdtypes.html#str.format). Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle time, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) will be supplied by `wxvx`.
+The `baseline.url` value may include Jinja2 expressions, processed at run-time with [`jinja2.Tremplate.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render). Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle time, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) will be supplied by `wxvx`.
 
 ### cycles
 
@@ -208,7 +208,7 @@ Consider a `config.yaml`
 baseline:
   compare: true
   name: HRRR
-  url: https://noaa-hrrr-bdp-pds.s3.amazonaws.com/hrrr.{yyyymmdd}/conus/hrrr.t{hh}z.wrfprsf{fh:02}.grib2
+  url: https://noaa-hrrr-bdp-pds.s3.amazonaws.com/hrrr.{{ yyyymmdd }}/conus/hrrr.t{{ hh }}z.wrfprsf{{ "%02d" % fh }}.grib2
 cycles:
   start: 2025-03-01T00:00:00
   step: 1
