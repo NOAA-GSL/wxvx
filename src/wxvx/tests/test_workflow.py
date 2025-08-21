@@ -112,6 +112,22 @@ def test_workflow_stats(c, noop):
     assert len(val.ref) == len(c.variables) + 1  # for 2x SPFH levels
 
 
+def test_workflow__config_grid_stat(c, fakefs):
+    path = fakefs / "refc.config"
+    assert not path.is_file()
+    workflow._config_grid_stat(
+        c=c,
+        path=path,
+        varname="REFC",
+        rundir=fakefs,
+        var=variables.Var(name="refc", level_type="atmosphere"),
+        prefix="foo",
+        source=Source.FORECAST,
+        polyfile=None,
+    )
+    assert path.is_file()
+
+
 def test_workflow__existing(fakefs):
     path = fakefs / "forecast"
     assert not ready(workflow._existing(path=path))
@@ -287,7 +303,6 @@ def test_workflow__stats_vs_grid(c, fakefs, tc):
     with (
         patch.object(workflow, "_grid_grib", mock),
         patch.object(workflow, "_grid_nc", mock),
-        patch.object(workflow, "_grid_stat_config", side_effect=lambda *_: cfgfile.touch()),
         patch.object(workflow, "mpexec", side_effect=lambda *_: stat.touch()) as mpexec,
     ):
         stat.parent.mkdir(parents=True)
@@ -299,22 +314,6 @@ def test_workflow__stats_vs_grid(c, fakefs, tc):
 
 
 # Support Tests
-
-
-def test_workflow__grid_stat_config(c, fakefs):
-    path = fakefs / "refc.config"
-    assert not path.is_file()
-    workflow._grid_stat_config(
-        c=c,
-        path=path,
-        varname="REFC",
-        rundir=fakefs,
-        var=variables.Var(name="refc", level_type="atmosphere"),
-        prefix="foo",
-        source=Source.FORECAST,
-        polyfile=None,
-    )
-    assert path.is_file()
 
 
 def test_workflow__meta(c):

@@ -110,8 +110,59 @@ def stats(c: Config):
 
 
 @task
+def _config_grid_stat(
+    c: Config,
+    path: Path,
+    varname: str,
+    rundir: Path,
+    var: Var,
+    prefix: str,
+    source: Source,
+    polyfile: Node | None,
+):
+    taskname = f"Config for grid_stat {path}"
+    yield taskname
+    yield asset(path, path.is_file)
+    yield None
+    level_obs = metlevel(var.level_type, var.level)
+    baseline_class = variables.model_class(c.baseline.name)
+    attrs = {
+        Source.BASELINE: (level_obs, baseline_class.varname(var.name), c.baseline.name),
+        Source.FORECAST: ("(0,0,*,*)", varname, c.forecast.name),
+    }
+    level_fcst, name_fcst, model = attrs[source]
+    field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
+    field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
+    meta = _meta(c, varname)
+    if meta.cat_thresh:
+        for x in field_fcst, field_obs:
+            x["cat_thresh"] = meta.cat_thresh
+    if meta.cnt_thresh:
+        for x in field_fcst, field_obs:
+            x["cnt_thresh"] = meta.cnt_thresh
+    mask_grid = [] if polyfile else ["FULL"]
+    mask_poly = [polyfile.ref] if polyfile else []
+    config = {
+        "fcst": {"field": [field_fcst]},
+        "mask": {"grid": mask_grid, "poly": mask_poly},
+        "model": model,
+        "nc_pairs_flag": "FALSE",
+        "obs": {"field": [field_obs]},
+        "obtype": c.baseline.name,
+        "output_flag": dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), "BOTH"),
+        "output_prefix": f"{prefix}",
+        "regrid": {"method": c.regrid.method, "to_grid": c.regrid.to},
+        "tmp_dir": rundir,
+    }
+    if nbrhd := {k: v for k, v in [("shape", meta.nbrhd_shape), ("width", meta.nbrhd_width)] if v}:
+        config["nbrhd"] = nbrhd
+    with atomic(path) as tmp:
+        tmp.write_text("%s\n" % render_metconf(config))
+
+
+@task
 def _config_pb2nc(path: Path, rundir: Path):
-    taskname = f"pb2nc config {path}"
+    taskname = f"Config for pb2nc {path}"
     yield taskname
     yield asset(path, path.is_file)
     yield None
@@ -155,7 +206,7 @@ def _config_pb2nc(path: Path, rundir: Path):
 
 @task
 def _config_point_stat(path: Path, rundir: Path):
-    taskname = f"point_stat config {path}"
+    taskname = f"Config for point_stat {path}"
     yield taskname
     yield asset(path, path.is_file)
     yield None
@@ -335,23 +386,25 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     template = "grid_stat_%s_%02d0000L_%s_%s0000V.stat"
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
-    baseline = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
     forecast = _grid_nc(c, varname, tc, var)
-    toverify = _grid_grib(c, tc, var) if source == Source.BASELINE else forecast
-    reqs = [toverify, baseline]
-    if source == Source.BASELINE:
-        reqs.append(forecast)
+    reqs = [forecast]
     polyfile = None
     if mask := c.forecast.mask:
         polyfile = _polyfile(c.paths.run / "stats" / "mask.poly", mask)
         reqs.append(polyfile)
+    if source == Source.BASELINE:
+        reqs.append(forecast)
+    toverify = _grid_grib(c, tc, var) if source == Source.BASELINE else forecast
+    baseline = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
+    config = _config_grid_stat(
+        c, path.with_suffix(".config"), varname, rundir, var, prefix, source, polyfile
+    )
+    reqs.extend([toverify, baseline, config])
     yield reqs
-    cfgfile = path.with_suffix(".config")
-    _grid_stat_config(c, cfgfile, varname, rundir, var, prefix, source, polyfile)
     runscript = path.with_suffix(".sh")
     content = f"""
     export OMP_NUM_THREADS=1
-    grid_stat -v 4 {toverify.ref} {baseline.ref} {cfgfile} >{path.stem}.log 2>&1
+    grid_stat -v 4 {toverify.ref} {baseline.ref} {config.ref} >{path.stem}.log 2>&1
     """
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
@@ -384,52 +437,6 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
 
 
 # Support
-
-
-def _grid_stat_config(
-    c: Config,
-    path: Path,
-    varname: str,
-    rundir: Path,
-    var: Var,
-    prefix: str,
-    source: Source,
-    polyfile: Node | None,
-) -> None:
-    level_obs = metlevel(var.level_type, var.level)
-    baseline_class = variables.model_class(c.baseline.name)
-    attrs = {
-        Source.BASELINE: (level_obs, baseline_class.varname(var.name), c.baseline.name),
-        Source.FORECAST: ("(0,0,*,*)", varname, c.forecast.name),
-    }
-    level_fcst, name_fcst, model = attrs[source]
-    field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
-    field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
-    meta = _meta(c, varname)
-    if meta.cat_thresh:
-        for x in field_fcst, field_obs:
-            x["cat_thresh"] = meta.cat_thresh
-    if meta.cnt_thresh:
-        for x in field_fcst, field_obs:
-            x["cnt_thresh"] = meta.cnt_thresh
-    mask_grid = [] if polyfile else ["FULL"]
-    mask_poly = [polyfile.ref] if polyfile else []
-    config = {
-        "fcst": {"field": [field_fcst]},
-        "mask": {"grid": mask_grid, "poly": mask_poly},
-        "model": model,
-        "nc_pairs_flag": "FALSE",
-        "obs": {"field": [field_obs]},
-        "obtype": c.baseline.name,
-        "output_flag": dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), "BOTH"),
-        "output_prefix": f"{prefix}",
-        "regrid": {"method": c.regrid.method, "to_grid": c.regrid.to},
-        "tmp_dir": rundir,
-    }
-    if nbrhd := {k: v for k, v in [("shape", meta.nbrhd_shape), ("width", meta.nbrhd_width)] if v}:
-        config["nbrhd"] = nbrhd
-    with atomic(path) as tmp:
-        tmp.write_text("%s\n" % render_metconf(config))
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
