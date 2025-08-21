@@ -20,7 +20,7 @@ forecast:
 leadtimes: [0]
 meta:
   grids: "{{ meta.workdir }}/grids"
-  levels: &levels [500]
+  levels: &levels [1000]
   workdir: /path/to/workdir
 paths:
   grids:

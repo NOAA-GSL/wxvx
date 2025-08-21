@@ -340,7 +340,7 @@ def _grid_stat_config(
     prefix: str,
     source: Source,
     polyfile: Node | None,
-):
+) -> None:
     level_obs = metlevel(var.level_type, var.level)
     baseline_class = variables.model_class(c.baseline.name)
     attrs = {
@@ -379,6 +379,44 @@ def _grid_stat_config(
 
 def _meta(c: Config, varname: str) -> VarMeta:
     return VARMETA[c.variables[varname]["name"]]
+
+
+def _pb2nc_config(rundir: Path) -> None:
+    config = {
+        "message_type": ["ADPUPA", "AIRCAR", "AIRCFT"],
+        "obs_bufr_var": ["D_RH", "QOB", "TOB", "UOB", "VOB", "ZOB"],
+        "obs_prepbufr_map": {
+            "CEILING": "CEILING",
+            "D_CAPE": "CAPE",
+            "D_MIXR": "MIXR",
+            "D_MLCAPE": "MLCAPE",
+            "D_PBL": "HPBL",
+            "D_RH": "RH",
+            "D_WDIR": "WDIR",
+            "D_WIND": "WIND",
+            "HOVI": "VIS",
+            "MXGS": "GUST",
+            "PMO": "PRMSL",
+            "POB": "PRES",
+            "QOB": "SPFH",
+            "TDO": "DPT",
+            "TOB": "TMP",
+            "TOCC": "TCDC",
+            "UOB": "UGRD",
+            "VOB": "VGRD",
+            "ZOB": "HGT",
+        },
+        "obs_window": {"beg": -1800, "end": 1800},
+        "quality_mark_thresh": 9,
+        "time_summary": {
+            "step": 3600,
+            "width": 3600,
+            "obs_var": [],
+            "type": ["min", "max", "range", "mean", "stdev", "median", "p80"],
+        },
+        "tmp_dir": rundir,
+    }
+    assert config
 
 
 def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd.DataFrame:
