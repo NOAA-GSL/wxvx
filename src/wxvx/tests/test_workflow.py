@@ -420,6 +420,18 @@ def test_workflow__vxvars(c):
     }
 
 
+def test_workflow__write_runscript(fakefs):
+    path = fakefs / "runscript"
+    assert not path.exists()
+    workflow._write_runscript(path=path, content="foo")
+    expected = """
+    #!/usr/bin/env bash
+
+    foo
+    """
+    assert path.read_text().strip() == dedent(expected).strip()
+
+
 # Fixtures
 
 
