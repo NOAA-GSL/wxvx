@@ -109,30 +109,6 @@ def stats(c: Config):
 # Private tasks
 
 
-@task
-def netcdf_from_prepbufr(c: Config):  # PM Later: Make private.
-    for tc in gen_validtimes(c.cycles, c.leadtimes):
-        yyyymmdd, hh, leadtime = tcinfo(tc)
-    taskname = f"netCDF from prepbufr at {yyyymmdd}{hh}"
-    yield taskname
-    # PM Later: Get input-file info from baseline.url.
-    url = c.baseline.url.format(yyyymmdd=yyyymmdd, yyyy=yyyymmdd[:4], mm=yyyymmdd[4:6], hh=hh)
-    rundir = c.paths.run / "obs" / yyyymmdd / hh
-    netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
-    # PM Later: Yield a task to *create* config instead of requiring it to exist.
-    pre = Path("/work/point")
-    pre = Path("/gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input/")
-    config = pre / "pb2nc.config"
-    yield [asset(netcdf, netcdf.is_file), asset(config, config.is_file)]
-    # PM Later: Consider yielding a task to fetch prepbufr from remote URL.
-    prun = _prepbufr_file(rundir, url)
-    yield [prun]
-    runscript = netcdf.with_suffix(".sh")
-    content = f"pb2nc -v 4 {prun.ref} {netcdf} {config} >{netcdf.stem}.log 2>&1"
-    _write_runscript(runscript, content)
-    mpexec(str(runscript), rundir, taskname)
-
-
 # @task
 # def pointstat_from_netcdf(c: Config):
 #     for tc in gen_validtimes(c.cycles, c.leadtimes):
@@ -155,16 +131,6 @@ def netcdf_from_prepbufr(c: Config):  # PM Later: Make private.
 #     content = f"point_stat -v 4 {fcst} {netcdf} {config} -outdir {rundir} >{fcst.stem}.log 2>&1"
 #     _write_runscript(runscript, content)
 #     yield mpexec(str(runscript), rundir, taskname)
-
-
-@task
-def _prepbufr_file(outdir: Path, url: str):
-    path = outdir / Path(urlparse(url).path).name
-    taskname = "prepbufr file %s" % path
-    yield taskname
-    yield asset(path, path.is_file)
-    yield None
-    fetch(taskname, url, path)
 
 
 @external
@@ -263,6 +229,31 @@ def _local_file_from_http(outdir: Path, url: str, desc: str):
     yield None
     fetch(taskname, url, path)
 
+# PM REMOVE
+@tasks
+def test(c: Config):
+    yield "test"
+    yield [_netcdf_from_prepbufr(c, tc) for tc in gen_validtimes(c.cycles, c.leadtimes)]
+# PM REMOVE
+
+
+@task
+def _netcdf_from_prepbufr(c: Config, tc: TimeCoords):
+    yyyymmdd, hh, _ = tcinfo(tc)
+    taskname = "netCDF from prepbufr at %s %sZ" % (yyyymmdd, hh)
+    yield taskname
+    rundir = c.paths.run / "obs" / yyyymmdd / hh
+    url = c.baseline.url.format(yyyymmdd=yyyymmdd, hh=hh)
+    netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
+    yield asset(netcdf, netcdf.is_file)
+    config = Path("/work/point/pb2nc.config")
+    prun = _local_file_from_http(rundir, url, "prepbufr file")
+    yield [_exising(config), prun]
+    runscript = netcdf.with_suffix(".sh")
+    content = f"pb2nc -v 4 {prun.ref} {netcdf} {config} >{netcdf.stem}.log 2>&1"
+    _write_runscript(runscript, content)
+    mpexec(str(runscript), rundir, taskname)
+
 
 @task
 def _polyfile(path: Path, mask: tuple[tuple[float, float]]):
@@ -307,6 +298,16 @@ def _plot(
     path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(path, bbox_inches="tight")
     plt.close()
+
+
+@task
+def _prepbufr_file(outdir: Path, url: str):
+    path = outdir / Path(urlparse(url).path).name
+    taskname = "prepbufr file %s" % path
+    yield taskname
+    yield asset(path, path.is_file)
+    yield None
+    fetch(taskname, url, path)
 
 
 @task
