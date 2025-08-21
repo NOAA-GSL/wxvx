@@ -268,7 +268,7 @@ def test_workflow__plot(c, dictkey, fakefs, fs):
     xticks.assert_called_once_with(ticks=[0, 6, 12], labels=["000", "006", "012"], rotation=90)
 
 
-def test_workflow__stat(c, fakefs, tc):
+def test_workflow__stat_vs_grid(c, fakefs, tc):
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
@@ -278,7 +278,7 @@ def test_workflow__stat(c, fakefs, tc):
     taskname = "MET stats for baseline 2t-heightAboveGround-0002 at 19700101 00Z 000"
     var = variables.Var(name="2t", level_type="heightAboveGround", level=2)
     kwargs = dict(c=c, varname="T2M", tc=tc, var=var, prefix="foo", source=Source.BASELINE)
-    stat = workflow._stat(**kwargs, dry_run=True).ref
+    stat = workflow._stat_vs_grid(**kwargs, dry_run=True).ref
     cfgfile = (rundir / stat.stem).with_suffix(".config")
     runscript = (rundir / stat.stem).with_suffix(".sh")
     assert not stat.is_file()
@@ -291,7 +291,7 @@ def test_workflow__stat(c, fakefs, tc):
         patch.object(workflow, "mpexec", side_effect=lambda *_: stat.touch()) as mpexec,
     ):
         stat.parent.mkdir(parents=True)
-        workflow._stat(**kwargs)
+        workflow._stat_vs_grid(**kwargs)
     assert stat.is_file()
     assert cfgfile.is_file()
     assert runscript.is_file()
@@ -364,20 +364,20 @@ def test_workflow__statargs(c, statkit, cycle):
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
 def test_workflow__statreqs(c, statkit, cycle):
     with (
-        patch.object(workflow, "_stat") as _stat,
+        patch.object(workflow, "_stat_vs_grid") as _stat_vs_grid,
         patch.object(workflow, "_vxvars", return_value={statkit.var: statkit.varname}),
         patch.object(workflow, "gen_validtimes", return_value=[statkit.tc]),
     ):
         reqs = workflow._statreqs(c=c, varname=statkit.varname, level=statkit.level, cycle=cycle)
     assert len(reqs) == 2
-    assert _stat.call_count == 2
+    assert _stat_vs_grid.call_count == 2
     args = (c, statkit.varname, statkit.tc, statkit.var)
-    assert _stat.call_args_list[0].args == (
+    assert _stat_vs_grid.call_args_list[0].args == (
         *args,
         f"forecast_gh_{statkit.level_type}_{statkit.level:04d}",
         Source.FORECAST,
     )
-    assert _stat.call_args_list[1].args == (
+    assert _stat_vs_grid.call_args_list[1].args == (
         *args,
         f"gfs_gh_{statkit.level_type}_{statkit.level:04d}",
         Source.BASELINE,

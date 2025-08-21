@@ -36,6 +36,12 @@ if TYPE_CHECKING:
 # Public tasks
 
 
+@tasks  # PM REMOVE
+def test(c: Config):
+    yield "test"
+    yield [_netcdf_from_prepbufr(c, tc) for tc in gen_validtimes(c.cycles, c.leadtimes)]
+
+
 @tasks
 def grids(c: Config, baseline: bool = True, forecast: bool = True):
     if baseline and not forecast:
@@ -230,12 +236,6 @@ def _local_file_from_http(outdir: Path, url: str, desc: str):
     fetch(taskname, url, path)
 
 
-@tasks  # PM REMOVE
-def test(c: Config):
-    yield "test"
-    yield [_netcdf_from_prepbufr(c, tc) for tc in gen_validtimes(c.cycles, c.leadtimes)]
-
-
 @task
 def _netcdf_from_prepbufr(c: Config, tc: TimeCoords):
     yyyymmdd, hh, _ = tcinfo(tc)
@@ -310,7 +310,7 @@ def _prepbufr_file(outdir: Path, url: str):
 
 
 @task
-def _stat(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source):
+def _stat_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     source_name = {Source.BASELINE: "baseline", Source.FORECAST: "forecast"}[source]
     taskname = "MET stats for %s %s at %s %sZ %s" % (source_name, var, yyyymmdd, hh, leadtime)
@@ -438,7 +438,9 @@ def _statargs(
 def _statreqs(
     c: Config, varname: str, level: float | None, cycle: datetime | None = None
 ) -> Sequence[Node]:
-    genreqs = lambda source: [_stat(*args) for args in _statargs(c, varname, level, source, cycle)]
+    genreqs = lambda source: [
+        _stat_vs_grid(*args) for args in _statargs(c, varname, level, source, cycle)
+    ]
     reqs: Sequence[Node] = genreqs(Source.FORECAST)
     if c.baseline.compare:
         reqs = [*reqs, *genreqs(Source.BASELINE)]
