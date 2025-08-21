@@ -255,6 +255,10 @@ def test_schema_paths(config_data, fs, logged):
     for key in ["run"]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
+    # Either grids.baseline or obs is required:
+    assert ok(with_del(config, "grids", "baseline"))
+    assert ok(with_del(config, "obs"))
+    assert not ok(with_del(with_del(config, "grids", "baseline"), "obs"))
 
 
 def test_schema_paths_grids(config_data, fs, logged):
@@ -263,7 +267,7 @@ def test_schema_paths_grids(config_data, fs, logged):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in ["baseline", "forecast"]:
+    for key in ["forecast"]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Additional keys are not allowed:

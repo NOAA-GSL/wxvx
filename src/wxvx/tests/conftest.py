@@ -98,6 +98,7 @@ def config_data():
                 "baseline": "/path/to/grids/baseline",
                 "forecast": "/path/to/grids/forecast",
             },
+            "obs": "/path/to/obs",
             "run": "/path/to/run",
         },
         "regrid": {

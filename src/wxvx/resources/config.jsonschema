@@ -280,6 +280,27 @@
     },
     "paths": {
       "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "grids": {
+              "required": [
+                "baseline"
+              ]
+            }
+          }
+        },
+        {
+          "properties": {
+            "obs": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "obs"
+          ]
+        }
+      ],
       "properties": {
         "grids": {
           "additionalProperties": false,
@@ -292,10 +313,12 @@
             }
           },
           "required": [
-            "baseline",
             "forecast"
           ],
           "type": "object"
+        },
+        "obs": {
+          "type": "string"
         },
         "run": {
           "type": "string"
