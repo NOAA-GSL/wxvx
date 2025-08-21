@@ -246,10 +246,10 @@ def _netcdf_from_prepbufr(c: Config, tc: TimeCoords):
     netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
     yield asset(netcdf, netcdf.is_file)
     config = Path("/work/point/pb2nc.config")
-    prun = _local_file_from_http(c.paths.obs, url, "prepbufr file")
-    yield [_existing(config), prun]
+    prepbufr = _local_file_from_http(c.paths.obs / yyyymmdd / hh, url, "prepbufr file")
+    yield [_existing(config), prepbufr]
     runscript = netcdf.with_suffix(".sh")
-    content = f"pb2nc -v 4 {prun.ref} {netcdf} {config} >{netcdf.stem}.log 2>&1"
+    content = f"pb2nc -v 4 {prepbufr.ref} {netcdf} {config} >{netcdf.stem}.log 2>&1"
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
 
