@@ -14,11 +14,16 @@ from subprocess import run
 from typing import TYPE_CHECKING, NoReturn, cast, overload
 from urllib.parse import urlparse
 
+import jinja2
 import magic
 import zarr
 
+from wxvx.times import tcinfo
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+    from wxvx.times import TimeCoords
 
 pkgname = __name__.split(".", maxsplit=1)[0]
 
@@ -123,6 +128,11 @@ def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> No
     if env:
         kwargs["env"] = env
     get_pool().apply(run, [cmd], kwargs)
+
+
+def render(template: str, tc: TimeCoords) -> str:
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    return jinja2.Template(template).render(yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime))
 
 
 def resource(relpath: str | Path) -> str:

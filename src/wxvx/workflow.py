@@ -14,7 +14,6 @@ from warnings import catch_warnings, simplefilter
 import matplotlib as mpl
 
 mpl.use("Agg")
-import jinja2
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -22,11 +21,11 @@ import xarray as xr
 from iotaa import Node, asset, external, task, tasks
 
 from wxvx import variables
-from wxvx.metconf import render
+from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.times import TimeCoords, gen_validtimes, hh, tcinfo, yyyymmdd
 from wxvx.types import Cycles, Source
-from wxvx.util import LINETYPE, Proximity, atomic, classify_url, mpexec
+from wxvx.util import LINETYPE, Proximity, atomic, classify_url, mpexec, render
 from wxvx.variables import VARMETA, Var, da_construct, da_select, ds_construct, metlevel
 
 if TYPE_CHECKING:
@@ -183,7 +182,7 @@ def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
 @task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    url = _render(c.baseline.url, tc)
+    url = render(c.baseline.url, tc)
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
         assert isinstance(src, Path)
@@ -211,7 +210,7 @@ def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
     taskname = "Forecast grid %s" % path
     yield taskname
     yield asset(path, path.is_file)
-    fd = _forecast_dataset(Path(_render(c.forecast.path, tc)))
+    fd = _forecast_dataset(Path(render(c.forecast.path, tc)))
     yield fd
     src = da_select(c, fd.ref, varname, tc, var)
     da = da_construct(c, src)
@@ -243,7 +242,7 @@ def _netcdf_from_prepbufr(c: Config, tc: TimeCoords):
     taskname = "netCDF from prepbufr at %s %sZ" % (yyyymmdd, hh)
     yield taskname
     rundir = c.paths.run / "obs" / yyyymmdd / hh
-    url = _render(c.baseline.url, tc)
+    url = render(c.baseline.url, tc)
     netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
     yield asset(netcdf, netcdf.is_file)
     config = Path("/work/point/pb2nc.config")
@@ -389,7 +388,7 @@ def _grid_stat_config(
     if nbrhd := {k: v for k, v in [("shape", meta.nbrhd_shape), ("width", meta.nbrhd_width)] if v}:
         config["nbrhd"] = nbrhd
     with atomic(path) as tmp:
-        tmp.write_text("%s\n" % render(config))
+        tmp.write_text("%s\n" % render_metconf(config))
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
@@ -414,11 +413,6 @@ def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd
     if "INTERP_PNTS" in columns and width is not None:
         plot_data = plot_data[plot_data["INTERP_PNTS"] == width**2]
     return plot_data
-
-
-def _render(template: str, tc: TimeCoords) -> str:
-    yyyymmdd, hh, leadtime = tcinfo(tc)
-    return jinja2.Template(template).render(yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime))
 
 
 def _statargs(
