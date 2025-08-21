@@ -91,21 +91,20 @@ def test_util_classify_data_format__zarr_missing(fakefs):
 
 
 @mark.parametrize(
-    ("template", "expected_scheme"),
+    ("url", "expected_scheme"),
     [
-        ("http://link/to/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.REMOTE),
-        ("file://{root}/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.LOCAL),
-        ("{root}/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.LOCAL),
+        ("http://example.com/path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.REMOTE),
+        ("file:///path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
+        ("/path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
     ],
 )
-def test_workflow_classify_url(template, expected_scheme, fakefs):
-    url = template.format(root=fakefs, hh="00", fh=0)
+def test_workflow_classify_url(expected_scheme, url):
     scheme, _ = util.classify_url(url)
     assert scheme == expected_scheme
 
 
-def test_workflow_classify_url_unsupported(fakefs):
-    url = f"foo://{fakefs}/gfs.t00z.pgrb2.0p25.f000"
+def test_workflow_classify_url_unsupported():
+    url = "foo:///path/to/gfs.t00z.pgrb2.0p25.f000"
     with raises(util.WXVXError) as e:
         util.classify_url(url)
     assert str(e.value) == f"Scheme 'foo' in '{url}' not supported."

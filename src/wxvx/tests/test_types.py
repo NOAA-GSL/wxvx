@@ -59,7 +59,7 @@ def time(config_data):
 def test_types_Baseline(baseline, config_data):
     obj = baseline
     assert obj.name == "GFS"
-    assert obj.url == "https://some.url/{yyyymmdd}/{hh}/{fh:02}/a.grib2"
+    assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
     cfg = config_data["baseline"]
     other1 = types.Baseline(**cfg)
     assert obj == other1
@@ -131,7 +131,7 @@ def test_types_Forecast(config_data, forecast):
     assert obj.coords.time.inittime == "time"
     assert obj.coords.time.leadtime == "lead_time"
     assert obj.name == "Forecast"
-    assert obj.path == "/path/to/forecast-{yyyymmdd}-{hh}-{fh:03}.nc"
+    assert obj.path == "/path/to/forecast-{{ yyyymmdd }}-{{ hh }}-{{ '%03d' % fh }}.nc"
     cfg = config_data["forecast"]
     other1 = types.Forecast(**cfg)
     assert obj == other1
