@@ -10,6 +10,7 @@ from unittest.mock import patch
 from pytest import mark, raises
 
 from wxvx import util
+from wxvx.times import TimeCoords
 
 # Tests
 
@@ -158,6 +159,12 @@ def test_util_mpexec(tmp_path):
     expected = "3.14"
     util.mpexec(cmd=cmd, rundir=tmp_path, taskname="foo", env={"PI": expected})
     assert path.read_text().strip() == expected
+
+
+def test_util_render(utc):
+    template = "{{ yyyymmdd }}-{{ yyyymmdd[:4] }}-{{ hh }}-{{ '%03d' % fh }}"
+    tc = TimeCoords(cycle=utc(2025, 8, 21, 6), leadtime=1)
+    assert util.render(template, tc) == "20250821-2025-06-001"
 
 
 def test_util_resource(fs):
