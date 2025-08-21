@@ -31,6 +31,15 @@ def _mapping(k: str, v: list[str], level: int) -> list[str]:
     return [_indent("%s = {" % k, level), *v, _indent("}", level)]
 
 
+def _mapping_anonymous(d: dict, level: int) -> str:
+    lines = [
+        _indent("{", level),
+        *_collect(lambda k, v, level: _kvpair(k, _quoted(v), level + 1), d, level + 1),
+        _indent("}", level + 1),
+    ]
+    return "\n".join(lines)
+
+
 def _quoted(v: str) -> str:
     return f'"{v}"'
 
@@ -171,8 +180,8 @@ def _top(k: str, v: Any, level: int) -> list[str]:
         case "obs_prepbufr_map":
             return _sequence(
                 k,
-                list(v.items()),
-                lambda kvpair: _indent('{ key = "%s"; val = "%s"; }' % kvpair, level),
+                [{"key": key, "val": val} for key, val in v.items()],
+                lambda d: _mapping_anonymous(d, level),
                 level,
             )
     _fail(k)
