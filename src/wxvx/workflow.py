@@ -428,7 +428,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     obs = _netcdf_from_prepbufr(c, tc)
     config = _config_point_stat(path.with_suffix(".config"), rundir)
     yield [fcst, obs, config]
-    runscript = fcst.ref.with_suffix(".sh")
+    runscript = path.with_suffix(".sh")
     content = "point_stat -v 4 {fcst} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
         fcst=fcst.ref, obs=obs.ref, config=config.ref, rundir=rundir, log=f"{path.stem}.log"
     )
