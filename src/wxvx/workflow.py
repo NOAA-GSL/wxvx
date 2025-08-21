@@ -183,7 +183,7 @@ def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
 @task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    url = jinja2.Template(c.baseline.url).render(yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime))
+    url = _render(c.baseline.url, tc)
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
         assert isinstance(src, Path)
@@ -211,8 +211,7 @@ def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
     taskname = "Forecast grid %s" % path
     yield taskname
     yield asset(path, path.is_file)
-    rendered = jinja2.Template(c.forecast.path).render(yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime))
-    fd = _forecast_dataset(Path(rendered))
+    fd = _forecast_dataset(Path(_render(c.forecast.path, tc)))
     yield fd
     src = da_select(c, fd.ref, varname, tc, var)
     da = da_construct(c, src)
@@ -232,14 +231,10 @@ def _local_file_from_http(outdir: Path, url: str, desc: str):
     fetch(taskname, url, path)
 
 
-# PM REMOVE
-@tasks
+@tasks  # PM REMOVE
 def test(c: Config):
     yield "test"
     yield [_netcdf_from_prepbufr(c, tc) for tc in gen_validtimes(c.cycles, c.leadtimes)]
-
-
-# PM REMOVE
 
 
 @task
@@ -248,7 +243,7 @@ def _netcdf_from_prepbufr(c: Config, tc: TimeCoords):
     taskname = "netCDF from prepbufr at %s %sZ" % (yyyymmdd, hh)
     yield taskname
     rundir = c.paths.run / "obs" / yyyymmdd / hh
-    url = c.baseline.url.format(yyyymmdd=yyyymmdd, hh=hh)
+    url = _render(c.baseline.url, tc)
     netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
     yield asset(netcdf, netcdf.is_file)
     config = Path("/work/point/pb2nc.config")
@@ -419,6 +414,11 @@ def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd
     if "INTERP_PNTS" in columns and width is not None:
         plot_data = plot_data[plot_data["INTERP_PNTS"] == width**2]
     return plot_data
+
+
+def _render(template: str, tc: TimeCoords) -> str:
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    return jinja2.Template(template).render(yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime))
 
 
 def _statargs(
