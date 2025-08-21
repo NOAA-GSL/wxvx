@@ -109,6 +109,61 @@ def stats(c: Config):
 # Private tasks
 
 
+@task
+def _config_pb2nc(path: Path, rundir: Path):
+    taskname = f"pb2nc config {path}"
+    yield taskname
+    yield asset(path, path.is_file)
+    yield None
+    config = {
+        "message_type": ["ADPUPA", "AIRCAR", "AIRCFT"],
+        "obs_bufr_var": ["D_RH", "QOB", "TOB", "UOB", "VOB", "ZOB"],
+        "obs_prepbufr_map": {
+            "CEILING": "CEILING",
+            "D_CAPE": "CAPE",
+            "D_MIXR": "MIXR",
+            "D_MLCAPE": "MLCAPE",
+            "D_PBL": "HPBL",
+            "D_RH": "RH",
+            "D_WDIR": "WDIR",
+            "D_WIND": "WIND",
+            "HOVI": "VIS",
+            "MXGS": "GUST",
+            "PMO": "PRMSL",
+            "POB": "PRES",
+            "QOB": "SPFH",
+            "TDO": "DPT",
+            "TOB": "TMP",
+            "TOCC": "TCDC",
+            "UOB": "UGRD",
+            "VOB": "VGRD",
+            "ZOB": "HGT",
+        },
+        "obs_window": {"beg": -1800, "end": 1800},
+        "quality_mark_thresh": 9,
+        "time_summary": {
+            "step": 3600,
+            "width": 3600,
+            "obs_var": [],
+            "type": ["min", "max", "range", "mean", "stdev", "median", "p80"],
+        },
+        "tmp_dir": rundir,
+    }
+    with atomic(path) as tmp:
+        tmp.write_text("%s\n" % render_metconf(config))
+
+
+@task
+def _config_point_stat(path: Path, rundir: Path):
+    taskname = f"point_stat config {path}"
+    yield taskname
+    yield asset(path, path.is_file)
+    yield None
+    assert rundir  # PM REMOVE
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.touch()
+
+
 @external
 def _existing(path: Path):
     taskname = "Existing path %s" % path
@@ -215,57 +270,13 @@ def _netcdf_from_prepbufr(c: Config, tc: TimeCoords):
     url = render(c.baseline.url, tc)
     path = (rundir / url.split("/")[-1]).with_suffix(".nc")
     yield asset(path, path.is_file)
-    cfgfile = _pb2nc_config(path.with_suffix(".config"), rundir)
+    config = _config_pb2nc(path.with_suffix(".config"), rundir)
     prepbufr = _local_file_from_http(c.paths.obs / yyyymmdd / hh, url, "prepbufr file")
-    yield [cfgfile, prepbufr]
+    yield [config, prepbufr]
     runscript = path.with_suffix(".sh")
-    content = f"pb2nc -v 4 {prepbufr.ref} {path} {cfgfile.ref} >{path.stem}.log 2>&1"
+    content = f"pb2nc -v 4 {prepbufr.ref} {path} {config.ref} >{path.stem}.log 2>&1"
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
-
-
-@task
-def _pb2nc_config(path: Path, rundir: Path):
-    taskname = f"pb2nc config {path}"
-    yield taskname
-    yield asset(path, path.is_file)
-    yield None
-    config = {
-        "message_type": ["ADPUPA", "AIRCAR", "AIRCFT"],
-        "obs_bufr_var": ["D_RH", "QOB", "TOB", "UOB", "VOB", "ZOB"],
-        "obs_prepbufr_map": {
-            "CEILING": "CEILING",
-            "D_CAPE": "CAPE",
-            "D_MIXR": "MIXR",
-            "D_MLCAPE": "MLCAPE",
-            "D_PBL": "HPBL",
-            "D_RH": "RH",
-            "D_WDIR": "WDIR",
-            "D_WIND": "WIND",
-            "HOVI": "VIS",
-            "MXGS": "GUST",
-            "PMO": "PRMSL",
-            "POB": "PRES",
-            "QOB": "SPFH",
-            "TDO": "DPT",
-            "TOB": "TMP",
-            "TOCC": "TCDC",
-            "UOB": "UGRD",
-            "VOB": "VGRD",
-            "ZOB": "HGT",
-        },
-        "obs_window": {"beg": -1800, "end": 1800},
-        "quality_mark_thresh": 9,
-        "time_summary": {
-            "step": 3600,
-            "width": 3600,
-            "obs_var": [],
-            "type": ["min", "max", "range", "mean", "stdev", "median", "p80"],
-        },
-        "tmp_dir": rundir,
-    }
-    with atomic(path) as tmp:
-        tmp.write_text("%s\n" % render_metconf(config))
 
 
 @task
@@ -300,17 +311,6 @@ def _plot(
     path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(path, bbox_inches="tight")
     plt.close()
-
-
-@task
-def _point_stat_config(path: Path, rundir: Path):
-    taskname = f"point_stat config {path}"
-    yield taskname
-    yield asset(path, path.is_file)
-    yield None
-    assert rundir  # PM REMOVE
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.touch()
 
 
 @task
@@ -373,11 +373,11 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yield asset(path, path.is_file)
     fcst = _grid_nc(c, varname, tc, var)
     obs = _netcdf_from_prepbufr(c, tc)
-    cfgfile = _point_stat_config(path.with_suffix(".config"), rundir)
-    yield [fcst, obs, cfgfile]
+    config = _config_point_stat(path.with_suffix(".config"), rundir)
+    yield [fcst, obs, config]
     runscript = fcst.ref.with_suffix(".sh")
-    content = "point_stat -v 4 {fcst} {obs} {cfgfile} -outdir {rundir} >{log} 2>&1".format(
-        fcst=fcst.ref, obs=obs.ref, cfgfile=cfgfile.ref, rundir=rundir, log=f"{path.stem}.log"
+    content = "point_stat -v 4 {fcst} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
+        fcst=fcst.ref, obs=obs.ref, config=config.ref, rundir=rundir, log=f"{path.stem}.log"
     )
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
