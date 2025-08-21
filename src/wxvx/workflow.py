@@ -381,7 +381,7 @@ def _meta(c: Config, varname: str) -> VarMeta:
     return VARMETA[c.variables[varname]["name"]]
 
 
-def _pb2nc_config(rundir: Path) -> None:
+def _pb2nc_config(path: Path, rundir: Path) -> None:
     config = {
         "message_type": ["ADPUPA", "AIRCAR", "AIRCFT"],
         "obs_bufr_var": ["D_RH", "QOB", "TOB", "UOB", "VOB", "ZOB"],
@@ -416,7 +416,8 @@ def _pb2nc_config(rundir: Path) -> None:
         },
         "tmp_dir": rundir,
     }
-    assert config
+    with atomic(path) as tmp:
+        tmp.write_text("%s\n" % render_metconf(config))
 
 
 def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd.DataFrame:
