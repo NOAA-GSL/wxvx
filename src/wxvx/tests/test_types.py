@@ -39,6 +39,7 @@ def paths(config_data):
     return types.Paths(
         grids_baseline=Path(config_data["paths"]["grids"]["baseline"]),
         grids_forecast=Path(config_data["paths"]["grids"]["forecast"]),
+        obs=Path(config_data["paths"]["obs"]),
         run=Path(config_data["paths"]["run"]),
     )
 
@@ -172,6 +173,7 @@ def test_types_Paths(paths, config_data):
     cfg = {
         "grids_baseline": Path(config_data["paths"]["grids"]["baseline"]),
         "grids_forecast": Path(config_data["paths"]["grids"]["forecast"]),
+        "obs": Path(config_data["paths"]["obs"]),
         "run": Path(config_data["paths"]["run"]),
     }
     other1 = types.Paths(**cfg)
