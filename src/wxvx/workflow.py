@@ -231,11 +231,14 @@ def _local_file_from_http(outdir: Path, url: str, desc: str):
     yield None
     fetch(taskname, url, path)
 
+
 # PM REMOVE
 @tasks
 def test(c: Config):
     yield "test"
     yield [_netcdf_from_prepbufr(c, tc) for tc in gen_validtimes(c.cycles, c.leadtimes)]
+
+
 # PM REMOVE
 
 
@@ -250,7 +253,7 @@ def _netcdf_from_prepbufr(c: Config, tc: TimeCoords):
     yield asset(netcdf, netcdf.is_file)
     config = Path("/work/point/pb2nc.config")
     prun = _local_file_from_http(rundir, url, "prepbufr file")
-    yield [_exising(config), prun]
+    yield [_existing(config), prun]
     runscript = netcdf.with_suffix(".sh")
     content = f"pb2nc -v 4 {prun.ref} {netcdf} {config} >{netcdf.stem}.log 2>&1"
     _write_runscript(runscript, content)
