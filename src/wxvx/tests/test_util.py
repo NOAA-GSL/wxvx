@@ -94,8 +94,8 @@ def test_util_classify_data_format__zarr_missing(fakefs):
     ("url", "expected_scheme"),
     [
         ("http://link/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.REMOTE),
-        ("file://{root}/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
-        ("{root}/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
+        ("file:///path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
+        ("/path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
     ],
 )
 def test_workflow_classify_url(expected_scheme, url):
@@ -103,8 +103,8 @@ def test_workflow_classify_url(expected_scheme, url):
     assert scheme == expected_scheme
 
 
-def test_workflow_classify_url_unsupported(fakefs):
-    url = f"foo://{fakefs}/gfs.t00z.pgrb2.0p25.f000"
+def test_workflow_classify_url_unsupported():
+    url = "foo:///path/to/gfs.t00z.pgrb2.0p25.f000"
     with raises(util.WXVXError) as e:
         util.classify_url(url)
     assert str(e.value) == f"Scheme 'foo' in '{url}' not supported."
