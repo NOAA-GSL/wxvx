@@ -275,7 +275,7 @@ def test_workflow__stat_vs_grid(c, fakefs, tc):
         yield asset(Path("/some/file"), lambda: True)
 
     rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
-    taskname = "MET stats for baseline 2t-heightAboveGround-0002 at 19700101 00Z 000"
+    taskname = "Stats vs grid for baseline 2t-heightAboveGround-0002 at 19700101 00Z 000"
     var = variables.Var(name="2t", level_type="heightAboveGround", level=2)
     kwargs = dict(c=c, varname="T2M", tc=tc, var=var, prefix="foo", source=Source.BASELINE)
     stat = workflow._stat_vs_grid(**kwargs, dry_run=True).ref

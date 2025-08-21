@@ -103,40 +103,7 @@ def stats(c: Config):
     yield reqs
 
 
-# @tasks
-# def point_stat(c: Config):
-#     taskname = "Convert %s to NetCDF for point-stat calculation" % (c.baseline.name)
-#     yield taskname
-#     logging.info(taskname)
-#     end goal: yield(_pb2nc(pbin, pbout, pbconfig), _point_stat(fcstin, pbout, psconfig, outdir))
-#     yield [_pb2nc(c)]
-
-
 # Private tasks
-
-
-# @task
-# def pointstat_from_netcdf(c: Config):
-#     for tc in gen_validtimes(c.cycles, c.leadtimes):
-#         yyyymmdd, hh, leadtime = tcinfo(tc)
-#     taskname = f"point stats from fcst and netcdf at {yyyymmdd}{hh}"
-#     yield taskname
-#     pre = Path("/work/point")
-#     pre = Path("/gpfs/f6/bil-fire8/world-shared/David.Burrows/wxvx_input/")
-#     fcst = Path(c.forecast.path)
-#     rundir = c.paths.run / "obs" / yyyymmdd / hh
-#     url = c.baseline.url.format(yyyymmdd=yyyymmdd, yyyy=yyyymmdd[:4], mm=yyyymmdd[4:6], hh=hh)
-#     netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
-#     config = pre / "pointstat.config"
-#     yield [
-#         asset(fcst, fcst.is_file),
-#         asset(netcdf, netcdf.is_file),
-#         asset(config, config.is_file),
-#     ]
-#     runscript = fcst.with_suffix(".sh")
-#     content = f"point_stat -v 4 {fcst} {netcdf} {config} -outdir {rundir} >{fcst.stem}.log 2>&1"
-#     _write_runscript(runscript, content)
-#     yield mpexec(str(runscript), rundir, taskname)
 
 
 @external
@@ -245,7 +212,7 @@ def _netcdf_from_prepbufr(c: Config, tc: TimeCoords):
     url = render(c.baseline.url, tc)
     netcdf = (rundir / url.split("/")[-1]).with_suffix(".nc")
     yield asset(netcdf, netcdf.is_file)
-    config = Path("/work/point/pb2nc.config")
+    config = Path("/work/point/pb2nc.config")  # PM GENERATE CONFIG INSTEAD
     prepbufr = _local_file_from_http(c.paths.obs / yyyymmdd / hh, url, "prepbufr file")
     yield [_existing(config), prepbufr]
     runscript = netcdf.with_suffix(".sh")
@@ -300,20 +267,10 @@ def _plot(
 
 
 @task
-def _prepbufr_file(outdir: Path, url: str):
-    path = outdir / Path(urlparse(url).path).name
-    taskname = "prepbufr file %s" % path
-    yield taskname
-    yield asset(path, path.is_file)
-    yield None
-    fetch(taskname, url, path)
-
-
-@task
 def _stat_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     source_name = {Source.BASELINE: "baseline", Source.FORECAST: "forecast"}[source]
-    taskname = "MET stats for %s %s at %s %sZ %s" % (source_name, var, yyyymmdd, hh, leadtime)
+    taskname = "Stats vs grid for %s %s at %s %sZ %s" % (source_name, var, yyyymmdd, hh, leadtime)
     yield taskname
     rundir = c.paths.run / "stats" / yyyymmdd / hh / leadtime
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
@@ -339,6 +296,31 @@ def _stat_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     grid_stat -v 4 {toverify.ref} {baseline.ref} {cfgfile} >{path.stem}.log 2>&1
     """
     _write_runscript(runscript, content)
+    mpexec(str(runscript), rundir, taskname)
+
+
+# PM DRY OUT ^ and v
+
+
+@task
+def _stat_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str):
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    taskname = "Stats vs obs for %s %s at %s %sZ %s" % ("forecast", var, yyyymmdd, hh, leadtime)
+    yield taskname
+    rundir = c.paths.run / "stats" / yyyymmdd / hh / leadtime
+    template = "point_stat_%s_%02d0000L_%s_%s0000V.stat"
+    yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
+    path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
+    yield asset(path, path.is_file)
+    fcst = _grid_nc(c, varname, tc, var)
+    obs = _netcdf_from_prepbufr(c, tc)
+    config = _existing(Path("/work/point/pointstat.config"))  # PM GENERATE CONFIG INSTEAD
+    yield [fcst, obs, config]
+    runscript = fcst.ref.with_suffix(".sh")
+    cmd = "point_stat -v 4 {fcst} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
+        fcst=fcst.ref, obs=obs.ref, config=config.ref, rundir=rundir, log=f"{fcst.ref.stem}.log"
+    )
+    _write_runscript(runscript, cmd)
     mpexec(str(runscript), rundir, taskname)
 
 
@@ -480,7 +462,7 @@ def _vxvars(c: Config) -> dict[Var, str]:
 
 
 def _write_runscript(path: Path, content: str) -> None:
-    # PM Write unit test for this.
+    # PM WRITE UNIT TEST FOR THIS.
     with atomic(path) as tmp:
         tmp.write_text("#!/usr/bin/env bash\n\n%s\n" % dedent(content).strip())
     path.chmod(path.stat().st_mode | S_IEXEC)
