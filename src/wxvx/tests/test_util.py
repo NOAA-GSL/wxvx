@@ -91,15 +91,14 @@ def test_util_classify_data_format__zarr_missing(fakefs):
 
 
 @mark.parametrize(
-    ("template", "expected_scheme"),
+    ("url", "expected_scheme"),
     [
-        ("http://link/to/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.REMOTE),
-        ("file://{root}/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.LOCAL),
-        ("{root}/gfs.t{hh}z.pgrb2.0p25.f{fh:03d}", util.Proximity.LOCAL),
+        ("http://link/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.REMOTE),
+        ("file://{root}/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
+        ("{root}/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
     ],
 )
-def test_workflow_classify_url(template, expected_scheme, fakefs):
-    url = template.format(root=fakefs, hh="00", fh=0)
+def test_workflow_classify_url(expected_scheme, url):
     scheme, _ = util.classify_url(url)
     assert scheme == expected_scheme
 

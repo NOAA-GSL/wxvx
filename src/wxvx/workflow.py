@@ -14,6 +14,7 @@ from warnings import catch_warnings, simplefilter
 import matplotlib as mpl
 
 mpl.use("Agg")
+import jinja2
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -159,7 +160,7 @@ def _grib_index_file(outdir: Path, url: str):
 @task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    url = c.baseline.url.format(yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime))
+    url = jinja2.Template(c.baseline.url).render(yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime))
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
         assert isinstance(src, Path)
@@ -187,7 +188,8 @@ def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
     taskname = "Forecast grid %s" % path
     yield taskname
     yield asset(path, path.is_file)
-    fd = _forecast_dataset(Path(c.forecast.path.format(yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime))))
+    rendered = jinja2.Template(c.forecast.path).render(yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime))
+    fd = _forecast_dataset(Path(rendered))
     yield fd
     src = da_select(c, fd.ref, varname, tc, var)
     da = da_construct(c, src)
