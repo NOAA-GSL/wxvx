@@ -93,7 +93,7 @@ def test_util_classify_data_format__zarr_missing(fakefs):
 @mark.parametrize(
     ("url", "expected_scheme"),
     [
-        ("http://link/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.REMOTE),
+        ("http://example.com/path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.REMOTE),
         ("file:///path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
         ("/path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
     ],
