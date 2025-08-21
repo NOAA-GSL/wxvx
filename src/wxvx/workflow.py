@@ -267,7 +267,7 @@ def _plot(
 
 
 @task
-def _stat_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source):
+def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     source_name = {Source.BASELINE: "baseline", Source.FORECAST: "forecast"}[source]
     taskname = "Stats vs grid for %s %s at %s %sZ %s" % (source_name, var, yyyymmdd, hh, leadtime)
@@ -303,7 +303,7 @@ def _stat_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
 
 
 @task
-def _stat_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str):
+def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     taskname = "Stats vs obs for %s %s at %s %sZ %s" % ("forecast", var, yyyymmdd, hh, leadtime)
     yield taskname
@@ -421,7 +421,7 @@ def _statreqs(
     c: Config, varname: str, level: float | None, cycle: datetime | None = None
 ) -> Sequence[Node]:
     genreqs = lambda source: [
-        _stat_vs_grid(*args) for args in _statargs(c, varname, level, source, cycle)
+        _stats_vs_grid(*args) for args in _statargs(c, varname, level, source, cycle)
     ]
     reqs: Sequence[Node] = genreqs(Source.FORECAST)
     if c.baseline.compare:
