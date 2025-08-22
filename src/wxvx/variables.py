@@ -229,6 +229,12 @@ class HRRR(GFS):
     )
 
 
+class PREPBUFR(GFS):
+    """
+    Observations in PREPBUFR format, following GFS conventions.
+    """
+
+
 def da_construct(c: Config, da: xr.DataArray) -> xr.DataArray:
     inittime = _da_val(da, c.forecast.coords.time.inittime, "initialization time", np.datetime64)
     leadtime = c.forecast.coords.time.leadtime

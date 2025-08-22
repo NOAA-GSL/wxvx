@@ -194,7 +194,7 @@ def test_variables_model_names():
     class C2(B): ...
 
     assert variables.model_names(A) == {"B", "C1", "C2"}
-    assert variables.model_names() == {"GFS", "HRRR"}
+    assert variables.model_names() == {"GFS", "HRRR", "PREPBUFR"}
 
 
 def test_variables__da_val__fail_unparesable(da_flat):

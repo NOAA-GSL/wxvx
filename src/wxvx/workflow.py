@@ -143,15 +143,25 @@ def _config_grid_stat(
     mask_grid = [] if polyfile else ["FULL"]
     mask_poly = [polyfile.ref] if polyfile else []
     config = {
-        "fcst": {"field": [field_fcst]},
-        "mask": {"grid": mask_grid, "poly": mask_poly},
+        "fcst": {
+            "field": [field_fcst],
+        },
+        "mask": {
+            "grid": mask_grid,
+            "poly": mask_poly,
+        },
         "model": model,
         "nc_pairs_flag": "FALSE",
-        "obs": {"field": [field_obs]},
+        "obs": {
+            "field": [field_obs],
+        },
         "obtype": c.baseline.name,
         "output_flag": dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), "BOTH"),
         "output_prefix": f"{prefix}",
-        "regrid": {"method": c.regrid.method, "to_grid": c.regrid.to},
+        "regrid": {
+            "method": c.regrid.method,
+            "to_grid": c.regrid.to,
+        },
         "tmp_dir": rundir,
     }
     if nbrhd := {k: v for k, v in [("shape", meta.nbrhd_shape), ("width", meta.nbrhd_width)] if v}:
@@ -167,8 +177,19 @@ def _config_pb2nc(path: Path, rundir: Path):
     yield asset(path, path.is_file)
     yield None
     config = {
-        "message_type": ["ADPUPA", "AIRCAR", "AIRCFT"],
-        "obs_bufr_var": ["D_RH", "QOB", "TOB", "UOB", "VOB", "ZOB"],
+        "message_type": [
+            "ADPUPA",
+            "AIRCAR",
+            "AIRCFT",
+        ],
+        "obs_bufr_var": [
+            "D_RH",
+            "QOB",
+            "TOB",
+            "UOB",
+            "VOB",
+            "ZOB",
+        ],
         "obs_prepbufr_map": {
             "CEILING": "CEILING",
             "D_CAPE": "CAPE",
@@ -190,13 +211,24 @@ def _config_pb2nc(path: Path, rundir: Path):
             "VOB": "VGRD",
             "ZOB": "HGT",
         },
-        "obs_window": {"beg": -1800, "end": 1800},
+        "obs_window": {
+            "beg": -1800,
+            "end": 1800,
+        },
         "quality_mark_thresh": 9,
         "time_summary": {
             "step": 3600,
             "width": 3600,
             "obs_var": [],
-            "type": ["min", "max", "range", "mean", "stdev", "median", "p80"],
+            "type": [
+                "min",
+                "max",
+                "range",
+                "mean",
+                "stdev",
+                "median",
+                "p80",
+            ],
         },
         "tmp_dir": rundir,
     }
@@ -205,14 +237,61 @@ def _config_pb2nc(path: Path, rundir: Path):
 
 
 @task
-def _config_point_stat(path: Path, rundir: Path):
+def _config_point_stat(c: Config, path: Path, varname: str, rundir: Path, var: Var):
     taskname = f"Config for point_stat {path}"
     yield taskname
     yield asset(path, path.is_file)
     yield None
-    assert rundir  # PM REMOVE
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.touch()
+    level_obs = metlevel(var.level_type, var.level)
+    baseline_class = variables.model_class(c.baseline.name)
+    level_fcst, name_fcst, model = ("(0,0,*,*)", varname, c.forecast.name)
+    field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
+    field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
+    config = {
+        "fcst": {
+            "field": [field_fcst],
+        },
+        "interp": {
+            "shape": "SQUARE",
+            "type": {
+                "method": "BILIN",
+                "width": 2,
+            },
+            "vld_thresh": 1.0,
+        },
+        "message_type": [
+            "ADPUPA",
+            "AIRCAR",
+            "AIRCFT",
+        ],
+        "message_type_group_map": {
+            "AIRUPA": "ADPUPA,AIRCAR,AIRCFT",
+            "ANYAIR": "AIRCAR,AIRCFT",
+            "ANYSFC": "ADPSFC,SFCSHP,ADPUPA,PROFLR,MSONET",
+            "LANDSF": "ADPSFC,MSONET",
+            "ONLYSF": "ADPSFC,SFCSHP",
+            "SURFACE": "ADPSFC,SFCSHP,MSONET",
+            "WATERSF": "SFCSHP",
+        },
+        "model": model,
+        "obs": {
+            "field": [field_obs],
+        },
+        "obs_window": {
+            "beg": -1800,
+            "end": 1800,
+        },
+        "output_flag": {
+            "cnt": "BOTH",
+        },
+        "regrid": {
+            "method": c.regrid.method,
+            "to_grid": c.regrid.to,
+        },
+        "tmp_dir": rundir,
+    }
+    with atomic(path) as tmp:
+        tmp.write_text("%s\n" % render_metconf(config))
 
 
 @external
