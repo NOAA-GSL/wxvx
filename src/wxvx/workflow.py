@@ -505,7 +505,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yield asset(path, path.is_file)
     fcst = _grid_nc(c, varname, tc, var)
     obs = _netcdf_from_prepbufr(c, tc)
-    config = _config_point_stat(path.with_suffix(".config"), rundir)
+    config = _config_point_stat(c, path.with_suffix(".config"), varname, rundir, var)
     yield [fcst, obs, config]
     runscript = path.with_suffix(".sh")
     content = "point_stat -v 4 {fcst} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
