@@ -92,6 +92,17 @@ def _field_sequence(k: str, v: list[dict], level: int) -> list[str]:
     return [_indent("%s = [" % k, level), *mappings, _indent("];", level)]
 
 
+def _interp(k: str, v: Any, level: int) -> list[str]:
+    match k:
+        case "shape":
+            return _kvpair(k, _quoted(v), level)
+        case "type":
+            return _mapping(k, _collect(_type, v, level + 1), level)
+        case "vld_thresh":
+            return _kvpair(k, _bare(v), level)
+    _fail(k)
+
+
 def _mask(k: str, v: list, level: int) -> list[str]:
     match k:
         case "grid" | "poly":
@@ -143,47 +154,51 @@ def _time_summary(k: str, v: Any, level: int) -> list[str]:
 
 def _top(k: str, v: Any, level: int) -> list[str]:
     match k:
-        # Mapping: datasets.
-        case "fcst" | "obs":
+        # Custom mappings:
+        case "fcst":
             return _mapping(k, _collect(_dataset, v, level + 1), level)
-        # Mapping: mask.
+        case "interp":
+            return _mapping(k, _collect(_interp, v, level + 1), level)
         case "mask":
             return _mapping(k, _collect(_mask, v, level + 1), level)
-        # Mapping: nbrhd.
         case "nbrhd":
             return _mapping(k, _collect(_nbrhd, v, level + 1), level)
-        # Mapping: obs_window.
+        case "obs":
+            return _mapping(k, _collect(_dataset, v, level + 1), level)
         case "obs_window":
             return _mapping(k, _collect(_obs_window, v, level + 1), level)
-        # Mapping: output_flag.
         case "output_flag":
             return _mapping(k, _collect(_output_flag, v, level + 1), level)
-        # Mapping: regrid.
         case "regrid":
             return _mapping(k, _collect(_regrid, v, level + 1), level)
-        # Mapping: time_summary.
         case "time_summary":
             return _mapping(k, _collect(_time_summary, v, level + 1), level)
         # Scalar: bare.
-        case "quality_mark_thresh":
+        case "nc_pairs_flag" | "quality_mark_thresh":
             return _kvpair(k, _bare(v), level)
         # Scalar: quoted.
         case "model" | "obtype" | "output_prefix" | "tmp_dir":
             return _kvpair(k, _quoted(v), level)
-        # Scalar: bare.
-        case "nc_pairs_flag":
-            return _kvpair(k, _bare(v), level)
         # Sequence: quoted.
         case "message_type" | "obs_bufr_var":
             return _sequence(k, v, _quoted, level)
-        # Sequence: special.
-        case "obs_prepbufr_map":
+        # Sequence: list of single key-val dictionaries.
+        case "message_type_group_map" | "obs_prepbufr_map":
             return _sequence(
                 k,
                 [{"key": key, "val": val} for key, val in v.items()],
                 lambda d: _mapping_anonymous(d, level),
                 level,
             )
+    _fail(k)
+
+
+def _type(k: str, v: Any, level: int) -> list[str]:
+    match k:
+        case "method":
+            return _kvpair(k, _quoted(v), level)
+        case "width":
+            return _kvpair(k, _bare(v), level)
     _fail(k)
 
 
