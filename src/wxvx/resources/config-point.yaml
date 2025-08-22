@@ -13,7 +13,7 @@ forecast:
     time:
       inittime: forecast_reference_time
       validtime: time
-  name: Res
+  name: AIWX
   path: /path/to/forecast.zarr
   projection:
     proj: latlon

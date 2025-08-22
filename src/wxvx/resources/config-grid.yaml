@@ -20,7 +20,7 @@ forecast:
     - [52.61564933, 255.00000000]
     - [21.138123,   255.00000000]
     - [21.138123,   225.90452027]
-  name: ResHRRR
+  name: AIWX
   path: /path/to/forecast.zarr
   projection:
     proj: latlon
