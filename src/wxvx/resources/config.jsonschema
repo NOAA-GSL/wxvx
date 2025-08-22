@@ -355,10 +355,8 @@
           ]
         },
         "to": {
-          "enum": [
-            "baseline",
-            "forecast"
-          ]
+          "pattern": "^baseline|forecast|G[0-9]{3}$",
+          "type": "string"
         }
       },
       "type": "object"

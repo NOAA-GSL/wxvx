@@ -289,10 +289,13 @@ def test_schema_regrid(logged, config_data, fs):
     # Must have at least one property:
     assert not ok({})
     assert logged("should be non-empty")
-    # Properties must have expected values:
-    for x in ["method", "to"]:
-        assert not ok(with_set(config, "UNEXPECTED", x))
-        assert logged("'UNEXPECTED' is not one of")
+    # "method" must not have an expected value:
+    assert not ok(with_set(config, "UNEXPECTED", "method"))
+    assert logged("'UNEXPECTED' is not one of")
+    # "to" must have an expected value:
+    assert ok(with_set(config, "G004", "to"))
+    assert not ok(with_set(config, "UNEXPECTED", "to"))
+    assert logged("'UNEXPECTED' does not match")
 
 
 def test_schema_variables(logged, config_data, fs):

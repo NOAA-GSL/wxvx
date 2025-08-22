@@ -158,8 +158,13 @@ class Regrid:
     method: str = "NEAREST"
     to: str = "forecast"
 
+    # See https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/appendixB.html#grids
+    # for information on the "GNNN" grid names accepted as regrid-to values.
+
     def __post_init__(self):
-        _force(self, "to", {"baseline": "OBS", "forecast": "FCST"}[self.to])
+        mapping = {"baseline": "OBS", "forecast": "FCST"}
+        if self.to in mapping:
+            _force(self, "to", mapping[self.to])
 
 
 @dataclass(frozen=True)

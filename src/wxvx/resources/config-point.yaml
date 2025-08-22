@@ -17,9 +17,6 @@ forecast:
   path: /path/to/forecast.zarr
   projection:
     proj: latlon
-  regrid:
-    method: BILIN
-    to: G004
 leadtimes: [0]
 meta:
   grids: "{{ meta.workdir }}/grids"
@@ -30,6 +27,9 @@ paths:
     forecast: "{{ meta.grids }}/forecast"
   obs: "{{ meta.workdir }}/obs"
   run: "{{ meta.workdir }}/run"
+regrid:
+  method: BILIN
+  to: G004
 variables:
   temperature:
     level_type: isobaricInhPa
