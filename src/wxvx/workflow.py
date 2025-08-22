@@ -287,6 +287,7 @@ def _config_point_stat(c: Config, path: Path, varname: str, rundir: Path, var: V
         "regrid": {
             "method": c.regrid.method,
             "to_grid": c.regrid.to,
+            "width": 2,
         },
         "tmp_dir": rundir,
     }

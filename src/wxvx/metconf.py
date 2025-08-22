@@ -59,6 +59,7 @@ def _sequence(k: str, v: list, handler: Callable, level: int) -> list[str]:
 
 def _dataset(k: str, v: list[dict], level: int) -> list[str]:
     match k:
+        # Sequence: custom.
         case "field":
             return _field_sequence(k, v, level)
     _fail(k)
@@ -94,17 +95,18 @@ def _field_sequence(k: str, v: list[dict], level: int) -> list[str]:
 
 def _interp(k: str, v: Any, level: int) -> list[str]:
     match k:
-        case "shape":
-            return _kvpair(k, _quoted(v), level)
+        # Key-Value Pair: bare.
+        case "shape" | "vld_thresh":
+            return _kvpair(k, _bare(v), level)
+        # Mapping: custom.
         case "type":
             return _mapping(k, _collect(_type, v, level + 1), level)
-        case "vld_thresh":
-            return _kvpair(k, _bare(v), level)
     _fail(k)
 
 
 def _mask(k: str, v: list, level: int) -> list[str]:
     match k:
+        # Sequence: quoted.
         case "grid" | "poly":
             return _sequence(k, v, _quoted, level)
     _fail(k)
@@ -112,8 +114,10 @@ def _mask(k: str, v: list, level: int) -> list[str]:
 
 def _nbrhd(k: str, v: Any, level: int) -> list[str]:
     match k:
+        # Key-Value Pair: bare.
         case "shape":
             return _kvpair(k, _bare(v), level)
+        # Sequence: bare.
         case "width":
             return _sequence(k, v, _bare, level)
     _fail(k)
@@ -121,6 +125,7 @@ def _nbrhd(k: str, v: Any, level: int) -> list[str]:
 
 def _obs_window(k: str, v: Any, level: int) -> list[str]:
     match k:
+        # Key-Value Pair: bare.
         case "beg" | "end":
             return _kvpair(k, _bare(v), level)
     _fail(k)
@@ -128,6 +133,7 @@ def _obs_window(k: str, v: Any, level: int) -> list[str]:
 
 def _output_flag(k: str, v: str, level: int) -> list[str]:
     match k:
+        # Key-Value Pair: bare.
         case "cnt" | "cts" | "nbrcnt":
             return _kvpair(k, _bare(v), level)
     _fail(k)
@@ -136,8 +142,12 @@ def _output_flag(k: str, v: str, level: int) -> list[str]:
 def _regrid(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Scalar: bare.
-        case "method" | "to_grid":
+        case "method" | "width":
             return _kvpair(k, _bare(v), level)
+        # Scalar: custom.
+        case "to_grid":
+            f = _bare if v in ("FCST", "OBS") else _quoted
+            return _kvpair(k, f(v), level)
     _fail(k)
 
 
@@ -154,7 +164,7 @@ def _time_summary(k: str, v: Any, level: int) -> list[str]:
 
 def _top(k: str, v: Any, level: int) -> list[str]:
     match k:
-        # Custom mappings:
+        # Mapping: custom.
         case "fcst":
             return _mapping(k, _collect(_dataset, v, level + 1), level)
         case "interp":
@@ -195,9 +205,8 @@ def _top(k: str, v: Any, level: int) -> list[str]:
 
 def _type(k: str, v: Any, level: int) -> list[str]:
     match k:
-        case "method":
-            return _kvpair(k, _quoted(v), level)
-        case "width":
+        # Key-Value Pair: bare.
+        case "method" | "width":
             return _kvpair(k, _bare(v), level)
     _fail(k)
 
