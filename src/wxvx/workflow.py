@@ -36,15 +36,6 @@ if TYPE_CHECKING:
 # Public tasks
 
 
-@tasks  # PM REMOVE
-def test(c: Config):
-    yield "test"
-    yield [
-        _stats_vs_obs(*args)
-        for args in _statargs(c=c, varname="temperature", level=500, source=Source.FORECAST)
-    ]
-
-
 @tasks
 def grids(c: Config, baseline: bool = True, forecast: bool = True):
     if baseline and not forecast:
