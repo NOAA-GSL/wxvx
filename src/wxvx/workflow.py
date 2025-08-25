@@ -76,6 +76,14 @@ def grids_forecast(c: Config):
 
 
 @tasks
+def obs(c: Config):
+    taskname = "Baseline obs for %s" % c.baseline.name
+    yield taskname
+    reqs = [_netcdf_from_obs(c, tc) for tc in gen_validtimes(c.cycles, c.leadtimes)]
+    yield reqs
+
+
+@tasks
 def plots(c: Config):
     taskname = "Plots for %s vs %s" % (c.forecast.name, c.baseline.name)
     yield taskname
@@ -385,7 +393,7 @@ def _local_file_from_http(outdir: Path, url: str, desc: str):
 
 
 @task
-def _netcdf_from_prepbufr(c: Config, tc: TimeCoords):
+def _netcdf_from_obs(c: Config, tc: TimeCoords):
     yyyymmdd, hh, _ = tcinfo(tc)
     taskname = "netCDF from prepbufr at %s %sZ" % (yyyymmdd, hh)
     yield taskname
@@ -495,7 +503,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
     forecast = _grid_nc(c, varname, tc, var)
-    obs = _netcdf_from_prepbufr(c, tc)
+    obs = _netcdf_from_obs(c, tc)
     config = _config_point_stat(c, path.with_suffix(".config"), varname, rundir, var, prefix)
     yield [forecast, obs, config]
     runscript = path.with_suffix(".sh")
