@@ -27,6 +27,21 @@ def _kvpair(k: str, v: str, level: int) -> list[str]:
     return [_indent(f"{k} = {v};", level)]
 
 
+def _key_val_map_list(k: str, v: dict[str, str], level: int) -> list[str]:
+    lines = [_indent(f"{k} = [", level)]
+    for key, val in sorted(v.items()):
+        block = [
+            _indent("{", level + 1),
+            *_kvpair("key", _quoted(key), level + 2),
+            *_kvpair("val", _quoted(val), level + 2),
+            _indent("},", level + 1),
+        ]
+        lines.extend(block)
+    lines[-1] = lines[-1].rstrip(",")
+    lines.append(_indent("];", level))
+    return lines
+
+
 def _mapping(k: str, v: list[str], level: int) -> list[str]:
     return [_indent("%s = {" % k, level), *v, _indent("}", level)]
 
@@ -185,18 +200,7 @@ def _top(k: str, v: Any, level: int) -> list[str]:
             return _sequence(k, v, _quoted, level)
         # Sequence: list of single key-val dictionaries.
         case "message_type_group_map" | "obs_prepbufr_map":
-            lines = [_indent(f"{k} = [", level)]
-            for key, val in sorted(v.items()):
-                block = [
-                    _indent("{", level + 1),
-                    *_kvpair("key", _quoted(key), level + 2),
-                    *_kvpair("val", _quoted(val), level + 2),
-                    _indent("},", level + 1)
-                ]
-                lines.extend(block)
-            lines[-1] = lines[-1].rstrip(",")
-            lines.append(_indent("];", level))
-            return lines
+            return _key_val_map_list(k, v, level)
     _fail(k)
 
 
