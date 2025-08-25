@@ -24,7 +24,7 @@ from wxvx import variables
 from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.times import TimeCoords, gen_validtimes, hh, tcinfo, yyyymmdd
-from wxvx.types import Cycles, Source
+from wxvx.types import Cycles, Source, VxType
 from wxvx.util import LINETYPE, Proximity, atomic, classify_url, mpexec, render
 from wxvx.variables import VARMETA, Var, da_construct, da_select, ds_construct, metlevel
 
@@ -565,9 +565,8 @@ def _statargs(
 def _statreqs(
     c: Config, varname: str, level: float | None, cycle: datetime | None = None
 ) -> Sequence[Node]:
-    genreqs = lambda source: [
-        _stats_vs_grid(*args) for args in _statargs(c, varname, level, source, cycle)
-    ]
+    f = _stats_vs_obs if c.baseline.type == VxType.POINT else _stats_vs_grid
+    genreqs = lambda source: [f(*args) for args in _statargs(c, varname, level, source, cycle)]
     reqs: Sequence[Node] = genreqs(Source.FORECAST)
     if c.baseline.compare:
         reqs = [*reqs, *genreqs(Source.BASELINE)]

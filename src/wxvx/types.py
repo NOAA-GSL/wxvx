@@ -21,6 +21,14 @@ Source = Enum(
     ],
 )
 
+VxType = Enum(
+    "VxType",
+    [
+        ("GRID", auto()),
+        ("POINT", auto()),
+    ],
+)
+
 
 @dataclass(frozen=True)
 class Baseline:
@@ -28,6 +36,9 @@ class Baseline:
     name: str
     url: str
     type: str
+
+    def __post_init__(self):
+        _force(self, "type", VxType.POINT if self.type == "point" else VxType.GRID)
 
 
 class Config:
