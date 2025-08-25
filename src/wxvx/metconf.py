@@ -185,8 +185,7 @@ def _top(k: str, v: Any, level: int) -> list[str]:
             return _sequence(k, v, _quoted, level)
         # Sequence: list of single key-val dictionaries.
         case "message_type_group_map" | "obs_prepbufr_map":
-            lines = []
-            lines.append(_indent(f"{k} = [", level))
+            lines = [_indent(f"{k} = [", level)]
             for key, val in sorted(v.items()):
                 block = [
                     _indent("{", level + 1),
