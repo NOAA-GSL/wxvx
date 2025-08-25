@@ -188,10 +188,13 @@ def _top(k: str, v: Any, level: int) -> list[str]:
             lines = []
             lines.append(_indent(f"{k} = [", level))
             for key, val in sorted(v.items()):
-                lines.append(_indent("{", level + 1))
-                lines.extend(_kvpair("key", _quoted(key), level + 2))
-                lines.extend(_kvpair("val", _quoted(val), level + 2))
-                lines.append(_indent("},", level + 1))
+                block = [
+                    _indent("{", level + 1),
+                    *_kvpair("key", _quoted(key), level + 2),
+                    *_kvpair("val", _quoted(val), level + 2),
+                    _indent("},", level + 1)
+                ]
+                lines.extend(block)
             lines[-1] = lines[-1].rstrip(",")
             lines.append(_indent("];", level))
             return lines
