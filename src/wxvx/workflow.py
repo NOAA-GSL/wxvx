@@ -467,25 +467,23 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     template = "grid_stat_%s_%02d0000L_%s_%s0000V.stat"
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
-    forecast = _grid_nc(c, varname, tc, var)
-    reqs = [forecast]
+    baseline = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
+    forecast = (
+        _grid_grib(c, tc, var) if source == Source.BASELINE else _grid_nc(c, varname, tc, var)
+    )
+    reqs = [baseline, forecast]
     polyfile = None
     if mask := c.forecast.mask:
         polyfile = _polyfile(c.paths.run / "stats" / "mask.poly", mask)
         reqs.append(polyfile)
-    if source == Source.BASELINE:
-        reqs.append(forecast)
-    toverify = _grid_grib(c, tc, var) if source == Source.BASELINE else forecast
-    baseline = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
-    config = _config_grid_stat(
-        c, path.with_suffix(".config"), varname, rundir, var, prefix, source, polyfile
-    )
-    reqs.extend([toverify, baseline, config])
+    path_config = path.with_suffix(".config")
+    config = _config_grid_stat(c, path_config, varname, rundir, var, prefix, source, polyfile)
+    reqs.append(config)
     yield reqs
     runscript = path.with_suffix(".sh")
     content = f"""
     export OMP_NUM_THREADS=1
-    grid_stat -v 4 {toverify.ref} {baseline.ref} {config.ref} >{path.stem}.log 2>&1
+    grid_stat -v 4 {forecast.ref} {baseline.ref} {config.ref} >{path.stem}.log 2>&1
     """
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
@@ -505,13 +503,13 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
-    fcst = _grid_nc(c, varname, tc, var)
+    forecast = _grid_nc(c, varname, tc, var)
     obs = _netcdf_from_prepbufr(c, tc)
     config = _config_point_stat(c, path.with_suffix(".config"), varname, rundir, var, prefix)
-    yield [fcst, obs, config]
+    yield [forecast, obs, config]
     runscript = path.with_suffix(".sh")
-    content = "point_stat -v 4 {fcst} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
-        fcst=fcst.ref, obs=obs.ref, config=config.ref, rundir=rundir, log=f"{path.stem}.log"
+    content = "point_stat -v 4 {forecast} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
+        forecast=forecast.ref, obs=obs.ref, config=config.ref, rundir=rundir, log=f"{path.stem}.log"
     )
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
