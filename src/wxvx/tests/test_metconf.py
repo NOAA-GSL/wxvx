@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 from pytest import mark, raises
 
 from wxvx import metconf
@@ -102,13 +104,52 @@ def test_metconf__indent():
     assert metconf._indent(v="foo", level=2) == "    foo"
 
 
-def test_metconf_kvpair():
+def test_metconf__kvpair():
     assert metconf._kvpair(k="1", v="one", level=2) == ["    1 = one;"]
 
 
-def test_metconf_mapping():
+def test_metconf__key_val_map_list():
+    text = """
+    maplist = [
+      {
+        key = "1";
+        val = "one";
+      },
+      {
+        key = "2";
+        val = "two";
+      }
+    ];
+    """
+    expected = dedent(text).strip().split("\n")
+    assert metconf._key_val_map_list(k="maplist", v={"1": "one", "2": "two"}, level=0) == expected
+
+
+def test_metconf__mapping():
     expected = ["  m = {", '    1 = "one";', '    2 = "two";', "  }"]
     assert metconf._mapping(k="m", v=['    1 = "one";', '    2 = "two";'], level=1) == expected
+
+
+@mark.parametrize("v", ["foo", 42])
+def test_metconf__quoted(v):
+    assert metconf._quoted(v=v) == f'"{v}"'
+
+
+def test_metconf__sequence():
+    text = """
+    s = [
+      FOO,
+        BAR
+    ];
+    """
+    expected = dedent(text).strip().split("\n")
+    v = ["foo", "  bar"]
+    handler = lambda x: x.upper()
+    assert metconf._sequence(k="s", v=v, handler=handler, level=0) == expected
+
+
+def test_metconf__sequence__blank():
+    assert metconf._sequence(k="s", v=[], handler=lambda x: x, level=1) == ["  s = [];"]
 
 
 # Item-specific:
@@ -119,9 +160,24 @@ def test_metconf__dataset_fail():
         metconf._dataset(k="foo", v=[], level=0)
 
 
+@mark.skip()
+def test_metconf__field_mapping():
+    pass
+
+
 def test_metconf__field_mapping_kvpairs():
     with raises(ValueError, match="Unsupported key: foo"):
         metconf._field_mapping_kvpairs(k="foo", v=None, level=0)
+
+
+@mark.skip()
+def test_metconf__field_sequence():
+    pass
+
+
+@mark.skip()
+def test_metconf__interp():
+    pass
 
 
 def test_metconf__mask():
@@ -134,6 +190,11 @@ def test_metconf__nbrhd():
         metconf._nbrhd(k="foo", v=None, level=0)
 
 
+@mark.skip()
+def test_metconf__obs_window():
+    pass
+
+
 def test_metconf__output_flag():
     with raises(ValueError, match="Unsupported key: foo"):
         metconf._output_flag(k="foo", v="bar", level=0)
@@ -144,9 +205,22 @@ def test_metconf__regrid():
         metconf._regrid(k="foo", v="bar", level=0)
 
 
+@mark.skip()
+def test_metconf__time_summary():
+    pass
+
+
 def test_metconf__top():
     with raises(ValueError, match="Unsupported key: foo"):
         metconf._top(k="foo", v=None, level=0)
+
+
+@mark.skip()
+def test_metconf__type():
+    pass
+
+
+# API:
 
 
 def test_metconf_render():
