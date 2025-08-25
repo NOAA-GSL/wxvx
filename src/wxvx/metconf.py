@@ -187,7 +187,7 @@ def _top(k: str, v: Any, level: int) -> list[str]:
         case "message_type_group_map" | "obs_prepbufr_map":
             lines = []
             lines.append(_indent(f"{k} = [", level))
-            for key, val in v.items():
+            for key, val in sorted(v.items()):
                 lines.append(_indent("{", level + 1))
                 lines.extend(_kvpair("key", _quoted(key), level + 2))
                 lines.extend(_kvpair("val", _quoted(val), level + 2))
