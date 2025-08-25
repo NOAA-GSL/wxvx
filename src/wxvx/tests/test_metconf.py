@@ -1,4 +1,4 @@
-from pytest import raises
+from pytest import mark, raises
 
 from wxvx import metconf
 
@@ -74,6 +74,44 @@ regrid = {
 }
 tmp_dir = "/path/to/dir";
 """
+
+
+# Generic:
+
+
+@mark.parametrize("v", ["foo", 42])
+def test_metconf__bare(v):
+    assert metconf._bare(v=v) == str(v)
+
+
+def test_metconf__collect():
+    f = lambda k, v, level: ["%s%s = %s" % ("  " * level, k, v)]
+    expected = ["    1 = one", "    2 = two"]
+    assert metconf._collect(f=f, d={"2": "two", "1": "one"}, level=2) == expected
+
+
+def test_metconf__fail():
+    key = "foo"
+    msg = f"Unsupported key: {key}"
+    with raises(ValueError, match=msg) as e:
+        metconf._fail(k=key)
+    assert str(e.value) == msg
+
+
+def test_metconf__indent():
+    assert metconf._indent(v="foo", level=2) == "    foo"
+
+
+def test_metconf_kvpair():
+    assert metconf._kvpair(k="1", v="one", level=2) == ["    1 = one;"]
+
+
+def test_metconf_mapping():
+    expected = ["  m = {", '    1 = "one";', '    2 = "two";', "  }"]
+    assert metconf._mapping(k="m", v=['    1 = "one";', '    2 = "two";'], level=1) == expected
+
+
+# Item-specific:
 
 
 def test_metconf__dataset_fail():

@@ -3,8 +3,8 @@ from typing import Any, Callable, NoReturn
 # Generic:
 
 
-def _bare(v: str) -> str:
-    return f"{v}"
+def _bare(v: Any) -> str:
+    return str(v)
 
 
 def _collect(f: Callable, d: dict, level: int) -> list[str]:
@@ -29,15 +29,6 @@ def _kvpair(k: str, v: str, level: int) -> list[str]:
 
 def _mapping(k: str, v: list[str], level: int) -> list[str]:
     return [_indent("%s = {" % k, level), *v, _indent("}", level)]
-
-
-def _mapping_anonymous(d: dict, level: int) -> str:
-    lines = [
-        _indent("{", level),
-        *_collect(lambda k, v, level: _kvpair(k, _quoted(v), level + 1), d, level + 1),
-        _indent("}", level + 1),
-    ]
-    return "\n".join(lines)
 
 
 def _quoted(v: str) -> str:
@@ -194,12 +185,16 @@ def _top(k: str, v: Any, level: int) -> list[str]:
             return _sequence(k, v, _quoted, level)
         # Sequence: list of single key-val dictionaries.
         case "message_type_group_map" | "obs_prepbufr_map":
-            return _sequence(
-                k,
-                [{"key": key, "val": val} for key, val in v.items()],
-                lambda d: _mapping_anonymous(d, level),
-                level,
-            )
+            lines = []
+            lines.append(_indent(f"{k} = [", level))
+            for key, val in v.items():
+                lines.append(_indent("{", level + 1))
+                lines.extend(_kvpair("key", _quoted(key), level + 2))
+                lines.extend(_kvpair("val", _quoted(val), level + 2))
+                lines.append(_indent("},", level + 1))
+            lines[-1] = lines[-1].rstrip(",")
+            lines.append(_indent("];", level))
+            return lines
     _fail(k)
 
 
