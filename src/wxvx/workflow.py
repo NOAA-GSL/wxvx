@@ -79,7 +79,11 @@ def grids_forecast(c: Config):
 def obs(c: Config):
     taskname = "Baseline obs for %s" % c.baseline.name
     yield taskname
-    reqs = [_netcdf_from_obs(c, tc) for tc in gen_validtimes(c.cycles, c.leadtimes)]
+    reqs = []
+    for tc in gen_validtimes(c.cycles, c.leadtimes):
+        yyyymmdd, hh, _ = tcinfo(tc)
+        url = render(c.baseline.url, tc)
+        reqs.append(_local_file_from_http(c.paths.obs / yyyymmdd / hh, url, "prepbufr file"))
     yield reqs
 
 
