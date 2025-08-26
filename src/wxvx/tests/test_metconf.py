@@ -43,9 +43,26 @@ def test_metconf__fail():
     assert str(e.value) == msg
 
 
-@mark.skip()
 def test_metconf__field_mapping():
-    pass
+    text = """
+    {
+      cnt_thresh = [
+        1,
+        2
+      ];
+      level = [
+        "(0,0,*,*)"
+      ];
+      name = "foo";
+    }
+    """
+    expected = dedent(text).strip()
+    assert (
+        metconf._field_mapping(
+            d={"name": "foo", "cnt_thresh": [1, 2], "level": ["(0,0,*,*)"]}, level=0
+        )
+        == expected
+    )
 
 
 def test_metconf__field_mapping_kvpairs():
@@ -53,9 +70,35 @@ def test_metconf__field_mapping_kvpairs():
         metconf._field_mapping_kvpairs(k="foo", v=None, level=0)
 
 
-@mark.skip()
 def test_metconf__field_sequence():
-    pass
+    text = """
+    field = [
+      {
+        cnt_thresh = [
+          1,
+          2
+        ];
+        level = [
+          "(0,0,*,*)"
+        ];
+        name = "foo";
+      },
+      {
+        cat_thresh = [
+          3,
+          4
+        ];
+        level = [
+          "P1000"
+        ];
+        name = "bar";
+      }
+    ];
+    """
+    expected = dedent(text).strip().split("\n")
+    d1 = {"name": "foo", "cnt_thresh": [1, 2], "level": ["(0,0,*,*)"]}
+    d2 = {"name": "bar", "cat_thresh": [3, 4], "level": ["P1000"]}
+    assert metconf._field_sequence(k="field", v=[d1, d2], level=0) == expected
 
 
 def test_metconf__indent():
