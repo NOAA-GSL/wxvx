@@ -81,8 +81,9 @@ def obs(c: Config):
     yield taskname
     reqs = []
     for tc in gen_validtimes(c.cycles, c.leadtimes):
-        yyyymmdd, hh, _ = tcinfo(tc)
-        url = render(c.baseline.url, tc)
+        tc_valid = TimeCoords(tc.validtime)
+        yyyymmdd, hh, _ = tcinfo(tc_valid)
+        url = render(c.baseline.url, tc_valid)
         reqs.append(_local_file_from_http(c.paths.obs / yyyymmdd / hh, url, "prepbufr file"))
     yield reqs
 
