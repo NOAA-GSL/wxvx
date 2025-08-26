@@ -1,6 +1,13 @@
 from typing import Any, Callable, NoReturn
 
-# Generic:
+# Public:
+
+
+def render(config: dict) -> str:
+    return "\n".join(_collect(_top, config, 0))
+
+
+# Private:
 
 
 def _bare(v: Any) -> str:
@@ -14,61 +21,17 @@ def _collect(f: Callable, d: dict, level: int) -> list[str]:
     return lines
 
 
-def _fail(k: str) -> NoReturn:
-    msg = f"Unsupported key: {k}"
-    raise ValueError(msg)
-
-
-def _indent(v: str, level: int) -> str:
-    return "  " * level + v
-
-
-def _kvpair(k: str, v: str, level: int) -> list[str]:
-    return [_indent(f"{k} = {v};", level)]
-
-
-def _key_val_map_list(k: str, v: dict[str, str], level: int) -> list[str]:
-    lines = [_indent(f"{k} = [", level)]
-    for key, val in sorted(v.items()):
-        block = [
-            _indent("{", level + 1),
-            *_kvpair("key", _quoted(key), level + 2),
-            *_kvpair("val", _quoted(val), level + 2),
-            _indent("},", level + 1),
-        ]
-        lines.extend(block)
-    lines[-1] = lines[-1].rstrip(",")
-    lines.append(_indent("];", level))
-    return lines
-
-
-def _mapping(k: str, v: list[str], level: int) -> list[str]:
-    return [_indent("%s = {" % k, level), *v, _indent("}", level)]
-
-
-def _quoted(v: str) -> str:
-    return f'"{v}"'
-
-
-def _sequence(k: str, v: list, handler: Callable, level: int) -> list[str]:
-    if v:
-        return [
-            _indent(f"{k} = [", level),
-            *",\n".join([_indent(handler(x), level + 1) for x in v]).split("\n"),
-            _indent("];", level),
-        ]
-    return [_indent(f"{k} = [];", level)]
-
-
-# Item-specific:
-
-
 def _dataset(k: str, v: list[dict], level: int) -> list[str]:
     match k:
         # Sequence: custom.
         case "field":
             return _field_sequence(k, v, level)
-    _fail(k)
+    return _fail(k)
+
+
+def _fail(k: str) -> NoReturn:
+    msg = f"Unsupported key: {k}"
+    raise ValueError(msg)
 
 
 def _field_mapping(d: dict, level: int) -> str:
@@ -91,12 +54,16 @@ def _field_mapping_kvpairs(k: str, v: Any, level: int) -> list[str]:
         # Sequence: quoted.
         case "level":
             return _sequence(k, v, _quoted, level)
-    _fail(k)
+    return _fail(k)
 
 
 def _field_sequence(k: str, v: list[dict], level: int) -> list[str]:
     mappings = ",\n".join([_field_mapping(d, level + 1) for d in v]).split("\n")
     return [_indent("%s = [" % k, level), *mappings, _indent("];", level)]
+
+
+def _indent(v: str, level: int) -> str:
+    return "  " * level + v
 
 
 def _interp(k: str, v: Any, level: int) -> list[str]:
@@ -107,7 +74,30 @@ def _interp(k: str, v: Any, level: int) -> list[str]:
         # Mapping: custom.
         case "type":
             return _mapping(k, _collect(_type, v, level + 1), level)
-    _fail(k)
+    return _fail(k)
+
+
+def _key_val_map_list(k: str, v: dict[str, str], level: int) -> list[str]:
+    lines = [_indent(f"{k} = [", level)]
+    for key, val in sorted(v.items()):
+        block = [
+            _indent("{", level + 1),
+            *_kvpair("key", _quoted(key), level + 2),
+            *_kvpair("val", _quoted(val), level + 2),
+            _indent("},", level + 1),
+        ]
+        lines.extend(block)
+    lines[-1] = lines[-1].rstrip(",")
+    lines.append(_indent("];", level))
+    return lines
+
+
+def _kvpair(k: str, v: str, level: int) -> list[str]:
+    return [_indent(f"{k} = {v};", level)]
+
+
+def _mapping(k: str, v: list[str], level: int) -> list[str]:
+    return [_indent("%s = {" % k, level), *v, _indent("}", level)]
 
 
 def _mask(k: str, v: list, level: int) -> list[str]:
@@ -115,7 +105,7 @@ def _mask(k: str, v: list, level: int) -> list[str]:
         # Sequence: quoted.
         case "grid" | "poly":
             return _sequence(k, v, _quoted, level)
-    _fail(k)
+    return _fail(k)
 
 
 def _nbrhd(k: str, v: Any, level: int) -> list[str]:
@@ -126,7 +116,7 @@ def _nbrhd(k: str, v: Any, level: int) -> list[str]:
         # Sequence: bare.
         case "width":
             return _sequence(k, v, _bare, level)
-    _fail(k)
+    return _fail(k)
 
 
 def _obs_window(k: str, v: Any, level: int) -> list[str]:
@@ -134,7 +124,7 @@ def _obs_window(k: str, v: Any, level: int) -> list[str]:
         # Key-Value Pair: bare.
         case "beg" | "end":
             return _kvpair(k, _bare(v), level)
-    _fail(k)
+    return _fail(k)
 
 
 def _output_flag(k: str, v: str, level: int) -> list[str]:
@@ -142,7 +132,11 @@ def _output_flag(k: str, v: str, level: int) -> list[str]:
         # Key-Value Pair: bare.
         case "cnt" | "cts" | "nbrcnt":
             return _kvpair(k, _bare(v), level)
-    _fail(k)
+    return _fail(k)
+
+
+def _quoted(v: str) -> str:
+    return f'"{v}"'
 
 
 def _regrid(k: str, v: Any, level: int) -> list[str]:
@@ -154,7 +148,17 @@ def _regrid(k: str, v: Any, level: int) -> list[str]:
         case "to_grid":
             f = _bare if v in ("FCST", "OBS") else _quoted
             return _kvpair(k, f(v), level)
-    _fail(k)
+    return _fail(k)
+
+
+def _sequence(k: str, v: list, handler: Callable, level: int) -> list[str]:
+    if v:
+        return [
+            _indent(f"{k} = [", level),
+            *",\n".join([_indent(handler(x), level + 1) for x in v]).split("\n"),
+            _indent("];", level),
+        ]
+    return [_indent(f"{k} = [];", level)]
 
 
 def _time_summary(k: str, v: Any, level: int) -> list[str]:
@@ -165,7 +169,7 @@ def _time_summary(k: str, v: Any, level: int) -> list[str]:
         # Sequence: quoted.
         case "obs_var" | "type":
             return _sequence(k, v, _quoted, level)
-    _fail(k)
+    return _fail(k)
 
 
 def _top(k: str, v: Any, level: int) -> list[str]:
@@ -201,7 +205,7 @@ def _top(k: str, v: Any, level: int) -> list[str]:
         # Sequence: list of single key-val dictionaries.
         case "message_type_group_map" | "obs_prepbufr_map":
             return _key_val_map_list(k, v, level)
-    _fail(k)
+    return _fail(k)
 
 
 def _type(k: str, v: Any, level: int) -> list[str]:
@@ -209,11 +213,4 @@ def _type(k: str, v: Any, level: int) -> list[str]:
         # Key-Value Pair: bare.
         case "method" | "width":
             return _kvpair(k, _bare(v), level)
-    _fail(k)
-
-
-# API:
-
-
-def render(config: dict) -> str:
-    return "\n".join(_collect(_top, config, 0))
+    return _fail(k)
