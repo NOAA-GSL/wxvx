@@ -175,9 +175,20 @@ def test_metconf__field_sequence():
     pass
 
 
-@mark.skip()
-def test_metconf__interp():
-    pass
+@mark.parametrize(("k", "v"), [("shape", "SQUARE"), ("vld_thresh", 1.0)])
+def test_metconf__interp__kvpair(k, v):
+    assert metconf._interp(k=k, v=v, level=1) == [f"  {k} = {v};"]
+
+
+def test_metconf__interp__type():
+    text = """
+    type = {
+      method = BILIN;
+      width = 2;
+    }
+    """
+    expected = dedent(text).strip().split("\n")
+    assert metconf._interp(k="type", v={"method": "BILIN", "width": 2}, level=0) == expected
 
 
 def test_metconf__mask():
@@ -190,9 +201,9 @@ def test_metconf__nbrhd():
         metconf._nbrhd(k="foo", v=None, level=0)
 
 
-@mark.skip()
-def test_metconf__obs_window():
-    pass
+@mark.parametrize(("k", "v"), [("beg", -1800), ("end", 1800)])
+def test_metconf__obs_window(k, v):
+    assert metconf._obs_window(k=k, v=v, level=1) == [f"  {k} = {v};"]
 
 
 def test_metconf__output_flag():
@@ -205,9 +216,21 @@ def test_metconf__regrid():
         metconf._regrid(k="foo", v="bar", level=0)
 
 
-@mark.skip()
-def test_metconf__time_summary():
-    pass
+@mark.parametrize(("k", "v"), [("step", 3600), ("width", 2)])
+def test_metconf__time_summary__scalar(k, v):
+    assert metconf._time_summary(k=k, v=v, level=1) == [f"  {k} = {v};"]
+
+
+@mark.parametrize(("k", "v"), [("obs_var", ["foo", "bar"]), ("type", ["min", "max"])])
+def test_metconf__time_summary__sequence(k, v):
+    text = f'''
+    {k} = [
+      "{v[0]}",
+      "{v[1]}"
+    ];
+    '''  # noqa: Q001
+    expected = dedent(text).strip().split("\n")
+    assert metconf._time_summary(k=k, v=v, level=0) == expected
 
 
 def test_metconf__top():
@@ -215,9 +238,9 @@ def test_metconf__top():
         metconf._top(k="foo", v=None, level=0)
 
 
-@mark.skip()
-def test_metconf__type():
-    pass
+@mark.parametrize(("k", "v"), [("method", "BILIN"), ("width", 2)])
+def test_metconf__type(k, v):
+    assert metconf._type(k=k, v=v, level=1) == [f"  {k} = {v};"]
 
 
 # API:
