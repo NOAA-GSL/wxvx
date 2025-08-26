@@ -509,7 +509,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
     forecast = _grid_nc(c, varname, tc, var)
-    obs = _netcdf_from_obs(c, tc)
+    obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
     config = _config_point_stat(c, path.with_suffix(".config"), varname, rundir, var, prefix)
     yield [forecast, obs, config]
     runscript = path.with_suffix(".sh")
