@@ -9,7 +9,200 @@ from wxvx import metconf
 
 
 def test_metconf_render():
-    assert metconf.render(config=config).strip() == expected.strip()
+    config = {
+        "fcst": {
+            "field": [
+                {
+                    "cat_thresh": [
+                        ">=20",
+                        ">=30",
+                    ],
+                    "level": [
+                        "(0,0,*,*)",
+                    ],
+                    "name": "T2M",
+                }
+            ]
+        },
+        "interp": {
+            "shape": "SQUARE",
+            "type": {
+                "method": "BILIN",
+                "width": 2,
+            },
+            "vld_thresh": 1.0,
+        },
+        "mask": {
+            "poly": [
+                "a.nc",
+            ],
+        },
+        "message_type": [
+            "ADPUPA",
+            "AIRCAR",
+        ],
+        "message_type_group_map": {
+            "AIRUPA": "ADPUPA,AIRCAR,AIRCFT",
+            "ANYAIR": "AIRCAR,AIRCFT",
+        },
+        "model": "GraphHRRR",
+        "nbrhd": {
+            "shape": "CIRCLE",
+            "width": [
+                3,
+                5,
+            ],
+        },
+        "nc_pairs_flag": "FALSE",
+        "obs": {
+            "field": [
+                {
+                    "cat_thresh": [
+                        ">=20",
+                        ">=30",
+                    ],
+                    "level": [
+                        "Z2",
+                    ],
+                    "name": "TMP",
+                },
+            ]
+        },
+        "obs_bufr_var": [
+            "D_RH",
+            "QOB",
+        ],
+        "obs_prepbufr_map": {
+            "CEILING": "CEILING",
+            "D_CAPE": "CAPE",
+        },
+        "obs_window": {
+            "beg": -1800,
+            "end": 1800,
+        },
+        "obtype": "HRRR",
+        "output_flag": {
+            "cnt": "BOTH",
+        },
+        "output_prefix": "foo_bar",
+        "regrid": {
+            "to_grid": "FCST",
+        },
+        "time_summary": {
+            "obs_var": [],
+            "step": 3600,
+            "type": [
+                "min",
+                "max",
+            ],
+            "width": 3600,
+        },
+        "tmp_dir": "/path/to/dir",
+    }
+    text = """
+    fcst = {
+      field = [
+        {
+          cat_thresh = [
+            >=20,
+            >=30
+          ];
+          level = [
+            "(0,0,*,*)"
+          ];
+          name = "T2M";
+        }
+      ];
+    }
+    interp = {
+      shape = SQUARE;
+      type = {
+        method = BILIN;
+        width = 2;
+      }
+      vld_thresh = 1.0;
+    }
+    mask = {
+      poly = [
+        "a.nc"
+      ];
+    }
+    message_type = [
+      "ADPUPA",
+      "AIRCAR"
+    ];
+    message_type_group_map = [
+      {
+        key = "AIRUPA";
+        val = "ADPUPA,AIRCAR,AIRCFT";
+      },
+      {
+        key = "ANYAIR";
+        val = "AIRCAR,AIRCFT";
+      }
+    ];
+    model = "GraphHRRR";
+    nbrhd = {
+      shape = CIRCLE;
+      width = [
+        3,
+        5
+      ];
+    }
+    nc_pairs_flag = FALSE;
+    obs = {
+      field = [
+        {
+          cat_thresh = [
+            >=20,
+            >=30
+          ];
+          level = [
+            "Z2"
+          ];
+          name = "TMP";
+        }
+      ];
+    }
+    obs_bufr_var = [
+      "D_RH",
+      "QOB"
+    ];
+    obs_prepbufr_map = [
+      {
+        key = "CEILING";
+        val = "CEILING";
+      },
+      {
+        key = "D_CAPE";
+        val = "CAPE";
+      }
+    ];
+    obs_window = {
+      beg = -1800;
+      end = 1800;
+    }
+    obtype = "HRRR";
+    output_flag = {
+      cnt = BOTH;
+    }
+    output_prefix = "foo_bar";
+    regrid = {
+      to_grid = FCST;
+    }
+    time_summary = {
+      obs_var = [];
+      step = 3600;
+      type = [
+        "min",
+        "max"
+      ];
+      width = 3600;
+    }
+    tmp_dir = "/path/to/dir";
+    """
+    expected = dedent(text).strip()
+    assert metconf.render(config=config).strip() == expected
 
 
 def test_metconf_render__fail():
@@ -240,79 +433,3 @@ def _fail(f: Callable, **kwargs):
     kwargs = kwargs or dict(k="foo", v=None, level=0)
     with raises(ValueError, match="Unsupported key: foo"):
         f(**kwargs)
-
-
-# Fixtures
-
-config = {
-    "fcst": {
-        "field": [{"cat_thresh": [">=20", ">=30", ">=40"], "level": ["(0,0,*,*)"], "name": "T2M"}]
-    },
-    "mask": {"poly": ["a.nc"]},
-    "model": "GraphHRRR",
-    "nbrhd": {"shape": "CIRCLE", "width": [3, 5, 11]},
-    "nc_pairs_flag": "FALSE",
-    "obs": {"field": [{"cat_thresh": [">=20", ">=30", ">=40"], "level": ["Z2"], "name": "TMP"}]},
-    "obtype": "HRRR",
-    "output_flag": {"cnt": "BOTH"},
-    "output_prefix": "foo_bar",
-    "regrid": {"to_grid": "FCST"},
-    "tmp_dir": "/path/to/dir",
-}
-
-expected = """
-fcst = {
-  field = [
-    {
-      cat_thresh = [
-        >=20,
-        >=30,
-        >=40
-      ];
-      level = [
-        "(0,0,*,*)"
-      ];
-      name = "T2M";
-    }
-  ];
-}
-mask = {
-  poly = [
-    "a.nc"
-  ];
-}
-model = "GraphHRRR";
-nbrhd = {
-  shape = CIRCLE;
-  width = [
-    3,
-    5,
-    11
-  ];
-}
-nc_pairs_flag = FALSE;
-obs = {
-  field = [
-    {
-      cat_thresh = [
-        >=20,
-        >=30,
-        >=40
-      ];
-      level = [
-        "Z2"
-      ];
-      name = "TMP";
-    }
-  ];
-}
-obtype = "HRRR";
-output_flag = {
-  cnt = BOTH;
-}
-output_prefix = "foo_bar";
-regrid = {
-  to_grid = FCST;
-}
-tmp_dir = "/path/to/dir";
-"""
