@@ -38,6 +38,7 @@ if TYPE_CHECKING:
 
 @tasks
 def grids(c: Config, baseline: bool = True, forecast: bool = True):
+    baseline = baseline and c.baseline.type == VxType.GRID
     if baseline and not forecast:
         suffix = "{b}"
     elif forecast and not baseline:
