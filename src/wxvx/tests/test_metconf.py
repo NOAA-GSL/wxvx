@@ -1,4 +1,5 @@
 from textwrap import dedent
+from typing import Callable
 
 from pytest import mark, raises
 
@@ -11,9 +12,8 @@ def test_metconf_render():
     assert metconf.render(config=config).strip() == expected.strip()
 
 
-def test_metconf_render_fail():
-    with raises(ValueError, match="Unsupported key: foo"):
-        metconf.render(config={"foo": "bar"})
+def test_metconf_render__fail():
+    _fail(metconf.render, config={"foo": "bar"})
 
 
 # Private:
@@ -30,17 +30,15 @@ def test_metconf__collect():
     assert metconf._collect(f=f, d={"2": "two", "1": "one"}, level=2) == expected
 
 
-def test_metconf__dataset_fail():
-    with raises(ValueError, match="Unsupported key: foo"):
-        metconf._dataset(k="foo", v=[], level=0)
+def test_metconf__dataset__fail():
+    _fail(metconf._dataset)
 
 
 def test_metconf__fail():
     key = "foo"
     msg = f"Unsupported key: {key}"
-    with raises(ValueError, match=msg) as e:
+    with raises(ValueError, match=msg):
         metconf._fail(k=key)
-    assert str(e.value) == msg
 
 
 def test_metconf__field_mapping():
@@ -66,8 +64,7 @@ def test_metconf__field_mapping():
 
 
 def test_metconf__field_mapping_kvpairs():
-    with raises(ValueError, match="Unsupported key: foo"):
-        metconf._field_mapping_kvpairs(k="foo", v=None, level=0)
+    _fail(metconf._field_mapping_kvpairs)
 
 
 def test_metconf__field_sequence():
@@ -103,6 +100,10 @@ def test_metconf__field_sequence():
 
 def test_metconf__indent():
     assert metconf._indent(v="foo", level=2) == "    foo"
+
+
+def test_metconf__interp__fail():
+    _fail(metconf._interp)
 
 
 @mark.parametrize(("k", "v"), [("shape", "SQUARE"), ("vld_thresh", 1.0)])
@@ -162,9 +163,12 @@ def test_metconf__obs_window(k, v):
     assert metconf._obs_window(k=k, v=v, level=1) == [f"  {k} = {v};"]
 
 
+def test_metconf__obs_window__fail():
+    _fail(metconf._obs_window)
+
+
 def test_metconf__output_flag():
-    with raises(ValueError, match="Unsupported key: foo"):
-        metconf._output_flag(k="foo", v="bar", level=0)
+    _fail(metconf._output_flag)
 
 
 @mark.parametrize("v", ["foo", 42])
@@ -194,6 +198,10 @@ def test_metconf__sequence__blank():
     assert metconf._sequence(k="s", v=[], handler=lambda x: x, level=1) == ["  s = [];"]
 
 
+def test_metconf__time_summary__fail():
+    _fail(metconf._time_summary)
+
+
 @mark.parametrize(("k", "v"), [("step", 3600), ("width", 2)])
 def test_metconf__time_summary__scalar(k, v):
     assert metconf._time_summary(k=k, v=v, level=1) == [f"  {k} = {v};"]
@@ -219,6 +227,19 @@ def test_metconf__top():
 @mark.parametrize(("k", "v"), [("method", "BILIN"), ("width", 2)])
 def test_metconf__type(k, v):
     assert metconf._type(k=k, v=v, level=1) == [f"  {k} = {v};"]
+
+
+def test_metconf__type__fail():
+    _fail(metconf._type)
+
+
+# Helpers
+
+
+def _fail(f: Callable, **kwargs):
+    kwargs = kwargs or dict(k="foo", v=None, level=0)
+    with raises(ValueError, match="Unsupported key: foo"):
+        f(**kwargs)
 
 
 # Fixtures
