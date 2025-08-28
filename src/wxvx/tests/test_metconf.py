@@ -66,14 +66,14 @@ def test_metconf_render():
                 },
             ]
         },
+        "obs_bufr_map": {
+            "MXGS": "GUST",
+            "PMO": "PRMSL",
+        },
         "obs_bufr_var": [
             "D_RH",
             "QOB",
         ],
-        "obs_prepbufr_map": {
-            "CEILING": "CEILING",
-            "D_CAPE": "CAPE",
-        },
         "obs_window": {
             "beg": -1800,
             "end": 1800,
@@ -157,19 +157,19 @@ def test_metconf_render():
         }
       ];
     }
+    obs_bufr_map = [
+      {
+        key = "MXGS";
+        val = "GUST";
+      },
+      {
+        key = "PMO";
+        val = "PRMSL";
+      }
+    ];
     obs_bufr_var = [
       "D_RH",
       "QOB"
-    ];
-    obs_prepbufr_map = [
-      {
-        key = "CEILING";
-        val = "CEILING";
-      },
-      {
-        key = "D_CAPE";
-        val = "CAPE";
-      }
     ];
     obs_window = {
       beg = -1800;

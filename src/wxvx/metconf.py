@@ -203,7 +203,7 @@ def _top(k: str, v: Any, level: int) -> list[str]:
         case "message_type" | "obs_bufr_var":
             return _sequence(k, v, _quoted, level)
         # Sequence: list of single key-val dictionaries.
-        case "message_type_group_map" | "obs_prepbufr_map":
+        case "message_type_group_map" | "obs_bufr_map":
             return _key_val_map_list(k, v, level)
     return _fail(k)
 
