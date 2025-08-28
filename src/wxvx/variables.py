@@ -326,7 +326,12 @@ def ds_construct(c: Config, da: xr.DataArray, taskname: str, level: float | None
 
 def metlevel(level_type: str, level: float | None) -> str:
     try:
-        prefix = {"atmosphere": "L", "heightAboveGround": "Z", "isobaricInhPa": "P"}[level_type]
+        prefix = {
+            "atmosphere": "L",
+            "heightAboveGround": "Z",
+            "isobaricInhPa": "P",
+            "surface": "Z0",
+        }[level_type]
     except KeyError as e:
         raise WXVXError("No MET level defined for level type %s" % level_type) from e
     return f"{prefix}%03d" % int(level or 0)
