@@ -266,20 +266,8 @@ def _config_point_stat(
             },
             "vld_thresh": 1.0,
         },
-        "message_type": [
-            "ADPUPA",
-            "AIRCAR",
-            "AIRCFT",
-        ],
-        "message_type_group_map": {
-            "AIRUPA": "ADPUPA,AIRCAR,AIRCFT",
-            "ANYAIR": "AIRCAR,AIRCFT",
-            "ANYSFC": "ADPSFC,SFCSHP,ADPUPA,PROFLR,MSONET",
-            "LANDSF": "ADPSFC,MSONET",
-            "ONLYSF": "ADPSFC,SFCSHP",
-            "SURFACE": "ADPSFC,SFCSHP,MSONET",
-            "WATERSF": "SFCSHP",
-        },
+        "message_type": ["AIRUPA"],
+        "message_type_group_map": {"AIRUPA": "ADPUPA,AIRCAR,AIRCFT"},
         "model": model,
         "obs": {
             "field": [field_obs],

@@ -38,12 +38,10 @@ def test_metconf_render():
             ],
         },
         "message_type": [
-            "ADPUPA",
-            "AIRCAR",
+            "AIRUPA",
         ],
         "message_type_group_map": {
             "AIRUPA": "ADPUPA,AIRCAR,AIRCFT",
-            "ANYAIR": "AIRCAR,AIRCFT",
         },
         "model": "GraphHRRR",
         "nbrhd": {
@@ -128,17 +126,12 @@ def test_metconf_render():
       ];
     }
     message_type = [
-      "ADPUPA",
-      "AIRCAR"
+      "AIRUPA"
     ];
     message_type_group_map = [
       {
         key = "AIRUPA";
         val = "ADPUPA,AIRCAR,AIRCFT";
-      },
-      {
-        key = "ANYAIR";
-        val = "AIRCAR,AIRCFT";
       }
     ];
     model = "GraphHRRR";
