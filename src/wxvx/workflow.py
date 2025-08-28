@@ -176,53 +176,54 @@ def _config_grid_stat(
 
 
 @task
-def _config_pb2nc(path: Path, rundir: Path):  # pragma: no cover
+def _config_pb2nc(path: Path, rundir: Path, mask: str = "FULL"):  # pragma: no cover
     taskname = f"Config for pb2nc {path}"
     yield taskname
     yield asset(path, path.is_file)
     yield None
     # Specify the union of values needed by either sfc or atm vx and let point_stat restrict its
     # selection of obs from the netCDF file created by pb2nc.
-    config = {
-        "message_type": [
-            "ADPSFC",
-            "ADPUPA",
-            "AIRCAR",
-            "AIRCFT",
-        ],
-        "obs_bufr_var": [
-            "CEILING",
-            "D_RH",
-            "HOVI",
-            "MXGS",
-            "PMO",
-            "QOB",
-            "TDO",
-            "TOB",
-            "TOCC",
-            "UOB",
-            "VOB",
-            "ZOB",
-        ],
-        "obs_window": {
-            "beg": -1800,
-            "end": 1800,
-        },
-        "quality_mark_thresh": 9,
-        "time_summary": {
-            "step": 3600,
-            "width": 3600,
-            "obs_var": [],
-            "type": [
-                "min",
-                "max",
-                "range",
-                "mean",
-                "stdev",
-                "median",
-                "p80",
-            ],
-        },
+    config: dict = {
+        "mask": mask,
+        # "message_type": [
+        #     "ADPSFC",
+        #     "ADPUPA",
+        #     "AIRCAR",
+        #     "AIRCFT",
+        # ],
+        # "obs_bufr_var": [
+        #     "CEILING",
+        #     "D_RH",
+        #     "HOVI",
+        #     "MXGS",
+        #     "PMO",
+        #     "QOB",
+        #     "TDO",
+        #     "TOB",
+        #     "TOCC",
+        #     "UOB",
+        #     "VOB",
+        #     "ZOB",
+        # ],
+        # "obs_window": {
+        #     "beg": -1800,
+        #     "end": 1800,
+        # },
+        # "quality_mark_thresh": 9,
+        # "time_summary": {
+        #     "step": 3600,
+        #     "width": 3600,
+        #     "obs_var": [],
+        #     "type": [
+        #         "min",
+        #         "max",
+        #         "range",
+        #         "mean",
+        #         "stdev",
+        #         "median",
+        #         "p80",
+        #     ],
+        # },
         "tmp_dir": rundir,
     }
     with atomic(path) as tmp:
@@ -260,11 +261,7 @@ def _config_point_stat(
             },
             "vld_thresh": 1.0,
         },
-        "message_type": ["SFC" if surface else "ATM"],
-        "message_type_group_map": {
-            "ATM": "ADPUPA,AIRCAR,AIRCFT",
-            "SFC": "ADPSFC",
-        },
+        "message_type": ["ADPSFC" if surface else "ADPUPA,AIRCAR,AIRCFT"],
         "model": model,
         "obs": {
             "field": [field_obs],
