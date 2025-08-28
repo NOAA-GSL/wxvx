@@ -263,6 +263,7 @@ def _config_point_stat(
     level_fcst, name_fcst, model = ("(0,0,*,*)", varname, c.forecast.name)
     field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
     field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
+    surface = var.level_type == "surface"
     config = {
         "fcst": {
             "field": [field_fcst],
@@ -275,15 +276,18 @@ def _config_point_stat(
             },
             "vld_thresh": 1.0,
         },
-        "message_type": ["AIRUPA"],
-        "message_type_group_map": {"AIRUPA": "ADPUPA,AIRCAR,AIRCFT"},
+        "message_type": ["SFC" if surface else "ATM"],
+        "message_type_group_map": {
+            "ATM": "ADPUPA,AIRCAR,AIRCFT",
+            "SFC": "ADPSFC",
+        },
         "model": model,
         "obs": {
             "field": [field_obs],
         },
         "obs_window": {
-            "beg": -1800,
-            "end": 1800,
+            "beg": -900 if surface else -1800,
+            "end": 900 if surface else 1800,
         },
         "output_flag": {
             "cnt": "BOTH",
@@ -292,7 +296,7 @@ def _config_point_stat(
         "regrid": {
             "method": c.regrid.method,
             "to_grid": c.regrid.to,
-            "width": 2,
+            "width": 2,  # PM should vary with method?
         },
         "tmp_dir": rundir,
     }
