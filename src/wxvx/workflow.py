@@ -187,30 +187,23 @@ def _config_pb2nc(c: Config, path: Path, rundir: Path):  # pragma: no cover
         "mask": {
             "grid": c.regrid.to or "FULL",
         },
-        # "message_type": [
-        #     "ADPSFC",
-        #     "ADPUPA",
-        #     "AIRCAR",
-        #     "AIRCFT",
-        # ],
-        # "obs_bufr_var": [
-        #     "CEILING",
-        #     "D_RH",
-        #     "HOVI",
-        #     "MXGS",
-        #     "PMO",
-        #     "QOB",
-        #     "TDO",
-        #     "TOB",
-        #     "TOCC",
-        #     "UOB",
-        #     "VOB",
-        #     "ZOB",
-        # ],
-        # "obs_window": {
-        #     "beg": -1800,
-        #     "end": 1800,
-        # },
+        "message_type": [
+            # "ADPSFC",
+            "ADPUPA",
+            # "AIRCAR",
+            # "AIRCFT",
+        ],
+        "obs_bufr_var": [
+            # "QOB",
+            "TOB",
+            # "UOB",
+            # "VOB",
+            # "ZOB",
+        ],
+        "obs_window": {
+            "beg": -1800,
+            "end": 1800,
+        },
         # "quality_mark_thresh": 9,
         # "time_summary": {
         #     "step": 3600,
@@ -263,7 +256,7 @@ def _config_point_stat(
             },
             "vld_thresh": 1.0,
         },
-        "message_type": ["ADPSFC" if surface else "ADPUPA,AIRCAR,AIRCFT"],
+        "message_type": ["ADPSFC"] if surface else ["ADPUPA", "AIRCAR", "AIRCFT"],
         "model": model,
         "obs": {
             "field": [field_obs],
