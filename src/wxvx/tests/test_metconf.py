@@ -335,6 +335,10 @@ def test_metconf__mask__grid_list():
     assert metconf._mask(k="grid", v=["FULL"], level=0) == expected
 
 
+def test_metconf__mask__grid_str():
+    assert metconf._mask(k="grid", v="G104", level=1) == ['  grid = "G104";']
+
+
 def test_metconf__nbrhd():
     with raises(ValueError, match="Unsupported key: foo"):
         metconf._nbrhd(k="foo", v=None, level=0)

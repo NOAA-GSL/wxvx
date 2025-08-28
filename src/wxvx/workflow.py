@@ -176,7 +176,7 @@ def _config_grid_stat(
 
 
 @task
-def _config_pb2nc(path: Path, rundir: Path, mask: str = "FULL"):  # pragma: no cover
+def _config_pb2nc(c: Config, path: Path, rundir: Path):  # pragma: no cover
     taskname = f"Config for pb2nc {path}"
     yield taskname
     yield asset(path, path.is_file)
@@ -184,7 +184,9 @@ def _config_pb2nc(path: Path, rundir: Path, mask: str = "FULL"):  # pragma: no c
     # Specify the union of values needed by either sfc or atm vx and let point_stat restrict its
     # selection of obs from the netCDF file created by pb2nc.
     config: dict = {
-        "mask": mask,
+        "mask": {
+            "grid": c.regrid.to or "FULL",
+        },
         # "message_type": [
         #     "ADPSFC",
         #     "ADPUPA",
@@ -391,7 +393,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):  # pragma: no cover
     url = render(c.baseline.url, tc)
     path = (rundir / url.split("/")[-1]).with_suffix(".nc")
     yield asset(path, path.is_file)
-    config = _config_pb2nc(path.with_suffix(".config"), rundir)
+    config = _config_pb2nc(c, path.with_suffix(".config"), rundir)
     prepbufr = _local_file_from_http(c.paths.obs / yyyymmdd / hh, url, "prepbufr file")
     yield [config, prepbufr]
     runscript = path.with_suffix(".sh")
