@@ -330,7 +330,7 @@ def metlevel(level_type: str, level: float | None) -> str:
             "atmosphere": "L",
             "heightAboveGround": "Z",
             "isobaricInhPa": "P",
-            "surface": "Z0",
+            "surface": "Z",
         }[level_type]
     except KeyError as e:
         raise WXVXError("No MET level defined for level type %s" % level_type) from e
