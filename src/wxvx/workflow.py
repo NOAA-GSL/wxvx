@@ -181,16 +181,25 @@ def _config_pb2nc(path: Path, rundir: Path):  # pragma: no cover
     yield taskname
     yield asset(path, path.is_file)
     yield None
+    # Specify the union of values needed by either sfc or atm vx and let point_stat restrict its
+    # selection of obs from the netCDF file created by pb2nc.
     config = {
         "message_type": [
+            "ADPSFC",
             "ADPUPA",
             "AIRCAR",
             "AIRCFT",
         ],
         "obs_bufr_var": [
+            "CEILING",
             "D_RH",
+            "HOVI",
+            "MXGS",
+            "PMO",
             "QOB",
+            "TDO",
             "TOB",
+            "TOCC",
             "UOB",
             "VOB",
             "ZOB",
