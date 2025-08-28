@@ -25,7 +25,7 @@ from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.times import TimeCoords, gen_validtimes, hh, tcinfo, yyyymmdd
 from wxvx.types import Cycles, Source, VxType
-from wxvx.util import LINETYPE, Proximity, atomic, classify_url, mpexec, render
+from wxvx.util import LINETYPE, Proximity, WXVXError, atomic, classify_url, mpexec, render
 from wxvx.variables import VARMETA, Var, da_construct, da_select, ds_construct, metlevel
 
 if TYPE_CHECKING:
@@ -264,6 +264,11 @@ def _config_point_stat(
     field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
     field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
     surface = var.level_type == "surface"
+    try:
+        regrid_width = {"BILIN": 2, "NEAREST": 1}[c.regrid.method]
+    except KeyError as e:
+        msg = "Could not determine 'width' value for regrid method %s" % c.regrid.method
+        raise WXVXError(msg) from e
     config = {
         "fcst": {
             "field": [field_fcst],
@@ -296,7 +301,7 @@ def _config_point_stat(
         "regrid": {
             "method": c.regrid.method,
             "to_grid": c.regrid.to,
-            "width": 2,  # PM should vary with method?
+            "width": regrid_width,
         },
         "tmp_dir": rundir,
     }
