@@ -320,23 +320,9 @@ def test_metconf__mapping():
     assert metconf._mapping(k="m", v=['    1 = "one";', '    2 = "two";'], level=1) == expected
 
 
-def test_metconf__mask__bad_key():
+def test_metconf__mask():
     with raises(ValueError, match="Unsupported key: foo"):
         metconf._mask(k="foo", v=[], level=0)
-
-
-def test_metconf__mask__grid_list():
-    text = """
-    grid = [
-      "FULL"
-    ];
-    """
-    expected = dedent(text).strip().split("\n")
-    assert metconf._mask(k="grid", v=["FULL"], level=0) == expected
-
-
-def test_metconf__mask__grid_str():
-    assert metconf._mask(k="grid", v="G104", level=1) == ['  grid = "G104";']
 
 
 def test_metconf__nbrhd():

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any, Callable, NoReturn
 
 # Public:
@@ -102,14 +100,11 @@ def _mapping(k: str, v: list[str], level: int) -> list[str]:
     return [_indent("%s = {" % k, level), *v, _indent("}", level)]
 
 
-def _mask(k: str, v: list | str, level: int) -> list[str]:
+def _mask(k: str, v: list, level: int) -> list[str]:
     match k:
+        # Sequence: quoted.
         case "grid" | "poly":
-            if isinstance(v, list):
-                # Sequence: quoted.
-                return _sequence(k, v, _quoted, level)
-            # Key-Value Pair: quoted.
-            return _kvpair(k, _quoted(v), level)
+            return _sequence(k, v, _quoted, level)
     return _fail(k)
 
 
