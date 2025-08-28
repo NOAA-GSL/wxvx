@@ -256,7 +256,11 @@ def _config_point_stat(
             },
             "vld_thresh": 1.0,
         },
-        "message_type": ["ADPSFC"] if surface else ["ADPUPA", "AIRCAR", "AIRCFT"],
+        "message_type": ["SFC" if surface else "ATM"],
+        "message_type_group_map": {
+            "ATM": "ADPUPA,AIRCAR,AIRCFT",
+            "SFC": "ADPSFC",
+        },
         "model": model,
         "obs": {
             "field": [field_obs],
