@@ -28,7 +28,7 @@ paths:
   run: "{{ meta.workdir }}/run"
 regrid:
   method: BILIN
-  to: G004
+  to: G104
 variables:
   10m_u_component_of_wind:
     level_type: heightAboveGround

@@ -190,12 +190,6 @@ def _config_pb2nc(path: Path, rundir: Path):  # pragma: no cover
             "AIRCAR",
             "AIRCFT",
         ],
-        "obs_bufr_map": {
-            "D_PBL": "HPBL",
-            "MXGS": "GUST",
-            "PMO": "PRMSL",
-            "TDO": "DPT",
-        },
         "obs_bufr_var": [
             "CEILING",
             "D_RH",
@@ -396,7 +390,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):  # pragma: no cover
     yyyymmdd, hh, _ = tcinfo(tc)
     taskname = "netCDF from prepbufr at %s %sZ" % (yyyymmdd, hh)
     yield taskname
-    rundir = c.paths.run / "obs" / yyyymmdd / hh
+    rundir = c.paths.run / "stats" / yyyymmdd / hh
     url = render(c.baseline.url, tc)
     path = (rundir / url.split("/")[-1]).with_suffix(".nc")
     yield asset(path, path.is_file)

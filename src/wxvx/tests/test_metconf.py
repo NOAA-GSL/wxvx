@@ -66,10 +66,6 @@ def test_metconf_render():
                 },
             ]
         },
-        "obs_bufr_map": {
-            "MXGS": "GUST",
-            "PMO": "PRMSL",
-        },
         "obs_bufr_var": [
             "D_RH",
             "QOB",
@@ -157,16 +153,6 @@ def test_metconf_render():
         }
       ];
     }
-    obs_bufr_map = [
-      {
-        key = "MXGS";
-        val = "GUST";
-      },
-      {
-        key = "PMO";
-        val = "PRMSL";
-      }
-    ];
     obs_bufr_var = [
       "D_RH",
       "QOB"
