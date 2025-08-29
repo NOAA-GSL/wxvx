@@ -119,7 +119,6 @@ def test_workflow__config_grid_stat(c, fakefs):
         c=c,
         path=path,
         varname="REFC",
-        rundir=fakefs,
         var=variables.Var(name="refc", level_type="atmosphere"),
         prefix="foo",
         source=Source.FORECAST,
