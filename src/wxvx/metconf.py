@@ -102,7 +102,13 @@ def _mapping(k: str, v: list[str], level: int) -> list[str]:
     return [_indent("%s = {" % k, level), *v, _indent("}", level)]
 
 
-def _mask(k: str, v: list | str, level: int) -> list[str]:
+def _mask(k: str, v: list[str] | str, level: int) -> list[str]:
+    # An inconsistency uncharacteristic of MET: The pb2nc 'mask' setting is formatted differently
+    # than for grid_stat and point_stat. For pb2nc, the format is
+    #   mask = { grid = ""; poly = ""; }
+    # with 'grid' and 'poly' as single strings, while for grid/point_stat it's
+    #   mask = { grid = [""]; poly = [""]; }
+    # with 'grid' and 'poly' as string sequences.
     match k:
         case "grid" | "poly":
             if isinstance(v, list):
