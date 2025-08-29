@@ -114,7 +114,7 @@ def test_schema_forecast(logged, config_data, fs):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in ["name", "path", "projection"]:
+    for key in ["name", "path"]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Additional keys are not allowed:

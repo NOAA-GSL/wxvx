@@ -138,6 +138,10 @@ def test_types_Forecast(config_data, forecast):
     assert obj == other1
     other2 = types.Forecast(**{**cfg, "name": "foo"})
     assert obj != other2
+    cfg_no_proj = {**cfg}
+    cfg_no_proj.pop("projection", None)
+    x_default = types.Forecast(**cfg_no_proj)
+    assert x_default.projection == {"proj": "latlon"}
 
 
 def test_types_Leadtimes():
