@@ -237,7 +237,7 @@ def _config_point_stat(
     level_fcst, name_fcst, model = ("(0,0,*,*)", varname, c.forecast.name)
     field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
     field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
-    surface = var.level_type == "surface"
+    surface = var.level_type in ("heightAboveGround", "surface")
     try:
         regrid_width = {"BILIN": 2, "NEAREST": 1}[c.regrid.method]
     except KeyError as e:
