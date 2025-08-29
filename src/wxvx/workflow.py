@@ -188,10 +188,10 @@ def _config_pb2nc(c: Config, path: Path, rundir: Path):  # pragma: no cover
             "grid": c.regrid.to or "FULL",
         },
         "message_type": [
-            # "ADPSFC",
+            "ADPSFC",
             "ADPUPA",
-            # "AIRCAR",
-            # "AIRCFT",
+            "AIRCAR",
+            "AIRCFT",
         ],
         "obs_bufr_var": [
             # "QOB",
@@ -204,7 +204,7 @@ def _config_pb2nc(c: Config, path: Path, rundir: Path):  # pragma: no cover
             "beg": -1800,
             "end": 1800,
         },
-        # "quality_mark_thresh": 9,
+        "quality_mark_thresh": 9,
         # "time_summary": {
         #     "step": 3600,
         #     "width": 3600,
