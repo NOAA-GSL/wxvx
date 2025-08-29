@@ -193,6 +193,7 @@ def _config_pb2nc(c: Config, path: Path):  # pragma: no cover
             "AIRCFT",
         ],
         "obs_bufr_var": [
+            "POB",
             "QOB",
             "TOB",
             "UOB",
