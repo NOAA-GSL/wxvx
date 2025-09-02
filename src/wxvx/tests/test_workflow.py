@@ -152,8 +152,42 @@ def test_workflow__config_pb2nc(c, fakefs):
     mask = {
       grid = "FCST";
     }
+    message_type = [
+      "ADPSFC",
+      "ADPUPA",
+      "AIRCAR",
+      "AIRCFT"
+    ];
+    obs_bufr_var = [
+      "POB",
+      "QOB",
+      "TOB",
+      "UOB",
+      "VOB",
+      "ZOB"
+    ];
+    obs_window = {
+      beg = -1800;
+      end = 1800;
+    }
+    quality_mark_thresh = 9;
+    time_summary = {
+      obs_var = [];
+      step = 3600;
+      type = [
+        "min",
+        "max",
+        "range",
+        "mean",
+        "stdev",
+        "median",
+        "p80"
+      ];
+      width = 3600;
+    }
+    tmp_dir = "/test";
     """
-    assert dedent(expected).strip() in path.read_text()
+    assert dedent(expected).strip() == path.read_text().strip()
 
 
 @mark.parametrize("to", ["G104", None])
@@ -169,6 +203,7 @@ def test_workflow__config_pb2nc__alt_masks(c, fakefs, to):
     """ % (to or "FULL")
     assert dedent(expected).strip() in path.read_text()
 
+
 def test_workflow__config_point_stat__atm(c, fakefs):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
@@ -176,7 +211,7 @@ def test_workflow__config_point_stat__atm(c, fakefs):
     var = variables.Var(name="gh", level_type="isobaricInhPa", level=500)
     prefix = "atm"
     workflow._config_point_stat(c=c, path=path, varname=varname, var=var, prefix=prefix)
-    expected ="""
+    expected = """
     fcst = {
       field = [
         {
@@ -184,7 +219,7 @@ def test_workflow__config_point_stat__atm(c, fakefs):
             "(0,0,*,*)"
           ];
           name = "geopotential";
-          set_attr_level = "P0500";
+          set_attr_level = "P500";
         }
       ];
     }
@@ -214,7 +249,7 @@ def test_workflow__config_point_stat__atm(c, fakefs):
       field = [
         {
           level = [
-            "P0500"
+            "P500"
           ];
           name = "HGT";
         }
@@ -245,7 +280,7 @@ def test_workflow__config_point_stat__sfc(c, fakefs):
     var = variables.Var(name="2t", level_type="heightAboveGround", level=2)
     prefix = "sfc"
     workflow._config_point_stat(c=c, path=path, varname=varname, var=var, prefix=prefix)
-    expected ="""
+    expected = """
     fcst = {
       field = [
         {
