@@ -144,6 +144,32 @@ def test_workflow__config_grid_stat(c, fakefs):
     assert path.is_file()
 
 
+def test_workflow__config_pb2nc(c, fakefs):
+    path = fakefs / "pb2nc.config"
+    assert not path.is_file()
+    workflow._config_pb2nc(c=c, path=path)
+    expected = """
+    mask = {
+      grid = "FCST";
+    }
+    """
+    assert dedent(expected).strip() in path.read_text().strip()
+
+
+@mark.parametrize("to", ["G104", None])
+def test_workflow__config_pb2nc__alt_masks(c, fakefs, to):
+    path = fakefs / "pb2nc.config"
+    assert not path.is_file()
+    c.regrid = replace(c.regrid, to=to)
+    workflow._config_pb2nc(c=c, path=path)
+    expected = """
+    mask = {
+      grid = "%s";
+    }
+    """ % (to or "FULL")
+    assert dedent(expected).strip() in path.read_text().strip()
+
+
 def test_workflow__existing(fakefs):
     path = fakefs / "forecast"
     assert not ready(workflow._existing(path=path))
