@@ -19,7 +19,7 @@ from iotaa import Node, asset, external, ready
 from pytest import fixture, mark
 
 from wxvx import variables, workflow
-from wxvx.times import gen_validtimes
+from wxvx.times import gen_validtimes, tcinfo
 from wxvx.types import Source
 from wxvx.variables import Var
 
@@ -478,15 +478,24 @@ def test_workflow__local_file_from_http(c):
     assert path.exists()
 
 
-# def test_workflow__netcdf_From_obs(c, fakefs, noop, tc):
-#     yyyymmdd, hh, _ = tcinfo(tc)
-#     breakpoint()
-#     path = (c.paths.obs / yyyymmdd / hh / url.split("/")[-1]).with_suffix(".nc")
-#     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-#     c.baseline = replace(c.baseline, url=url)
-#     with patch.object(workflow, "_local_file_from_http",
-#     task = workflow._netcdf_from_obs(c=c, tc=tc)
-#     pass
+def test_workflow__netcdf_From_obs(c, tc):
+    yyyymmdd, hh, _ = tcinfo(tc)
+    url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
+    c.baseline = replace(c.baseline, url=url)
+    path = c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nc"
+    assert not path.is_file()
+    prepbufr = path.with_suffix(".nr")
+    prepbufr.parent.mkdir(parents=True, exist_ok=True)
+    prepbufr.touch()
+    with patch.object(workflow, "mpexec", side_effect=lambda *_args: path.touch()) as mpexec:
+        task = workflow._netcdf_from_obs(c=c, tc=tc)
+    assert path.is_file()
+    assert task.ready
+    config = cast(dict, task.requirements)["config"].ref
+    assert config.is_file()
+    runscript = config.with_suffix(".sh")
+    assert runscript.is_file()
+    mpexec.assert_called_once_with(str(runscript), ANY, ANY)
 
 
 def test_workflow__polyfile(fakefs):

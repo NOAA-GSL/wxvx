@@ -390,7 +390,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     rundir = c.paths.run / "stats" / yyyymmdd / hh
     config = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
     prepbufr = _local_file_from_http(path.parent, url, "prepbufr file")
-    yield [config, prepbufr]
+    yield {"config": config, "prepbufr": prepbufr}
     runscript = config.ref.with_suffix(".sh")
     content = f"pb2nc -v 4 {prepbufr.ref} {path} {config.ref} >{path.stem}.log 2>&1"
     _write_runscript(runscript, content)
