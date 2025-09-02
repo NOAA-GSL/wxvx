@@ -19,7 +19,7 @@ from iotaa import Node, asset, external, ready
 from pytest import fixture, mark
 
 from wxvx import variables, workflow
-from wxvx.times import TimeCoords, gen_validtimes
+from wxvx.times import gen_validtimes
 from wxvx.types import Source
 from wxvx.variables import Var
 
@@ -207,10 +207,13 @@ def test_workflow__config_pb2nc__alt_masks(c, fakefs, to):
 def test_workflow__config_point_stat__atm(c, fakefs):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
-    varname = "geopotential"
-    var = variables.Var(name="gh", level_type="isobaricInhPa", level=500)
-    prefix = "atm"
-    workflow._config_point_stat(c=c, path=path, varname=varname, var=var, prefix=prefix)
+    workflow._config_point_stat(
+        c=c,
+        path=path,
+        varname="geopotential",
+        var=variables.Var(name="gh", level_type="isobaricInhPa", level=500),
+        prefix="atm",
+    )
     expected = """
     fcst = {
       field = [
@@ -276,10 +279,13 @@ def test_workflow__config_point_stat__atm(c, fakefs):
 def test_workflow__config_point_stat__sfc(c, fakefs):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
-    varname = "2m_temperature"
-    var = variables.Var(name="2t", level_type="heightAboveGround", level=2)
-    prefix = "sfc"
-    workflow._config_point_stat(c=c, path=path, varname=varname, var=var, prefix=prefix)
+    workflow._config_point_stat(
+        c=c,
+        path=path,
+        varname="2m_temperature",
+        var=variables.Var(name="2t", level_type="heightAboveGround", level=2),
+        prefix="sfc",
+    )
     expected = """
     fcst = {
       field = [
@@ -345,11 +351,14 @@ def test_workflow__config_point_stat__sfc(c, fakefs):
 def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, logged):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
-    varname = "geopotential"
-    var = variables.Var(name="gh", level_type="isobaricInhPa", level=500)
-    prefix = "atm"
     c.regrid = replace(c.regrid, method="BUDGET")
-    task = workflow._config_point_stat(c=c, path=path, varname=varname, var=var, prefix=prefix)
+    task = workflow._config_point_stat(
+        c=c,
+        path=path,
+        varname="geopotential",
+        var=variables.Var(name="gh", level_type="isobaricInhPa", level=500),
+        prefix="atm",
+    )
     assert not task.ready
     assert not path.is_file()
     assert logged("Could not determine 'width' value for regrid method 'BUDGET'")
@@ -467,6 +476,17 @@ def test_workflow__local_file_from_http(c):
         workflow._local_file_from_http(outdir=c.paths.grids_baseline, url=url, desc="Test")
     fetch.assert_called_once_with(ANY, url, ANY)
     assert path.exists()
+
+
+# def test_workflow__netcdf_From_obs(c, fakefs, noop, tc):
+#     yyyymmdd, hh, _ = tcinfo(tc)
+#     breakpoint()
+#     path = (c.paths.obs / yyyymmdd / hh / url.split("/")[-1]).with_suffix(".nc")
+#     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
+#     c.baseline = replace(c.baseline, url=url)
+#     with patch.object(workflow, "_local_file_from_http",
+#     task = workflow._netcdf_from_obs(c=c, tc=tc)
+#     pass
 
 
 def test_workflow__polyfile(fakefs):
@@ -680,7 +700,7 @@ def noop():
 
 
 @fixture
-def statkit(utc):
+def statkit(tc):
     level = 900
     level_type = "isobaricInhPa"
     return ns(
@@ -688,7 +708,7 @@ def statkit(utc):
         level_type=level_type,
         prefix=f"forecast_gh_{level_type}_{level:04d}",
         source=Source.FORECAST,
-        tc=TimeCoords(utc(2025, 3, 2, 12)),
+        tc=tc,
         var=Var("gh", level_type, level),
         varname="HGT",
     )
