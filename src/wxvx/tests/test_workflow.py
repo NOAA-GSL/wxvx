@@ -491,9 +491,9 @@ def test_workflow__netcdf_From_obs(c, tc):
         task = workflow._netcdf_from_obs(c=c, tc=tc)
     assert path.is_file()
     assert task.ready
-    config = cast(dict, task.requirements)["config"].ref
-    assert config.is_file()
-    runscript = config.with_suffix(".sh")
+    cfgfile = cast(dict, task.requirements)["cfgfile"].ref
+    assert cfgfile.is_file()
+    runscript = cfgfile.with_suffix(".sh")
     assert runscript.is_file()
     mpexec.assert_called_once_with(str(runscript), ANY, ANY)
 
@@ -546,13 +546,14 @@ def test_workflow__stats_vs_grid(c, fakefs, tc):
         yield "mock"
         yield asset(Path("/some/file"), lambda: True)
 
+    taskfunc = workflow._stats_vs_grid
     rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
     taskname = "Stats vs grid for baseline 2t-heightAboveGround-0002 at 19700101 00Z 000"
     var = variables.Var(name="2t", level_type="heightAboveGround", level=2)
     kwargs = dict(c=c, varname="T2M", tc=tc, var=var, prefix="foo", source=Source.BASELINE)
-    stat = workflow._stats_vs_grid(**kwargs, dry_run=True).ref
-    cfgfile = (rundir / stat.stem).with_suffix(".config")
-    runscript = (rundir / stat.stem).with_suffix(".sh")
+    stat = taskfunc(**kwargs, dry_run=True).ref
+    cfgfile = stat.with_suffix(".config")
+    runscript = stat.with_suffix(".sh")
     assert not stat.is_file()
     assert not cfgfile.is_file()
     assert not runscript.is_file()
@@ -562,7 +563,39 @@ def test_workflow__stats_vs_grid(c, fakefs, tc):
         patch.object(workflow, "mpexec", side_effect=lambda *_: stat.touch()) as mpexec,
     ):
         stat.parent.mkdir(parents=True)
-        workflow._stats_vs_grid(**kwargs)
+        taskfunc(**kwargs)
+    assert stat.is_file()
+    assert cfgfile.is_file()
+    assert runscript.is_file()
+    mpexec.assert_called_once_with(str(runscript), rundir, taskname)
+
+
+def test_workflow__stats_vs_obs(c, fakefs, tc):
+    @external
+    def mock(*_args, **_kwargs):
+        yield "mock"
+        yield asset(Path("/some/file"), lambda: True)
+
+    taskfunc = workflow._stats_vs_obs
+    url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
+    c.baseline = replace(c.baseline, type="point", url=url)
+    rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
+    taskname = "Stats vs obs for baseline 2t-heightAboveGround-0002 at 19700101 00Z 000"
+    var = variables.Var(name="2t", level_type="heightAboveGround", level=2)
+    kwargs = dict(c=c, varname="T2M", tc=tc, var=var, prefix="foo", source=Source.BASELINE)
+    stat = taskfunc(**kwargs, dry_run=True).ref
+    cfgfile = stat.with_suffix(".config")
+    runscript = stat.with_suffix(".sh")
+    assert not stat.is_file()
+    assert not cfgfile.is_file()
+    assert not runscript.is_file()
+    with (
+        patch.object(workflow, "_grid_nc", mock),
+        patch.object(workflow, "_netcdf_from_obs", mock),
+        patch.object(workflow, "mpexec", side_effect=lambda *_: stat.touch()) as mpexec,
+    ):
+        stat.parent.mkdir(parents=True)
+        taskfunc(**kwargs)
     assert stat.is_file()
     assert cfgfile.is_file()
     assert runscript.is_file()

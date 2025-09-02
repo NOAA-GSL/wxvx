@@ -388,11 +388,11 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     path = (c.paths.obs / yyyymmdd / hh / url.split("/")[-1]).with_suffix(".nc")
     yield asset(path, path.is_file)
     rundir = c.paths.run / "stats" / yyyymmdd / hh
-    config = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
+    cfgfile = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
     prepbufr = _local_file_from_http(path.parent, url, "prepbufr file")
-    yield {"config": config, "prepbufr": prepbufr}
-    runscript = config.ref.with_suffix(".sh")
-    content = f"pb2nc -v 4 {prepbufr.ref} {path} {config.ref} >{path.stem}.log 2>&1"
+    yield {"cfgfile": cfgfile, "prepbufr": prepbufr}
+    runscript = cfgfile.ref.with_suffix(".sh")
+    content = f"pb2nc -v 4 {prepbufr.ref} {path} {cfgfile.ref} >{path.stem}.log 2>&1"
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
 
