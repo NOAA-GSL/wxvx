@@ -23,7 +23,13 @@ forecast:
   name: AIWX
   path: /path/to/forecast.zarr
   projection:
-    proj: latlon
+    a: 6371229
+    b: 6371229
+    lat_0: 38.5
+    lat_1: 38.5
+    lat_2: 38.5
+    lon_0: 262.5
+    proj: lcc
 leadtimes: 
   start: "01:00:00"
   step: "01:00:00"
