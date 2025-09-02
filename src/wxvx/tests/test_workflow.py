@@ -153,7 +153,7 @@ def test_workflow__config_pb2nc(c, fakefs):
       grid = "FCST";
     }
     """
-    assert dedent(expected).strip() in path.read_text().strip()
+    assert dedent(expected).strip() in path.read_text()
 
 
 @mark.parametrize("to", ["G104", None])
@@ -167,7 +167,144 @@ def test_workflow__config_pb2nc__alt_masks(c, fakefs, to):
       grid = "%s";
     }
     """ % (to or "FULL")
-    assert dedent(expected).strip() in path.read_text().strip()
+    assert dedent(expected).strip() in path.read_text()
+
+def test_workflow__config_point_stat__atm(c, fakefs):
+    path = fakefs / "point_stat.config"
+    assert not path.is_file()
+    varname = "geopotential"
+    var = variables.Var(name="gh", level_type="isobaricInhPa", level=500)
+    prefix = "atm"
+    workflow._config_point_stat(c=c, path=path, varname=varname, var=var, prefix=prefix)
+    expected ="""
+    fcst = {
+      field = [
+        {
+          level = [
+            "(0,0,*,*)"
+          ];
+          name = "geopotential";
+          set_attr_level = "P0500";
+        }
+      ];
+    }
+    interp = {
+      shape = SQUARE;
+      type = {
+        method = BILIN;
+        width = 2;
+      }
+      vld_thresh = 1.0;
+    }
+    message_type = [
+      "ATM"
+    ];
+    message_type_group_map = [
+      {
+        key = "ATM";
+        val = "ADPUPA,AIRCAR,AIRCFT";
+      },
+      {
+        key = "SFC";
+        val = "ADPSFC";
+      }
+    ];
+    model = "Forecast";
+    obs = {
+      field = [
+        {
+          level = [
+            "P0500"
+          ];
+          name = "HGT";
+        }
+      ];
+    }
+    obs_window = {
+      beg = -1800;
+      end = 1800;
+    }
+    output_flag = {
+      cnt = BOTH;
+    }
+    output_prefix = "atm";
+    regrid = {
+      method = NEAREST;
+      to_grid = FCST;
+      width = 1;
+    }
+    tmp_dir = "/test";
+    """
+    assert dedent(expected).strip() in path.read_text()
+
+
+def test_workflow__config_point_stat__sfc(c, fakefs):
+    path = fakefs / "point_stat.config"
+    assert not path.is_file()
+    varname = "2m_temperature"
+    var = variables.Var(name="2t", level_type="heightAboveGround", level=2)
+    prefix = "sfc"
+    workflow._config_point_stat(c=c, path=path, varname=varname, var=var, prefix=prefix)
+    expected ="""
+    fcst = {
+      field = [
+        {
+          level = [
+            "(0,0,*,*)"
+          ];
+          name = "2m_temperature";
+          set_attr_level = "Z002";
+        }
+      ];
+    }
+    interp = {
+      shape = SQUARE;
+      type = {
+        method = BILIN;
+        width = 2;
+      }
+      vld_thresh = 1.0;
+    }
+    message_type = [
+      "SFC"
+    ];
+    message_type_group_map = [
+      {
+        key = "ATM";
+        val = "ADPUPA,AIRCAR,AIRCFT";
+      },
+      {
+        key = "SFC";
+        val = "ADPSFC";
+      }
+    ];
+    model = "Forecast";
+    obs = {
+      field = [
+        {
+          level = [
+            "Z002"
+          ];
+          name = "TMP";
+        }
+      ];
+    }
+    obs_window = {
+      beg = -900;
+      end = 900;
+    }
+    output_flag = {
+      cnt = BOTH;
+    }
+    output_prefix = "sfc";
+    regrid = {
+      method = NEAREST;
+      to_grid = FCST;
+      width = 1;
+    }
+    tmp_dir = "/test";
+    """
+    assert dedent(expected).strip() in path.read_text()
 
 
 def test_workflow__existing(fakefs):
