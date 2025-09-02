@@ -240,7 +240,7 @@ def _config_point_stat(c: Config, path: Path, varname: str, var: Var, prefix: st
     try:
         regrid_width = {"BILIN": 2, "NEAREST": 1}[c.regrid.method]
     except KeyError as e:
-        msg = "Could not determine 'width' value for regrid method %s" % c.regrid.method
+        msg = "Could not determine 'width' value for regrid method '%s'" % c.regrid.method
         raise WXVXError(msg) from e
     config = {
         "fcst": {

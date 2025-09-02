@@ -342,6 +342,19 @@ def test_workflow__config_point_stat__sfc(c, fakefs):
     assert dedent(expected).strip() in path.read_text()
 
 
+def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, logged):
+    path = fakefs / "point_stat.config"
+    assert not path.is_file()
+    varname = "geopotential"
+    var = variables.Var(name="gh", level_type="isobaricInhPa", level=500)
+    prefix = "atm"
+    c.regrid = replace(c.regrid, method="BUDGET")
+    task = workflow._config_point_stat(c=c, path=path, varname=varname, var=var, prefix=prefix)
+    assert not task.ready
+    assert not path.is_file()
+    assert logged("Could not determine 'width' value for regrid method 'BUDGET'")
+
+
 def test_workflow__existing(fakefs):
     path = fakefs / "forecast"
     assert not ready(workflow._existing(path=path))
