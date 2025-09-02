@@ -4,6 +4,7 @@ Tests for wxvx.workflow.
 
 import os
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from textwrap import dedent
@@ -95,6 +96,22 @@ def test_workflow_grids_baseline(c, n_grids, noop):
 def test_workflow_grids_forecast(c, n_grids, noop):
     with patch.object(workflow, "_grid_nc", noop):
         assert len(workflow.grids_forecast(c=c).ref) == n_grids
+
+
+def test_workflow_obs(c):
+    url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
+    c.baseline = replace(c.baseline, url=url)
+    expected = [
+        c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nr"
+        for (yyyymmdd, hh) in [
+            ("20241219", "18"),
+            ("20241220", "00"),
+            ("20241220", "06"),
+            ("20241220", "12"),
+            ("20241220", "18"),
+        ]
+    ]
+    assert workflow.obs(c).ref == expected
 
 
 def test_workflow_plots(c, noop):

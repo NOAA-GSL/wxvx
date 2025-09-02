@@ -5,8 +5,6 @@ from itertools import product
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     from wxvx.types import Cycles, Leadtimes
 
 # Public
@@ -37,9 +35,13 @@ class TimeCoords:
         return self.validtime.isoformat()
 
 
-def gen_validtimes(cycles: Cycles, leadtimes: Leadtimes) -> Iterator[TimeCoords]:
-    for cycle, leadtime in product(cycles.values, leadtimes.values):
-        yield TimeCoords(cycle=cycle, leadtime=leadtime)
+def gen_validtimes(cycles: Cycles, leadtimes: Leadtimes) -> list[TimeCoords]:
+    return sorted(
+        {
+            TimeCoords(cycle=cycle, leadtime=leadtime)
+            for cycle, leadtime in product(cycles.values, leadtimes.values)
+        }
+    )
 
 
 def hh(dt: datetime) -> str:

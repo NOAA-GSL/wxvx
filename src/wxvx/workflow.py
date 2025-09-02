@@ -77,7 +77,7 @@ def grids_forecast(c: Config):
 
 
 @tasks
-def obs(c: Config):  # pragma: no cover
+def obs(c: Config):
     taskname = "Baseline obs for %s" % c.baseline.name
     yield taskname
     reqs = []
@@ -175,7 +175,7 @@ def _config_grid_stat(
 
 
 @task
-def _config_pb2nc(c: Config, path: Path):  # pragma: no cover
+def _config_pb2nc(c: Config, path: Path):
     taskname = f"Config for pb2nc {path}"
     yield taskname
     yield asset(path, path.is_file)
@@ -226,9 +226,7 @@ def _config_pb2nc(c: Config, path: Path):  # pragma: no cover
 
 
 @task
-def _config_point_stat(
-    c: Config, path: Path, varname: str, var: Var, prefix: str
-):  # pragma: no cover
+def _config_point_stat(c: Config, path: Path, varname: str, var: Var, prefix: str):
     taskname = f"Config for point_stat {path}"
     yield taskname
     yield asset(path, path.is_file)
@@ -382,7 +380,7 @@ def _local_file_from_http(outdir: Path, url: str, desc: str):
 
 
 @task
-def _netcdf_from_obs(c: Config, tc: TimeCoords):  # pragma: no cover
+def _netcdf_from_obs(c: Config, tc: TimeCoords):
     yyyymmdd, hh, _ = tcinfo(tc)
     taskname = "netCDF from prepbufr at %s %sZ" % (yyyymmdd, hh)
     yield taskname
@@ -478,9 +476,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
 
 
 @task
-def _stats_vs_obs(
-    c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source
-):  # pragma: no cover
+def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     source_name = {Source.BASELINE: "baseline", Source.FORECAST: "forecast"}[source]
     taskname = "Stats vs obs for %s %s at %s %sZ %s" % (source_name, var, yyyymmdd, hh, leadtime)
