@@ -628,6 +628,18 @@ def test_workflow__prepare_plot_data(dictkey):
         assert tdf["INTERP_PNTS"].eq(width**2).all()
 
 
+@mark.parametrize(
+    ("fmt", "path"), [(DataFormat.NETCDF, "/path/to/a.nc"), (DataFormat.ZARR, "/path/to/a.zarr")]
+)
+def test_workflow__req_grid(c, fmt, path, tc, testvars):
+    with patch.object(workflow, "classify_data_format", return_value=fmt):
+        req = workflow._req_grid(path=path, c=c, varname="foo", tc=tc, var=testvars["2t"])
+    assert (
+        req.taskname
+        == "Forecast grid /test/grids/forecast/19700101/00/000/2t-heightAboveGround-0002.nc"
+    )
+
+
 def test_workflow__req_grid__grib(c, tc, testvars):
     path = Path("/path/to/a.grib2")
     with patch.object(workflow, "classify_data_format", return_value=DataFormat.GRIB):
