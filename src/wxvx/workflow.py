@@ -80,18 +80,12 @@ def grids_forecast(c: Config):
 def obs(c: Config):
     taskname = "Baseline obs for %s" % c.baseline.name
     yield taskname
-    reqs: list[Node] = []
+    reqs = []
     for tc in gen_validtimes(c.cycles, c.leadtimes):
         tc_valid = TimeCoords(tc.validtime)
-        yyyymmdd, hh, _ = tcinfo(tc_valid)
         url = render(c.baseline.url, tc_valid)
-        proximity, src = classify_url(url)
-        req: Node
-        if proximity == Proximity.LOCAL:
-            req = _existing(src)
-        else:
-            req = _local_file_from_http(c.paths.obs / yyyymmdd / hh, url, "prepbufr file")
-        reqs.append(req)
+        yyyymmdd, hh, _ = tcinfo(tc_valid)
+        reqs.append(_prepbufr(url, c.paths.obs / yyyymmdd / hh))
     yield reqs
 
 
@@ -393,14 +387,9 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     url = render(c.baseline.url, tc)
     path = (c.paths.obs / yyyymmdd / hh / url.split("/")[-1]).with_suffix(".nc")
     yield asset(path, path.is_file)
-    proximity, src = classify_url(url)
-    prepbufr: Node
-    if proximity == Proximity.LOCAL:
-        prepbufr = _existing(src)
-    else:
-        prepbufr = _local_file_from_http(path.parent, url, "prepbufr file")
     rundir = c.paths.run / "stats" / yyyymmdd / hh
     cfgfile = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
+    prepbufr = _prepbufr(url, path.parent)
     yield {"cfgfile": cfgfile, "prepbufr": prepbufr}
     runscript = cfgfile.ref.with_suffix(".sh")
     content = f"pb2nc -v 4 {prepbufr.ref} {path} {cfgfile.ref} >{path.stem}.log 2>&1"
@@ -535,6 +524,13 @@ def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd
     if "INTERP_PNTS" in columns and width is not None:
         plot_data = plot_data[plot_data["INTERP_PNTS"] == width**2]
     return plot_data
+
+
+def _prepbufr(url: str, outdir: Path) -> Node:
+    proximity, src = classify_url(url)
+    if proximity == Proximity.LOCAL:
+        return _existing(src)
+    return _local_file_from_http(outdir, url, "prepbufr file")
 
 
 def _statargs(
