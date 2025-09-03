@@ -94,6 +94,13 @@ def test_workflow_grids_baseline(c, n_grids, noop):
         assert len(workflow.grids_baseline(c=c).ref) == n_grids * 2
 
 
+def test_workflow_grids_baseline__no_path(c):
+    c.paths = replace(c.paths, grids_baseline=None)
+    with raises(WXVXError) as e:
+        workflow.grids_baseline(c)
+    assert str(e.value) == "Baseline grids for GFS: Config value paths.grids.baseline is not set"
+
+
 def test_workflow_grids_forecast(c, n_grids, noop):
     with patch.object(workflow, "_grid_nc", noop):
         assert len(workflow.grids_forecast(c=c).ref) == n_grids
@@ -119,7 +126,7 @@ def test_workflow_obs__bad_baseline_type(c):
     c.baseline = replace(c.baseline, type="grid")
     with raises(WXVXError) as e:
         workflow.obs(c)
-    assert str(e.value) == "Baseline obs for GFS: Set baseline type to 'obs' (not 'grid')"
+    assert str(e.value) == "Baseline obs for GFS: Config value baseline.type should be set to 'obs'"
 
 
 def test_workflow_plots(c, noop):

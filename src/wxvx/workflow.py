@@ -65,6 +65,8 @@ def grids(c: Config, baseline: bool = True, forecast: bool = True):
 @tasks
 def grids_baseline(c: Config):
     taskname = "Baseline grids for %s" % c.baseline.name
+    if not c.paths.grids_baseline:
+        raise WXVXError("%s: Config value paths.grids.baseline is not set" % taskname)
     yield taskname
     yield grids(c, baseline=True, forecast=False)
 
@@ -80,7 +82,7 @@ def grids_forecast(c: Config):
 def obs(c: Config):
     taskname = "Baseline obs for %s" % c.baseline.name
     if c.baseline.type == VxType.GRID:
-        raise WXVXError("%s: Set baseline type to 'obs' (not 'grid')" % taskname)
+        raise WXVXError("%s: Config value baseline.type should be set to 'obs'" % taskname)
     yield taskname
     reqs = []
     for tc in gen_validtimes(c.cycles, c.leadtimes):
