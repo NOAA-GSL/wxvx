@@ -65,9 +65,6 @@ def grids(c: Config, baseline: bool = True, forecast: bool = True):
 @tasks
 def grids_baseline(c: Config):
     taskname = "Baseline grids for %s" % c.baseline.name
-    if not c.paths.grids_baseline:
-        msg = "%s: This task requires that config value paths.grids.baseline be set"
-        raise WXVXError(msg % taskname)
     yield taskname
     yield grids(c, baseline=True, forecast=False)
 
@@ -345,7 +342,10 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         yield asset(src, src.is_file)
         yield None
     else:
-        outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
+        if not (basepath := c.paths.grids_baseline):
+            msg = "Config value paths.grids.baseline must be set"
+            raise WXVXError(msg)
+        outdir = basepath / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
         taskname = "Baseline grid %s" % path
         yield taskname
