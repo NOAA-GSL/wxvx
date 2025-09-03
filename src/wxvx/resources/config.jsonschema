@@ -238,10 +238,8 @@
         }
       },
       "required": [
-        "coords",
         "name",
-        "path",
-        "projection"
+        "path"
       ],
       "type": "object"
     },
