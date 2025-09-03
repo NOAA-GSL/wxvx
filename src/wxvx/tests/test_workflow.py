@@ -631,6 +631,14 @@ def test_workflow__prepare_plot_data(dictkey):
         assert tdf["INTERP_PNTS"].eq(width**2).all()
 
 
+def test_workflow_prepbufr(fakefs):
+    assert not workflow._prepbufr(url="https://example.com/prepbufr.nr", outdir=fakefs).ready
+    path = fakefs / "prepbufr.nr"
+    path.touch()
+    assert workflow._prepbufr(url=str(path), outdir=fakefs).ready
+    assert workflow._prepbufr(url=f"file://{path}", outdir=fakefs).ready
+
+
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
 def test_workflow__statargs(c, statkit, cycle):
     with (
