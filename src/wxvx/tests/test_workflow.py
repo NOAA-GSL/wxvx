@@ -535,7 +535,8 @@ def test_workflow__plot(c, dictkey, fakefs, fs):
     xticks.assert_called_once_with(ticks=[0, 6, 12], labels=["000", "006", "012"], rotation=90)
 
 
-def test_workflow__stats_vs_grid(c, fakefs, tc, testvars):
+@mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
+def test_workflow__stats_vs_grid(c, fakefs, source, tc, testvars):
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
@@ -543,27 +544,29 @@ def test_workflow__stats_vs_grid(c, fakefs, tc, testvars):
 
     taskfunc = workflow._stats_vs_grid
     rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
-    taskname = "Stats vs grid for baseline 2t-heightAboveGround-0002 at 19700101 00Z 000"
-    kwargs = dict(
-        c=c, varname="T2M", tc=tc, var=testvars["2t"], prefix="foo", source=Source.BASELINE
+    taskname = (
+        "Stats vs grid for %s 2t-heightAboveGround-0002 at 19700101 00Z 000"
+        % str(source).split(".")[1].lower()
     )
-    stat = taskfunc(**kwargs, dry_run=True).ref
-    cfgfile = stat.with_suffix(".config")
-    runscript = stat.with_suffix(".sh")
-    assert not stat.is_file()
-    assert not cfgfile.is_file()
-    assert not runscript.is_file()
-    with (
-        patch.object(workflow, "_grid_grib", mock),
-        patch.object(workflow, "_grid_nc", mock),
-        patch.object(workflow, "mpexec", side_effect=lambda *_: stat.touch()) as mpexec,
-    ):
-        stat.parent.mkdir(parents=True)
-        taskfunc(**kwargs)
-    assert stat.is_file()
-    assert cfgfile.is_file()
-    assert runscript.is_file()
-    mpexec.assert_called_once_with(str(runscript), rundir, taskname)
+    kwargs = dict(c=c, varname="T2M", tc=tc, var=testvars["2t"], prefix="foo", source=source)
+    with patch.object(workflow, "classify_data_format", return_value=DataFormat.NETCDF):
+        stat = taskfunc(**kwargs, dry_run=True).ref
+        cfgfile = stat.with_suffix(".config")
+        runscript = stat.with_suffix(".sh")
+        assert not stat.is_file()
+        assert not cfgfile.is_file()
+        assert not runscript.is_file()
+        with (
+            patch.object(workflow, "_grid_grib", mock),
+            patch.object(workflow, "_grid_nc", mock),
+            patch.object(workflow, "mpexec", side_effect=lambda *_: stat.touch()) as mpexec,
+        ):
+            stat.parent.mkdir(parents=True)
+            taskfunc(**kwargs)
+        assert stat.is_file()
+        assert cfgfile.is_file()
+        assert runscript.is_file()
+        mpexec.assert_called_once_with(str(runscript), rundir, taskname)
 
 
 @mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
