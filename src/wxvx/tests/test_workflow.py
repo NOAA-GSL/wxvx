@@ -98,7 +98,8 @@ def test_workflow_grids_baseline__no_path(c):
     c.paths = replace(c.paths, grids_baseline=None)
     with raises(WXVXError) as e:
         workflow.grids_baseline(c)
-    assert str(e.value) == "Baseline grids for GFS: Config value paths.grids.baseline is not set"
+    expected = "This task requires that config value paths.grids.baseline be set"
+    assert expected in str(e.value)
 
 
 def test_workflow_grids_forecast(c, n_grids, noop):
@@ -126,7 +127,8 @@ def test_workflow_obs__bad_baseline_type(c):
     c.baseline = replace(c.baseline, type="grid")
     with raises(WXVXError) as e:
         workflow.obs(c)
-    assert str(e.value) == "Baseline obs for GFS: Config value baseline.type should be set to 'obs'"
+    expected = "This task requires that config value baseline.type be set to 'obs'"
+    assert expected in str(e.value)
 
 
 def test_workflow_plots(c, noop):
