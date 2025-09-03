@@ -25,7 +25,17 @@ from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.times import TimeCoords, gen_validtimes, hh, tcinfo, yyyymmdd
 from wxvx.types import Cycles, Source, VxType
-from wxvx.util import LINETYPE, Proximity, WXVXError, atomic, classify_url, mpexec, render
+from wxvx.util import (
+    LINETYPE,
+    DataFormat,
+    Proximity,
+    WXVXError,
+    atomic,
+    classify_data_format,
+    classify_url,
+    mpexec,
+    render,
+)
 from wxvx.variables import VARMETA, Var, da_construct, da_select, ds_construct, metlevel
 
 if TYPE_CHECKING:
@@ -51,8 +61,8 @@ def grids(c: Config, baseline: bool = True, forecast: bool = True):
     for var, varname in _vxvars(c).items():
         for tc in gen_validtimes(c.cycles, c.leadtimes):
             if forecast:
-                forecast_grid = _grid_nc(c, varname, tc, var)
-                reqs.append(forecast_grid)
+                forecast_path = Path(render(c.forecast.path, tc))
+                reqs.append(_req_grid(forecast_path, c, varname, tc, var))
             if baseline:
                 baseline_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
                 reqs.append(baseline_grid)
@@ -85,7 +95,7 @@ def obs(c: Config):
         tc_valid = TimeCoords(tc.validtime)
         url = render(c.baseline.url, tc_valid)
         yyyymmdd, hh, _ = tcinfo(tc_valid)
-        reqs.append(_prepbufr(url, c.paths.obs / yyyymmdd / hh))
+        reqs.append(_req_prepbufr(url, c.paths.obs / yyyymmdd / hh))
     yield reqs
 
 
@@ -389,7 +399,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     yield asset(path, path.is_file)
     rundir = c.paths.run / "stats" / yyyymmdd / hh
     cfgfile = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
-    prepbufr = _prepbufr(url, path.parent)
+    prepbufr = _req_prepbufr(url, path.parent)
     yield {"cfgfile": cfgfile, "prepbufr": prepbufr}
     runscript = cfgfile.ref.with_suffix(".sh")
     content = f"pb2nc -v 4 {prepbufr.ref} {path} {cfgfile.ref} >{path.stem}.log 2>&1"
@@ -526,7 +536,13 @@ def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd
     return plot_data
 
 
-def _prepbufr(url: str, outdir: Path) -> Node:
+def _req_grid(path: Path, c: Config, varname: str, tc: TimeCoords, var: Var) -> Node:
+    if classify_data_format(path) == DataFormat.GRIB:
+        return _existing(path)
+    return _grid_nc(c, varname, tc, var)
+
+
+def _req_prepbufr(url: str, outdir: Path) -> Node:
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
         return _existing(src)
