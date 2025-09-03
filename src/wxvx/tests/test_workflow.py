@@ -478,7 +478,7 @@ def test_workflow__local_file_from_http(c):
     assert path.exists()
 
 
-def test_workflow__netcdf_From_obs(c, tc):
+def test_workflow__netcdf_from_obs(c, tc):
     yyyymmdd, hh, _ = tcinfo(tc)
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
     c.baseline = replace(c.baseline, url=url)
