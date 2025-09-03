@@ -16,11 +16,12 @@ from unittest.mock import ANY, Mock, patch
 import pandas as pd
 import xarray as xr
 from iotaa import Node, asset, external, ready
-from pytest import fixture, mark
+from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
 from wxvx.times import gen_validtimes, tcinfo
-from wxvx.types import Source
+from wxvx.types import Source, VxType
+from wxvx.util import WXVXError
 from wxvx.variables import Var
 
 TESTDATA = {
@@ -100,7 +101,7 @@ def test_workflow_grids_forecast(c, n_grids, noop):
 
 def test_workflow_obs(c):
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.baseline = replace(c.baseline, url=url)
+    c.baseline = replace(c.baseline, type="point", url=url)
     expected = [
         c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nr"
         for (yyyymmdd, hh) in [
@@ -112,6 +113,13 @@ def test_workflow_obs(c):
         ]
     ]
     assert workflow.obs(c).ref == expected
+
+
+def test_workflow_obs__bad_baseline_type(c):
+    c.baseline = replace(c.baseline, type="grid")
+    with raises(WXVXError) as e:
+        workflow.obs(c)
+    assert str(e.value) == "Baseline obs for GFS: Set baseline type to 'obs' (not 'grid')"
 
 
 def test_workflow_plots(c, noop):
@@ -578,7 +586,7 @@ def test_workflow__stats_vs_obs(c, fakefs, tc):
 
     taskfunc = workflow._stats_vs_obs
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.baseline = replace(c.baseline, type="point", url=url)
+    c.baseline = replace(c.baseline, type=VxType.POINT, url=url)
     rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
     taskname = "Stats vs obs for baseline 2t-heightAboveGround-0002 at 19700101 00Z 000"
     var = variables.Var(name="2t", level_type="heightAboveGround", level=2)

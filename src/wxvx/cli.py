@@ -11,27 +11,30 @@ from uwtools.api.logging import use_uwtools_logger
 
 from wxvx import workflow
 from wxvx.types import Config
-from wxvx.util import fail, pkgname, resource, resource_path
+from wxvx.util import WXVXError, fail, pkgname, resource, resource_path
 
 # Public
 
 
 def main() -> None:
-    args = _parse_args(sys.argv)
-    use_uwtools_logger(verbose=args.debug)
-    if not args.task:
-        _show_tasks_and_exit(0)
-    if args.task not in tasknames(workflow):
-        logging.error("No such task: %s", args.task)
-        _show_tasks_and_exit(1)
-    config_data = get_yaml_config(args.config)
-    config_data.dereference()
-    if not validate(schema_file=resource_path("config.jsonschema"), config_data=config_data):
-        fail()
-    if not args.check:
-        logging.info("Preparing task graph for %s", args.task)
-        task = getattr(workflow, args.task)
-        task(Config(config_data.data), threads=args.threads)
+    try:
+        args = _parse_args(sys.argv)
+        use_uwtools_logger(verbose=args.debug)
+        if not args.task:
+            _show_tasks_and_exit(0)
+        if args.task not in tasknames(workflow):
+            logging.error("No such task: %s", args.task)
+            _show_tasks_and_exit(1)
+        config_data = get_yaml_config(args.config)
+        config_data.dereference()
+        if not validate(schema_file=resource_path("config.jsonschema"), config_data=config_data):
+            fail()
+        if not args.check:
+            logging.info("Preparing task graph for %s", args.task)
+            task = getattr(workflow, args.task)
+            task(Config(config_data.data), threads=args.threads)
+    except WXVXError as e:
+        fail(str(e))
 
 
 # Private

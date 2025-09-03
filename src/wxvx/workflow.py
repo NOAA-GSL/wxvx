@@ -79,6 +79,8 @@ def grids_forecast(c: Config):
 @tasks
 def obs(c: Config):
     taskname = "Baseline obs for %s" % c.baseline.name
+    if c.baseline.type == VxType.GRID:
+        raise WXVXError("%s: Set baseline type to 'obs' (not 'grid')" % taskname)
     yield taskname
     reqs = []
     for tc in gen_validtimes(c.cycles, c.leadtimes):
