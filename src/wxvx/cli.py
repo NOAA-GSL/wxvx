@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+import traceback
 from argparse import Action, ArgumentParser, HelpFormatter, Namespace
 from pathlib import Path
 from typing import NoReturn
@@ -34,6 +35,8 @@ def main() -> None:
             task = getattr(workflow, args.task)
             task(Config(config_data.data), threads=args.threads)
     except WXVXError as e:
+        for line in traceback.format_exc().strip().split("\n"):
+            logging.debug(line)
         fail(str(e))
 
 
