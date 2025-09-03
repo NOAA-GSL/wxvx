@@ -80,12 +80,18 @@ def grids_forecast(c: Config):
 def obs(c: Config):
     taskname = "Baseline obs for %s" % c.baseline.name
     yield taskname
-    reqs = []
+    reqs: list[Node] = []
     for tc in gen_validtimes(c.cycles, c.leadtimes):
         tc_valid = TimeCoords(tc.validtime)
         yyyymmdd, hh, _ = tcinfo(tc_valid)
         url = render(c.baseline.url, tc_valid)
-        reqs.append(_local_file_from_http(c.paths.obs / yyyymmdd / hh, url, "prepbufr file"))
+        proximity, src = classify_url(url)
+        req: Node
+        if proximity == Proximity.LOCAL:
+            req = _existing(src)
+        else:
+            req = _local_file_from_http(c.paths.obs / yyyymmdd / hh, url, "prepbufr file")
+        reqs.append(req)
     yield reqs
 
 
@@ -387,13 +393,19 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     url = render(c.baseline.url, tc)
     path = (c.paths.obs / yyyymmdd / hh / url.split("/")[-1]).with_suffix(".nc")
     yield asset(path, path.is_file)
+    proximity, src = classify_url(url)
+    prepbufr: Node
+    if proximity == Proximity.LOCAL:
+        prepbufr = _existing(src)
+    else:
+        prepbufr = _local_file_from_http(path.parent, url, "prepbufr file")
     rundir = c.paths.run / "stats" / yyyymmdd / hh
     cfgfile = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
-    prepbufr = _local_file_from_http(path.parent, url, "prepbufr file")
     yield {"cfgfile": cfgfile, "prepbufr": prepbufr}
     runscript = cfgfile.ref.with_suffix(".sh")
     content = f"pb2nc -v 4 {prepbufr.ref} {path} {cfgfile.ref} >{path.stem}.log 2>&1"
     _write_runscript(runscript, content)
+    path.parent.mkdir(parents=True, exist_ok=True)
     mpexec(str(runscript), rundir, taskname)
 
 
