@@ -465,9 +465,12 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
     baseline = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
-    forecast = (
-        _grid_grib(c, tc, var) if source == Source.BASELINE else _grid_nc(c, varname, tc, var)
-    )
+    forecast: Node
+    if source == Source.BASELINE:
+        forecast = _grid_grib(c, tc, var)
+    else:
+        forecast_path = Path(render(c.forecast.path, tc))
+        forecast = _req_grid(forecast_path, c, varname, tc, var)
     reqs = [baseline, forecast]
     polyfile = None
     if mask := c.forecast.mask:
@@ -497,7 +500,8 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
-    forecast = _grid_nc(c, varname, tc, var)
+    forecast_path = Path(render(c.forecast.path, tc))
+    forecast = _req_grid(forecast_path, c, varname, tc, var)
     obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
     config = _config_point_stat(c, path.with_suffix(".config"), varname, var, prefix)
     yield [forecast, obs, config]
