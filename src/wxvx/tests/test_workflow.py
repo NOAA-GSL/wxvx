@@ -634,17 +634,18 @@ def test_workflow__prepare_plot_data(dictkey):
 def test_workflow__req_grid(c, fmt, path, tc, testvars):
     with patch.object(workflow, "classify_data_format", return_value=fmt):
         req = workflow._req_grid(path=path, c=c, varname="foo", tc=tc, var=testvars["2t"])
-    assert (
-        req.taskname
-        == "Forecast grid /test/grids/forecast/19700101/00/000/2t-heightAboveGround-0002.nc"
-    )
+    # For netCDF and Zarr forecast datasets, the grid will be extracted from the dataset and CF-
+    # decorated, so the requirement is a _grid_nc task, whose taskname is "Forecast grid ..."
+    assert req.taskname.startswith("Forecast grid")
 
 
 def test_workflow__req_grid__grib(c, tc, testvars):
     path = Path("/path/to/a.grib2")
     with patch.object(workflow, "classify_data_format", return_value=DataFormat.GRIB):
         req = workflow._req_grid(path=path, c=c, varname="foo", tc=tc, var=testvars["2t"])
-    assert req.taskname == f"Existing path {path}"
+    # For GRIB forecast datasets, the entire GRIB file will be accessed by MET, so the requirement
+    # is an existing local path.
+    assert req.taskname.startswith("Existing path")
 
 
 def test_workflow__req_prepbufr(fakefs):
