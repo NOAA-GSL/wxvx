@@ -15,7 +15,7 @@ from pytest import mark, raises
 import wxvx
 from wxvx import cli
 from wxvx.types import Config
-from wxvx.util import pkgname, resource_path
+from wxvx.util import WXVXError, pkgname, resource_path
 
 # Tests
 
@@ -37,7 +37,7 @@ def test_cli_main(config_data, fs, switch_c, switch_n, switch_t):
     mocks["workflow"].plots.assert_called_once_with(Config(config_data), threads=2)
 
 
-def test_cli_main_bad_config(fakefs, fs):
+def test_cli_main__bad_config(fakefs, fs):
     fs.add_real_file(resource_path("config.jsonschema"))
     fs.add_real_file(resource_path("info.json"))
     bad_config = fakefs / "config.yaml"
@@ -51,7 +51,7 @@ def test_cli_main_bad_config(fakefs, fs):
 
 
 @mark.parametrize("switch", ["-k", "--check"])
-def test_cli_main_check_config(fs, switch):
+def test_cli_main__check_config(fs, switch):
     fs.add_real_file(resource_path("config.jsonschema"))
     fs.add_real_file(resource_path("config-grid.yaml"))
     fs.add_real_file(resource_path("info.json"))
@@ -65,7 +65,15 @@ def test_cli_main_check_config(fs, switch):
     grids.assert_not_called()
 
 
-def test_cli_main_task_list(caplog):
+def test_cli_main__exception(logged):
+    msg = "Oh no!"
+    with patch.object(cli, "_parse_args", side_effect=WXVXError(msg)), raises(SystemExit) as e:
+        cli.main()
+    assert logged(msg)
+    assert e.value.code == 1
+
+
+def test_cli_main__task_list(caplog):
     caplog.set_level(logging.INFO)
     with (
         patch.object(cli.sys, "argv", [pkgname, "-c", str(resource_path("config-grid.yaml"))]),
@@ -86,7 +94,7 @@ def test_cli_main_task_list(caplog):
             assert line in caplog.messages
 
 
-def test_cli_main_task_missing(caplog):
+def test_cli_main__task_missing(caplog):
     caplog.set_level(logging.INFO)
     argv = [pkgname, "-c", str(resource_path("config-grid.yaml")), "-t", "foo"]
     with patch.object(cli.sys, "argv", argv), patch.object(cli, "use_uwtools_logger"):
@@ -107,7 +115,7 @@ def test_cli__parse_args(c, d):
 
 
 @mark.parametrize("h", ["-h", "--help"])
-def test_cli__parse_args_help(capsys, h):
+def test_cli__parse_args__help(capsys, h):
     with raises(SystemExit) as e:
         cli._parse_args([pkgname, h])
     assert e.value.code == 0
@@ -115,21 +123,21 @@ def test_cli__parse_args_help(capsys, h):
 
 
 @mark.parametrize("v", ["-v", "--version"])
-def test_cli__parse_args_version(capsys, v):
+def test_cli__parse_args__version(capsys, v):
     with raises(SystemExit) as e:
         cli._parse_args([pkgname, v])
     assert e.value.code == 0
     assert re.match(r"^\w+ version \d+\.\d+\.\d+ build \d+$", capsys.readouterr().out.strip())
 
 
-def test_cli__parse_args_required_arg_missing():
+def test_cli__parse_args__required_arg_missing():
     with raises(SystemExit) as e:
         cli._parse_args([pkgname])
     assert e.value.code == 2
 
 
 @mark.parametrize("n", ["-n", "--threads"])
-def test_cli__parse_args_threads_bad(capsys, n):
+def test_cli__parse_args__threads_bad(capsys, n):
     with raises(SystemExit) as e:
         cli._parse_args([pkgname, "-c", "a.yaml", n, "0"])
     assert e.value.code == 1

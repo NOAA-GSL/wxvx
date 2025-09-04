@@ -35,10 +35,12 @@ class Baseline:
     compare: bool
     name: str
     url: str
-    type: str
+    type: VxType
 
     def __post_init__(self):
-        _force(self, "type", VxType.POINT if self.type == "point" else VxType.GRID)
+        assert self.type in ["grid", "point"]
+        newval = {"grid": VxType.GRID, "point": VxType.POINT}
+        _force(self, "type", newval.get(str(self.type), self.type))
 
 
 class Config:

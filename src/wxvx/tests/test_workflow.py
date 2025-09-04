@@ -16,12 +16,12 @@ from unittest.mock import ANY, Mock, patch
 import pandas as pd
 import xarray as xr
 from iotaa import Node, asset, external, ready
-from pytest import fixture, mark
+from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
 from wxvx.times import gen_validtimes, tcinfo
 from wxvx.types import Source
-from wxvx.util import DataFormat
+from wxvx.util import DataFormat, WXVXError
 from wxvx.variables import Var
 
 TESTDATA = {
@@ -110,7 +110,7 @@ def test_workflow_grids_forecast(c, fmt, n_grids, noop):
 
 def test_workflow_obs(c):
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.baseline = replace(c.baseline, url=url)
+    c.baseline = replace(c.baseline, type="point", url=url)
     expected = [
         c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nr"
         for (yyyymmdd, hh) in [
@@ -122,6 +122,14 @@ def test_workflow_obs(c):
         ]
     ]
     assert workflow.obs(c).ref == expected
+
+
+def test_workflow_obs__bad_baseline_type(c):
+    c.baseline = replace(c.baseline, type="grid")
+    with raises(WXVXError) as e:
+        workflow.obs(c)
+    expected = "This task requires that config value baseline.type be set to 'point'"
+    assert expected in str(e.value)
 
 
 def test_workflow_plots(c, noop):
@@ -407,7 +415,7 @@ def test_workflow__grib_index_data(c, tc):
 @mark.parametrize(
     "template", ["{root}/gfs.t00z.pgrb2.0p25.f000", "file://{root}/gfs.t00z.pgrb2.0p25.f000"]
 )
-def test_workflow__grid_grib_local(template, config_data, gen_config, fakefs, tc, testvars):
+def test_workflow__grid_grib__local(template, config_data, gen_config, fakefs, tc, testvars):
     grib_path = fakefs / "gfs.t00z.pgrb2.0p25.f000"
     grib_path.write_text("foo")
     config_data["baseline"]["url"] = template.format(root=fakefs)
@@ -416,7 +424,7 @@ def test_workflow__grid_grib_local(template, config_data, gen_config, fakefs, tc
     assert ready(val)
 
 
-def test_workflow__grid_grib_remote(c, tc, testvars):
+def test_workflow__grid_grib__remote(c, tc, testvars):
     idxdata = {
         "gh-isobaricInhPa-0900": variables.HRRR(
             name="HGT", levstr="900 mb", firstbyte=0, lastbyte=0
@@ -450,6 +458,14 @@ def test_workflow__grid_grib_remote(c, tc, testvars):
     _grib_index_data.assert_called_with(c, outdir, tc, url=url)
 
 
+def test_workflow__grid_grib__remote_no_path(c, tc):
+    c.paths = replace(c.paths, grids_baseline=None)
+    with raises(WXVXError) as e:
+        workflow._grid_grib(c=c, tc=tc, var=Var(name="t", level_type="isobaricInhPa", level=900))
+    expected = "Config value paths.grids.baseline must be set"
+    assert expected in str(e.value)
+
+
 def test_workflow__grid_nc(c_real_fs, check_cf_metadata, da_with_leadtime, tc, testvars):
     level = 900
     path = Path(c_real_fs.paths.grids_forecast, "a.nc")
@@ -476,7 +492,7 @@ def test_workflow__local_file_from_http(c):
 def test_workflow__netcdf_from_obs(c, tc):
     yyyymmdd, hh, _ = tcinfo(tc)
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.baseline = replace(c.baseline, url=url)
+    c.baseline = replace(c.baseline, type="point", url=url)
     path = c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nc"
     assert not path.is_file()
     prepbufr = path.with_suffix(".nr")
@@ -493,20 +509,12 @@ def test_workflow__netcdf_from_obs(c, tc):
     mpexec.assert_called_once_with(str(runscript), ANY, ANY)
 
 
-def test_workflow__polyfile(fakefs):
-    path = fakefs / "a.poly"
-    assert not path.is_file()
-    mask = ((52.6, 225.9), (52.6, 255.0), (21.1, 255.0), (21.1, 225.9))
-    polyfile = workflow._polyfile(path=path, mask=mask)
-    assert polyfile.ready
-    expected = """
-    MASK
-    52.6 225.9
-    52.6 255.0
-    21.1 255.0
-    21.1 225.9
-    """
-    assert path.read_text().strip() == dedent(expected).strip()
+def test_workflow__netcdf_from_obs__no_path(c, tc):
+    c.paths = replace(c.paths, obs=None)
+    with raises(WXVXError) as e:
+        workflow._netcdf_from_obs(c=c, tc=tc)
+    expected = "Config value paths.obs must be set"
+    assert expected in str(e.value)
 
 
 @mark.parametrize("dictkey", ["foo", "bar", "baz"])
@@ -533,6 +541,22 @@ def test_workflow__plot(c, dictkey, fakefs, fs):
     assert path.is_file()
     assert _prepare_plot_data.call_count == 1
     xticks.assert_called_once_with(ticks=[0, 6, 12], labels=["000", "006", "012"], rotation=90)
+
+
+def test_workflow__polyfile(fakefs):
+    path = fakefs / "a.poly"
+    assert not path.is_file()
+    mask = ((52.6, 225.9), (52.6, 255.0), (21.1, 255.0), (21.1, 225.9))
+    polyfile = workflow._polyfile(path=path, mask=mask)
+    assert polyfile.ready
+    expected = """
+    MASK
+    52.6 225.9
+    52.6 255.0
+    21.1 255.0
+    21.1 225.9
+    """
+    assert path.read_text().strip() == dedent(expected).strip()
 
 
 @mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
@@ -633,6 +657,7 @@ def test_workflow__prepare_plot_data(dictkey):
         assert tdf["INTERP_PNTS"].eq(width**2).all()
 
 
+<<<<<<< HEAD
 @mark.parametrize(
     ("fmt", "path"), [(DataFormat.NETCDF, "/path/to/a.nc"), (DataFormat.ZARR, "/path/to/a.zarr")]
 )
