@@ -156,7 +156,7 @@ def test_workflow__config_grid_stat(c, fakefs, testvars):
         varname="REFC",
         var=testvars["refc"],
         prefix="foo",
-        source=Source.FORECAST,
+        datafmt=DataFormat.GRIB,
         polyfile=None,
     )
     assert path.is_file()
@@ -670,19 +670,21 @@ def test_workflow__prepare_plot_data(dictkey):
 )
 def test_workflow__req_grid(c, fmt, path, tc, testvars):
     with patch.object(workflow, "classify_data_format", return_value=fmt):
-        req = workflow._req_grid(path=path, c=c, varname="foo", tc=tc, var=testvars["2t"])
+        req, datafmt = workflow._req_grid(path=path, c=c, varname="foo", tc=tc, var=testvars["2t"])
     # For netCDF and Zarr forecast datasets, the grid will be extracted from the dataset and CF-
     # decorated, so the requirement is a _grid_nc task, whose taskname is "Forecast grid ..."
     assert req.taskname.startswith("Forecast grid")
+    assert datafmt == fmt
 
 
 def test_workflow__req_grid__grib(c, tc, testvars):
     path = Path("/path/to/a.grib2")
     with patch.object(workflow, "classify_data_format", return_value=DataFormat.GRIB):
-        req = workflow._req_grid(path=path, c=c, varname="foo", tc=tc, var=testvars["2t"])
+        req, datafmt = workflow._req_grid(path=path, c=c, varname="foo", tc=tc, var=testvars["2t"])
     # For GRIB forecast datasets, the entire GRIB file will be accessed by MET, so the requirement
     # is an existing local path.
     assert req.taskname.startswith("Existing path")
+    assert datafmt == DataFormat.GRIB
 
 
 def test_workflow__req_prepbufr(fakefs):

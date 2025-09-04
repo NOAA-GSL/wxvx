@@ -62,7 +62,8 @@ def grids(c: Config, baseline: bool = True, forecast: bool = True):
         for tc in gen_validtimes(c.cycles, c.leadtimes):
             if forecast:
                 forecast_path = Path(render(c.forecast.path, tc))
-                reqs.append(_req_grid(forecast_path, c, varname, tc, var))
+                req, _ = _req_grid(forecast_path, c, varname, tc, var)
+                reqs.append(req)
             if baseline:
                 baseline_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
                 reqs.append(baseline_grid)
@@ -134,7 +135,7 @@ def _config_grid_stat(
     varname: str,
     var: Var,
     prefix: str,
-    source: Source,
+    datafmt: DataFormat,
     polyfile: Node | None,
 ):
     taskname = f"Config for grid_stat {path}"
@@ -143,11 +144,11 @@ def _config_grid_stat(
     yield None
     level_obs = metlevel(var.level_type, var.level)
     baseline_class = variables.model_class(c.baseline.name)
-    attrs = {
-        Source.BASELINE: (level_obs, baseline_class.varname(var.name), c.baseline.name),
-        Source.FORECAST: ("(0,0,*,*)", varname, c.forecast.name),
-    }
-    level_fcst, name_fcst, model = attrs[source]
+    level_fcst, name_fcst, model = (
+        (level_obs, baseline_class.varname(var.name), c.baseline.name)
+        if datafmt == DataFormat.GRIB
+        else ("(0,0,*,*)", varname, c.forecast.name)
+    )
     field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
     field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
     meta = _meta(c, varname)
@@ -476,17 +477,17 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     baseline = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
     forecast: Node
     if source == Source.BASELINE:
-        forecast = _grid_grib(c, tc, var)
+        forecast, datafmt = _grid_grib(c, tc, var), DataFormat.GRIB
     else:
         forecast_path = Path(render(c.forecast.path, tc))
-        forecast = _req_grid(forecast_path, c, varname, tc, var)
+        forecast, datafmt = _req_grid(forecast_path, c, varname, tc, var)
     reqs = [baseline, forecast]
     polyfile = None
     if mask := c.forecast.mask:
         polyfile = _polyfile(c.paths.run / "stats" / "mask.poly", mask)
         reqs.append(polyfile)
     path_config = path.with_suffix(".config")
-    config = _config_grid_stat(c, path_config, varname, var, prefix, source, polyfile)
+    config = _config_grid_stat(c, path_config, varname, var, prefix, datafmt, polyfile)
     reqs.append(config)
     yield reqs
     runscript = path.with_suffix(".sh")
@@ -510,7 +511,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
     forecast_path = Path(render(c.forecast.path, tc))
-    forecast = _req_grid(forecast_path, c, varname, tc, var)
+    forecast, _ = _req_grid(forecast_path, c, varname, tc, var)
     obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
     config = _config_point_stat(c, path.with_suffix(".config"), varname, var, prefix)
     yield [forecast, obs, config]
@@ -549,10 +550,13 @@ def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd
     return plot_data
 
 
-def _req_grid(path: Path, c: Config, varname: str, tc: TimeCoords, var: Var) -> Node:
-    if classify_data_format(path) == DataFormat.GRIB:
-        return _existing(path)
-    return _grid_nc(c, varname, tc, var)
+def _req_grid(
+    path: Path, c: Config, varname: str, tc: TimeCoords, var: Var
+) -> tuple[Node, DataFormat]:
+    data_format = classify_data_format(path)
+    if data_format == DataFormat.GRIB:
+        return _existing(path), data_format
+    return _grid_nc(c, varname, tc, var), data_format
 
 
 def _req_prepbufr(url: str, outdir: Path) -> Node:
