@@ -413,7 +413,11 @@ def test_workflow__grib_index_data(c, tc):
 
 
 @mark.parametrize(
-    "template", ["{root}/gfs.t00z.pgrb2.0p25.f000", "file://{root}/gfs.t00z.pgrb2.0p25.f000"]
+    "template",
+    [
+        "{root}/gfs.t00z.pgrb2.0p25.f000",
+        "file://{root}/gfs.t00z.pgrb2.0p25.f000",
+    ],
 )
 def test_workflow__grid_grib__local(template, config_data, gen_config, fakefs, tc, testvars):
     grib_path = fakefs / "gfs.t00z.pgrb2.0p25.f000"
@@ -657,9 +661,12 @@ def test_workflow__prepare_plot_data(dictkey):
         assert tdf["INTERP_PNTS"].eq(width**2).all()
 
 
-<<<<<<< HEAD
 @mark.parametrize(
-    ("fmt", "path"), [(DataFormat.NETCDF, "/path/to/a.nc"), (DataFormat.ZARR, "/path/to/a.zarr")]
+    ("fmt", "path"),
+    [
+        (DataFormat.NETCDF, "/path/to/a.nc"),
+        (DataFormat.ZARR, "/path/to/a.zarr"),
+    ],
 )
 def test_workflow__req_grid(c, fmt, path, tc, testvars):
     with patch.object(workflow, "classify_data_format", return_value=fmt):
