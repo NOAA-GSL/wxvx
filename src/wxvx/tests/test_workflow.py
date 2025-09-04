@@ -116,7 +116,7 @@ def test_workflow_obs(c):
 
 
 def test_workflow_obs__bad_baseline_type(c):
-    c.baseline = replace(c.baseline, type="grid")
+    c.baseline = replace(c.baseline, type=VxType.GRID)
     with raises(WXVXError) as e:
         workflow.obs(c)
     expected = "This task requires that config value baseline.type be set to 'obs'"

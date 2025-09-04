@@ -35,7 +35,7 @@ class Baseline:
     compare: bool
     name: str
     url: str
-    type: str
+    type: VxType
 
     def __post_init__(self):
         _force(self, "type", VxType.POINT if self.type == "point" else VxType.GRID)
