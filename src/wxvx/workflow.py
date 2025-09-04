@@ -342,10 +342,10 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         yield asset(src, src.is_file)
         yield None
     else:
-        if not (basepath := c.paths.grids_baseline):
+        if not c.paths.grids_baseline:
             msg = "Config value paths.grids.baseline must be set"
             raise WXVXError(msg)
-        outdir = basepath / yyyymmdd / hh / leadtime
+        outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
         taskname = "Baseline grid %s" % path
         yield taskname
@@ -391,6 +391,9 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     taskname = "netCDF from prepbufr at %s %sZ" % (yyyymmdd, hh)
     yield taskname
     url = render(c.baseline.url, tc)
+    if not c.paths.obs:
+        msg = "Config value paths.obs must be set"
+        raise WXVXError(msg)
     path = (c.paths.obs / yyyymmdd / hh / url.split("/")[-1]).with_suffix(".nc")
     yield asset(path, path.is_file)
     rundir = c.paths.run / "stats" / yyyymmdd / hh

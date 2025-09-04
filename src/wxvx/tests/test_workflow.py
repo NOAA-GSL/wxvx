@@ -463,7 +463,7 @@ def test_workflow__grid_grib__remote(c, tc):
     _grib_index_data.assert_called_with(c, outdir, tc, url=url)
 
 
-def test_workflow__gird_grib__remote_no_path(c, tc):
+def test_workflow__grid_grib__remote_no_path(c, tc):
     c.paths = replace(c.paths, grids_baseline=None)
     with raises(WXVXError) as e:
         workflow._grid_grib(c=c, tc=tc, var=Var(name="t", level_type="isobaricInhPa", level=900))
@@ -513,6 +513,14 @@ def test_workflow__netcdf_from_obs(c, tc):
     runscript = cfgfile.with_suffix(".sh")
     assert runscript.is_file()
     mpexec.assert_called_once_with(str(runscript), ANY, ANY)
+
+
+def test_workflow__netcdf_from_obs__no_path(c, tc):
+    c.paths = replace(c.paths, obs=None)
+    with raises(WXVXError) as e:
+        workflow._netcdf_from_obs(c=c, tc=tc)
+    expected = "Config value paths.obs must be set"
+    assert expected in str(e.value)
 
 
 @mark.parametrize("dictkey", ["foo", "bar", "baz"])
