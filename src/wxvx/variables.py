@@ -24,36 +24,20 @@ UNKNOWN = "unknown"
 
 VARMETA = {
     x.name: x
-    for x in [
+    for x in [  # blocks ordered by description
         VarMeta(
-            cf_standard_name="air_temperature",
             description="2m Temperature",
+            cf_standard_name="air_temperature",
             level_type="heightAboveGround",
             met_stats=["ME", "RMSE"],
             name="2t",
             units="K",
         ),
         VarMeta(
-            cf_standard_name="geopotential_height",
-            description="Geopotential Height at {level} mb",
-            level_type="isobaricInhPa",
-            met_stats=["ME", "RMSE"],
-            name="gh",
-            units="m",
-        ),
-        VarMeta(
-            cf_standard_name="specific_humidity",
-            description="Specific Humidity at {level} mb",
-            level_type="isobaricInhPa",
-            met_stats=["ME", "RMSE"],
-            name="q",
-            units="1",
-        ),
-        VarMeta(
+            description="Composite Reflectivity",
             cat_thresh=[">=20", ">=30", ">=40"],
             cf_standard_name="unknown",
             cnt_thresh=[">15"],
-            description="Composite Reflectivity",
             level_type="atmosphere",
             met_stats=["FSS", "PODY"],
             name="refc",
@@ -62,48 +46,72 @@ VARMETA = {
             units="dBZ",
         ),
         VarMeta(
-            cf_standard_name="air_temperature",
+            description="Geopotential Height at {level} mb",
+            cf_standard_name="geopotential_height",
+            level_type="isobaricInhPa",
+            met_stats=["ME", "RMSE"],
+            name="gh",
+            units="m",
+        ),
+        VarMeta(
+            description="Specific Humidity at {level} mb",
+            cf_standard_name="specific_humidity",
+            level_type="isobaricInhPa",
+            met_stats=["ME", "RMSE"],
+            name="q",
+            units="1",
+        ),
+        VarMeta(
+            description="Surface Pressure",
+            cf_standard_name="surface_air_pressure",
+            level_type="surface",
+            met_stats=["ME", "RMSE"],
+            name="sp",
+            units="Pa",
+        ),
+        VarMeta(
             description="Temperature at {level} mb",
+            cf_standard_name="air_temperature",
             level_type="isobaricInhPa",
             met_stats=["ME", "RMSE"],
             name="t",
             units="K",
         ),
         VarMeta(
-            cf_standard_name="eastward_wind",
             description="U-Component of Wind at {level} mb",
+            cf_standard_name="eastward_wind",
             level_type="isobaricInhPa",
             met_stats=["ME", "RMSE"],
             name="u",
             units="m s-1",
         ),
         VarMeta(
-            cf_standard_name="eastward_wind",
             description="U-Component of Wind at 10m",
+            cf_standard_name="eastward_wind",
             level_type="heightAboveGround",
             met_stats=["ME", "RMSE"],
             name="u_10m",
             units="m s-1",
         ),
         VarMeta(
-            cf_standard_name="northward_wind",
             description="V-Component of Wind at {level} mb",
+            cf_standard_name="northward_wind",
             level_type="isobaricInhPa",
             met_stats=["ME", "RMSE"],
             name="v",
             units="m s-1",
         ),
         VarMeta(
-            cf_standard_name="northward_wind",
             description="V-Component of Wind at 10m",
+            cf_standard_name="northward_wind",
             level_type="heightAboveGround",
             met_stats=["ME", "RMSE"],
             name="v_10m",
             units="m s-1",
         ),
         VarMeta(
-            cf_standard_name="lagrangian_tendency_of_air_pressure",
             description="Vertical Velocity at {level} mb",
+            cf_standard_name="lagrangian_tendency_of_air_pressure",
             level_type="isobaricInhPa",
             met_stats=["ME", "RMSE"],
             name="w",
@@ -318,7 +326,12 @@ def ds_construct(c: Config, da: xr.DataArray, taskname: str, level: float | None
 
 def metlevel(level_type: str, level: float | None) -> str:
     try:
-        prefix = {"atmosphere": "L", "heightAboveGround": "Z", "isobaricInhPa": "P"}[level_type]
+        prefix = {
+            "atmosphere": "L",
+            "heightAboveGround": "Z",
+            "isobaricInhPa": "P",
+            "surface": "Z",
+        }[level_type]
     except KeyError as e:
         raise WXVXError("No MET level defined for level type %s" % level_type) from e
     return f"{prefix}%03d" % int(level or 0)

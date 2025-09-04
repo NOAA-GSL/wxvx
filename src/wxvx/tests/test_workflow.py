@@ -4,6 +4,7 @@ Tests for wxvx.workflow.
 
 import os
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from textwrap import dedent
@@ -15,11 +16,12 @@ from unittest.mock import ANY, Mock, patch
 import pandas as pd
 import xarray as xr
 from iotaa import Node, asset, external, ready
-from pytest import fixture, mark
+from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
-from wxvx.times import TimeCoords, gen_validtimes
+from wxvx.times import gen_validtimes, tcinfo
 from wxvx.types import Source
+from wxvx.util import WXVXError
 from wxvx.variables import Var
 
 TESTDATA = {
@@ -97,6 +99,30 @@ def test_workflow_grids_forecast(c, n_grids, noop):
         assert len(workflow.grids_forecast(c=c).ref) == n_grids
 
 
+def test_workflow_obs(c):
+    url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
+    c.baseline = replace(c.baseline, type="point", url=url)
+    expected = [
+        c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nr"
+        for (yyyymmdd, hh) in [
+            ("20241219", "18"),
+            ("20241220", "00"),
+            ("20241220", "06"),
+            ("20241220", "12"),
+            ("20241220", "18"),
+        ]
+    ]
+    assert workflow.obs(c).ref == expected
+
+
+def test_workflow_obs__bad_baseline_type(c):
+    c.baseline = replace(c.baseline, type="grid")
+    with raises(WXVXError) as e:
+        workflow.obs(c)
+    expected = "This task requires that config value baseline.type be set to 'point'"
+    assert expected in str(e.value)
+
+
 def test_workflow_plots(c, noop):
     with patch.object(workflow, "_plot", noop):
         val = workflow.plots(c=c)
@@ -119,13 +145,232 @@ def test_workflow__config_grid_stat(c, fakefs):
         c=c,
         path=path,
         varname="REFC",
-        rundir=fakefs,
         var=variables.Var(name="refc", level_type="atmosphere"),
         prefix="foo",
         source=Source.FORECAST,
         polyfile=None,
     )
     assert path.is_file()
+
+
+def test_workflow__config_pb2nc(c, fakefs):
+    path = fakefs / "pb2nc.config"
+    assert not path.is_file()
+    workflow._config_pb2nc(c=c, path=path)
+    expected = """
+    mask = {
+      grid = "FCST";
+    }
+    message_type = [
+      "ADPSFC",
+      "ADPUPA",
+      "AIRCAR",
+      "AIRCFT"
+    ];
+    obs_bufr_var = [
+      "POB",
+      "QOB",
+      "TOB",
+      "UOB",
+      "VOB",
+      "ZOB"
+    ];
+    obs_window = {
+      beg = -1800;
+      end = 1800;
+    }
+    quality_mark_thresh = 9;
+    time_summary = {
+      obs_var = [];
+      step = 3600;
+      type = [
+        "min",
+        "max",
+        "range",
+        "mean",
+        "stdev",
+        "median",
+        "p80"
+      ];
+      width = 3600;
+    }
+    tmp_dir = "/test";
+    """
+    assert dedent(expected).strip() == path.read_text().strip()
+
+
+@mark.parametrize("to", ["G104", None])
+def test_workflow__config_pb2nc__alt_masks(c, fakefs, to):
+    path = fakefs / "pb2nc.config"
+    assert not path.is_file()
+    c.regrid = replace(c.regrid, to=to)
+    workflow._config_pb2nc(c=c, path=path)
+    expected = """
+    mask = {
+      grid = "%s";
+    }
+    """ % (to or "FULL")
+    assert dedent(expected).strip() in path.read_text()
+
+
+def test_workflow__config_point_stat__atm(c, fakefs):
+    path = fakefs / "point_stat.config"
+    assert not path.is_file()
+    workflow._config_point_stat(
+        c=c,
+        path=path,
+        varname="geopotential",
+        var=variables.Var(name="gh", level_type="isobaricInhPa", level=500),
+        prefix="atm",
+    )
+    expected = """
+    fcst = {
+      field = [
+        {
+          level = [
+            "(0,0,*,*)"
+          ];
+          name = "geopotential";
+          set_attr_level = "P500";
+        }
+      ];
+    }
+    interp = {
+      shape = SQUARE;
+      type = {
+        method = BILIN;
+        width = 2;
+      }
+      vld_thresh = 1.0;
+    }
+    message_type = [
+      "ATM"
+    ];
+    message_type_group_map = [
+      {
+        key = "ATM";
+        val = "ADPUPA,AIRCAR,AIRCFT";
+      },
+      {
+        key = "SFC";
+        val = "ADPSFC";
+      }
+    ];
+    model = "Forecast";
+    obs = {
+      field = [
+        {
+          level = [
+            "P500"
+          ];
+          name = "HGT";
+        }
+      ];
+    }
+    obs_window = {
+      beg = -1800;
+      end = 1800;
+    }
+    output_flag = {
+      cnt = BOTH;
+    }
+    output_prefix = "atm";
+    regrid = {
+      method = NEAREST;
+      to_grid = FCST;
+      width = 1;
+    }
+    tmp_dir = "/test";
+    """
+    assert dedent(expected).strip() in path.read_text()
+
+
+def test_workflow__config_point_stat__sfc(c, fakefs):
+    path = fakefs / "point_stat.config"
+    assert not path.is_file()
+    workflow._config_point_stat(
+        c=c,
+        path=path,
+        varname="2m_temperature",
+        var=variables.Var(name="2t", level_type="heightAboveGround", level=2),
+        prefix="sfc",
+    )
+    expected = """
+    fcst = {
+      field = [
+        {
+          level = [
+            "(0,0,*,*)"
+          ];
+          name = "2m_temperature";
+          set_attr_level = "Z002";
+        }
+      ];
+    }
+    interp = {
+      shape = SQUARE;
+      type = {
+        method = BILIN;
+        width = 2;
+      }
+      vld_thresh = 1.0;
+    }
+    message_type = [
+      "SFC"
+    ];
+    message_type_group_map = [
+      {
+        key = "ATM";
+        val = "ADPUPA,AIRCAR,AIRCFT";
+      },
+      {
+        key = "SFC";
+        val = "ADPSFC";
+      }
+    ];
+    model = "Forecast";
+    obs = {
+      field = [
+        {
+          level = [
+            "Z002"
+          ];
+          name = "TMP";
+        }
+      ];
+    }
+    obs_window = {
+      beg = -900;
+      end = 900;
+    }
+    output_flag = {
+      cnt = BOTH;
+    }
+    output_prefix = "sfc";
+    regrid = {
+      method = NEAREST;
+      to_grid = FCST;
+      width = 1;
+    }
+    tmp_dir = "/test";
+    """
+    assert dedent(expected).strip() in path.read_text()
+
+
+def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, logged):
+    path = fakefs / "point_stat.config"
+    assert not path.is_file()
+    c.regrid = replace(c.regrid, method="BUDGET")
+    task = workflow._config_point_stat(
+        c=c,
+        path=path,
+        varname="geopotential",
+        var=variables.Var(name="gh", level_type="isobaricInhPa", level=500),
+        prefix="atm",
+    )
+    assert not task.ready
+    assert not path.is_file()
+    assert logged("Could not determine 'width' value for regrid method 'BUDGET'")
 
 
 def test_workflow__existing(fakefs):
@@ -173,7 +418,7 @@ def test_workflow__grib_index_data(c, tc):
 @mark.parametrize(
     "template", ["{root}/gfs.t00z.pgrb2.0p25.f000", "file://{root}/gfs.t00z.pgrb2.0p25.f000"]
 )
-def test_workflow__grid_grib_local(template, config_data, gen_config, fakefs, tc):
+def test_workflow__grid_grib__local(template, config_data, gen_config, fakefs, tc):
     grib_path = fakefs / "gfs.t00z.pgrb2.0p25.f000"
     grib_path.write_text("foo")
     config_data["baseline"]["url"] = template.format(root=fakefs)
@@ -183,7 +428,7 @@ def test_workflow__grid_grib_local(template, config_data, gen_config, fakefs, tc
     assert ready(val)
 
 
-def test_workflow__grid_grib_remote(c, tc):
+def test_workflow__grid_grib__remote(c, tc):
     idxdata = {
         "gh-isobaricInhPa-0900": variables.HRRR(
             name="HGT", levstr="900 mb", firstbyte=0, lastbyte=0
@@ -218,6 +463,14 @@ def test_workflow__grid_grib_remote(c, tc):
     _grib_index_data.assert_called_with(c, outdir, tc, url=url)
 
 
+def test_workflow__grid_grib__remote_no_path(c, tc):
+    c.paths = replace(c.paths, grids_baseline=None)
+    with raises(WXVXError) as e:
+        workflow._grid_grib(c=c, tc=tc, var=Var(name="t", level_type="isobaricInhPa", level=900))
+    expected = "Config value paths.grids.baseline must be set"
+    assert expected in str(e.value)
+
+
 def test_workflow__grid_nc(c_real_fs, check_cf_metadata, da_with_leadtime, tc):
     level = 900
     var = variables.Var(name="gh", level_type="isobaricInhPa", level=level)
@@ -242,20 +495,32 @@ def test_workflow__local_file_from_http(c):
     assert path.exists()
 
 
-def test_workflow__polyfile(fakefs):
-    path = fakefs / "a.poly"
+def test_workflow__netcdf_from_obs(c, tc):
+    yyyymmdd, hh, _ = tcinfo(tc)
+    url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
+    c.baseline = replace(c.baseline, type="point", url=url)
+    path = c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nc"
     assert not path.is_file()
-    mask = ((52.6, 225.9), (52.6, 255.0), (21.1, 255.0), (21.1, 225.9))
-    polyfile = workflow._polyfile(path=path, mask=mask)
-    assert polyfile.ready
-    expected = """
-    MASK
-    52.6 225.9
-    52.6 255.0
-    21.1 255.0
-    21.1 225.9
-    """
-    assert path.read_text().strip() == dedent(expected).strip()
+    prepbufr = path.with_suffix(".nr")
+    prepbufr.parent.mkdir(parents=True, exist_ok=True)
+    prepbufr.touch()
+    with patch.object(workflow, "mpexec", side_effect=lambda *_args: path.touch()) as mpexec:
+        task = workflow._netcdf_from_obs(c=c, tc=tc)
+    assert path.is_file()
+    assert task.ready
+    cfgfile = cast(dict, task.requirements)["cfgfile"].ref
+    assert cfgfile.is_file()
+    runscript = cfgfile.with_suffix(".sh")
+    assert runscript.is_file()
+    mpexec.assert_called_once_with(str(runscript), ANY, ANY)
+
+
+def test_workflow__netcdf_from_obs__no_path(c, tc):
+    c.paths = replace(c.paths, obs=None)
+    with raises(WXVXError) as e:
+        workflow._netcdf_from_obs(c=c, tc=tc)
+    expected = "Config value paths.obs must be set"
+    assert expected in str(e.value)
 
 
 @mark.parametrize("dictkey", ["foo", "bar", "baz"])
@@ -284,19 +549,36 @@ def test_workflow__plot(c, dictkey, fakefs, fs):
     xticks.assert_called_once_with(ticks=[0, 6, 12], labels=["000", "006", "012"], rotation=90)
 
 
+def test_workflow__polyfile(fakefs):
+    path = fakefs / "a.poly"
+    assert not path.is_file()
+    mask = ((52.6, 225.9), (52.6, 255.0), (21.1, 255.0), (21.1, 225.9))
+    polyfile = workflow._polyfile(path=path, mask=mask)
+    assert polyfile.ready
+    expected = """
+    MASK
+    52.6 225.9
+    52.6 255.0
+    21.1 255.0
+    21.1 225.9
+    """
+    assert path.read_text().strip() == dedent(expected).strip()
+
+
 def test_workflow__stats_vs_grid(c, fakefs, tc):
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
         yield asset(Path("/some/file"), lambda: True)
 
+    taskfunc = workflow._stats_vs_grid
     rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
     taskname = "Stats vs grid for baseline 2t-heightAboveGround-0002 at 19700101 00Z 000"
     var = variables.Var(name="2t", level_type="heightAboveGround", level=2)
     kwargs = dict(c=c, varname="T2M", tc=tc, var=var, prefix="foo", source=Source.BASELINE)
-    stat = workflow._stats_vs_grid(**kwargs, dry_run=True).ref
-    cfgfile = (rundir / stat.stem).with_suffix(".config")
-    runscript = (rundir / stat.stem).with_suffix(".sh")
+    stat = taskfunc(**kwargs, dry_run=True).ref
+    cfgfile = stat.with_suffix(".config")
+    runscript = stat.with_suffix(".sh")
     assert not stat.is_file()
     assert not cfgfile.is_file()
     assert not runscript.is_file()
@@ -306,7 +588,39 @@ def test_workflow__stats_vs_grid(c, fakefs, tc):
         patch.object(workflow, "mpexec", side_effect=lambda *_: stat.touch()) as mpexec,
     ):
         stat.parent.mkdir(parents=True)
-        workflow._stats_vs_grid(**kwargs)
+        taskfunc(**kwargs)
+    assert stat.is_file()
+    assert cfgfile.is_file()
+    assert runscript.is_file()
+    mpexec.assert_called_once_with(str(runscript), rundir, taskname)
+
+
+def test_workflow__stats_vs_obs(c, fakefs, tc):
+    @external
+    def mock(*_args, **_kwargs):
+        yield "mock"
+        yield asset(Path("/some/file"), lambda: True)
+
+    taskfunc = workflow._stats_vs_obs
+    url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
+    c.baseline = replace(c.baseline, type="point", url=url)
+    rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
+    taskname = "Stats vs obs for baseline 2t-heightAboveGround-0002 at 19700101 00Z 000"
+    var = variables.Var(name="2t", level_type="heightAboveGround", level=2)
+    kwargs = dict(c=c, varname="T2M", tc=tc, var=var, prefix="foo", source=Source.BASELINE)
+    stat = taskfunc(**kwargs, dry_run=True).ref
+    cfgfile = stat.with_suffix(".config")
+    runscript = stat.with_suffix(".sh")
+    assert not stat.is_file()
+    assert not cfgfile.is_file()
+    assert not runscript.is_file()
+    with (
+        patch.object(workflow, "_grid_nc", mock),
+        patch.object(workflow, "_netcdf_from_obs", mock),
+        patch.object(workflow, "mpexec", side_effect=lambda *_: stat.touch()) as mpexec,
+    ):
+        stat.parent.mkdir(parents=True)
+        taskfunc(**kwargs)
     assert stat.is_file()
     assert cfgfile.is_file()
     assert runscript.is_file()
@@ -340,6 +654,14 @@ def test_workflow__prepare_plot_data(dictkey):
         assert width is not None
         assert "INTERP_PNTS" in tdf.columns
         assert tdf["INTERP_PNTS"].eq(width**2).all()
+
+
+def test_workflow__prepbufr(fakefs):
+    assert not workflow._prepbufr(url="https://example.com/prepbufr.nr", outdir=fakefs).ready
+    path = fakefs / "prepbufr.nr"
+    path.touch()
+    assert workflow._prepbufr(url=str(path), outdir=fakefs).ready
+    assert workflow._prepbufr(url=f"file://{path}", outdir=fakefs).ready
 
 
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
@@ -453,7 +775,7 @@ def noop():
 
 
 @fixture
-def statkit(utc):
+def statkit(tc):
     level = 900
     level_type = "isobaricInhPa"
     return ns(
@@ -461,7 +783,7 @@ def statkit(utc):
         level_type=level_type,
         prefix=f"forecast_gh_{level_type}_{level:04d}",
         source=Source.FORECAST,
-        tc=TimeCoords(utc(2025, 3, 2, 12)),
+        tc=tc,
         var=Var("gh", level_type, level),
         varname="HGT",
     )

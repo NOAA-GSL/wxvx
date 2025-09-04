@@ -70,10 +70,6 @@ def test_metconf_render():
             "D_RH",
             "QOB",
         ],
-        "obs_prepbufr_map": {
-            "CEILING": "CEILING",
-            "D_CAPE": "CAPE",
-        },
         "obs_window": {
             "beg": -1800,
             "end": 1800,
@@ -160,16 +156,6 @@ def test_metconf_render():
     obs_bufr_var = [
       "D_RH",
       "QOB"
-    ];
-    obs_prepbufr_map = [
-      {
-        key = "CEILING";
-        val = "CEILING";
-      },
-      {
-        key = "D_CAPE";
-        val = "CAPE";
-      }
     ];
     obs_window = {
       beg = -1800;
@@ -334,9 +320,23 @@ def test_metconf__mapping():
     assert metconf._mapping(k="m", v=['    1 = "one";', '    2 = "two";'], level=1) == expected
 
 
-def test_metconf__mask():
+def test_metconf__mask_bad_key():
     with raises(ValueError, match="Unsupported key: foo"):
         metconf._mask(k="foo", v=[], level=0)
+
+
+def test_metconf__mask__grid_list():
+    text = """
+    grid = [
+      "FULL"
+    ];
+    """
+    expected = dedent(text).strip().split("\n")
+    assert metconf._mask(k="grid", v=["FULL"], level=0) == expected
+
+
+def test_metconf__mask__grid_str():
+    assert metconf._mask(k="grid", v="G104", level=1) == ['  grid = "G104";']
 
 
 def test_metconf__nbrhd():

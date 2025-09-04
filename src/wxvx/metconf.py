@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Callable, NoReturn
 
 # Public:
@@ -100,11 +102,20 @@ def _mapping(k: str, v: list[str], level: int) -> list[str]:
     return [_indent("%s = {" % k, level), *v, _indent("}", level)]
 
 
-def _mask(k: str, v: list, level: int) -> list[str]:
+def _mask(k: str, v: list[str] | str, level: int) -> list[str]:
+    # An inconsistency uncharacteristic of MET: The pb2nc 'mask' setting is formatted differently
+    # than for grid_stat and point_stat. For pb2nc, the format is
+    #   mask = { grid = ""; poly = ""; }
+    # with 'grid' and 'poly' as single strings, while for grid/point_stat it's
+    #   mask = { grid = [""]; poly = [""]; }
+    # with 'grid' and 'poly' as string sequences.
     match k:
-        # Sequence: quoted.
         case "grid" | "poly":
-            return _sequence(k, v, _quoted, level)
+            if isinstance(v, list):
+                # Sequence: quoted.
+                return _sequence(k, v, _quoted, level)
+            # Key-Value Pair: quoted.
+            return _kvpair(k, _quoted(v), level)
     return _fail(k)
 
 
@@ -203,7 +214,7 @@ def _top(k: str, v: Any, level: int) -> list[str]:
         case "message_type" | "obs_bufr_var":
             return _sequence(k, v, _quoted, level)
         # Sequence: list of single key-val dictionaries.
-        case "message_type_group_map" | "obs_prepbufr_map":
+        case "message_type_group_map" | "obs_bufr_map":
             return _key_val_map_list(k, v, level)
     return _fail(k)
 

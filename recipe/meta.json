@@ -1,6 +1,6 @@
 {
-  "build": "py_2",
-  "buildnum": 2,
+  "build": "py_3",
+  "buildnum": 3,
   "name": "wxvx",
   "packages": {
     "dev": [
