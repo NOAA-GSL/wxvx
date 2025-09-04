@@ -462,10 +462,10 @@ def test_workflow__grid_grib__remote(c, tc, testvars):
     _grib_index_data.assert_called_with(c, outdir, tc, url=url)
 
 
-def test_workflow__grid_grib__remote_no_path(c, tc):
+def test_workflow__grid_grib__remote_no_path(c, tc, testvars):
     c.paths = replace(c.paths, grids_baseline=None)
     with raises(WXVXError) as e:
-        workflow._grid_grib(c=c, tc=tc, var=Var(name="t", level_type="isobaricInhPa", level=900))
+        workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
     expected = "Config value paths.grids.baseline must be set"
     assert expected in str(e.value)
 
