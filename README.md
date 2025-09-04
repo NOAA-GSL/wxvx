@@ -55,7 +55,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │   mask:            │   Sequence of [lat, lon] pairs (optional) │
 │   name:            │   Dataset descriptive name                │
 │   path:            │   Filesystem path to Zarr/netCDF dataset  │
-│   projection:      │   Projection information                  │
+│   projection:      │   Projection information (optional)       │
 │ leadtimes:         │ Leadtimes to verify                       │
 │   start:           │   First leadtime                          │
 │   step:            │   Interval between leadtimes              │
@@ -163,7 +163,7 @@ The `meta:` block may contain, for example, values tagged with YAML anchors refe
 
 ### projection
 
-The `forecast.projection` value should be a mapping with at least a `proj` key identifying the ID of the [projection](https://proj.org/en/stable/operations/projections/index.html), and potentially additional projection attributes depending on the `proj` value:
+The `forecast.projection` block is optional, and defaults to a `latlon` projection when not specified. When provided, the `forecast.projection` value should be a mapping with at least a `proj` key identifying the ID of the [projection](https://proj.org/en/stable/operations/projections/index.html), and potentially additional projection attributes depending on the `proj` value:
 
   - When `proj` is [`latlon`](https://proj.org/en/stable/operations/conversions/latlon.html), specify no additional attributes.
   - When `proj` is [`lcc`](https://proj.org/en/stable/operations/projections/lcc.html), specify attributes `a`, `b`, `lat_0`, `lat_1`, `lat_2`, and `lon_0`.
