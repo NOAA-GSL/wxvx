@@ -20,7 +20,7 @@ from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
 from wxvx.times import gen_validtimes, tcinfo
-from wxvx.types import Source, VxType
+from wxvx.types import Source
 from wxvx.util import WXVXError
 from wxvx.variables import Var
 
@@ -116,10 +116,10 @@ def test_workflow_obs(c):
 
 
 def test_workflow_obs__bad_baseline_type(c):
-    c.baseline = replace(c.baseline, type=VxType.GRID)
+    c.baseline = replace(c.baseline, type="grid")
     with raises(WXVXError) as e:
         workflow.obs(c)
-    expected = "This task requires that config value baseline.type be set to 'obs'"
+    expected = "This task requires that config value baseline.type be set to 'point'"
     assert expected in str(e.value)
 
 
@@ -498,7 +498,7 @@ def test_workflow__local_file_from_http(c):
 def test_workflow__netcdf_from_obs(c, tc):
     yyyymmdd, hh, _ = tcinfo(tc)
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.baseline = replace(c.baseline, url=url)
+    c.baseline = replace(c.baseline, type="point", url=url)
     path = c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nc"
     assert not path.is_file()
     prepbufr = path.with_suffix(".nr")
@@ -603,7 +603,7 @@ def test_workflow__stats_vs_obs(c, fakefs, tc):
 
     taskfunc = workflow._stats_vs_obs
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.baseline = replace(c.baseline, type=VxType.POINT, url=url)
+    c.baseline = replace(c.baseline, type="point", url=url)
     rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
     taskname = "Stats vs obs for baseline 2t-heightAboveGround-0002 at 19700101 00Z 000"
     var = variables.Var(name="2t", level_type="heightAboveGround", level=2)

@@ -80,7 +80,7 @@ def grids_forecast(c: Config):
 def obs(c: Config):
     taskname = "Baseline obs for %s" % c.baseline.name
     if c.baseline.type == VxType.GRID:
-        msg = "%s: This task requires that config value baseline.type be set to 'obs'"
+        msg = "%s: This task requires that config value baseline.type be set to 'point'"
         raise WXVXError(msg % taskname)
     yield taskname
     reqs = []
