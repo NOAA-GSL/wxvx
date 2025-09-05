@@ -150,10 +150,9 @@ def _config_grid_stat(
     if meta.cnt_thresh:
         for x in field_fcst, field_obs:
             x["cnt_thresh"] = meta.cnt_thresh
-    mask = {"grid": [] if polyfile else ["FULL"], "poly": [polyfile.ref] if polyfile else []}
     config = {
         "fcst": {"field": [field_fcst]},
-        "mask": mask,
+        "mask": {"grid": [] if polyfile else ["FULL"], "poly": [polyfile.ref] if polyfile else []},
         "model": c.forecast.name,
         "nc_pairs_flag": "FALSE",
         "obs": {"field": [field_obs]},
