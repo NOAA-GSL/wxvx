@@ -857,6 +857,5 @@ def field_data(fmt: DataFormat) -> str:
           "Z002"
         ];
         name = "TMP";
-        set_attr_level = "Z002";
         """
     return dedent(text).strip()

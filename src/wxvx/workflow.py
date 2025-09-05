@@ -260,7 +260,9 @@ def _config_point_stat(
         if datafmt == DataFormat.GRIB
         else ("(0,0,*,*)", varname)
     )
-    field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
+    field_fcst = {"level": [level_fcst], "name": name_fcst}
+    if datafmt != DataFormat.GRIB:
+        field_fcst["set_attr_level"] = level_obs
     field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
     surface = var.level_type in ("heightAboveGround", "surface")
     try:
