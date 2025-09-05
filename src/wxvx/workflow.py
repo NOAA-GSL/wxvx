@@ -142,15 +142,7 @@ def _config_grid_stat(
     yield taskname
     yield asset(path, path.is_file)
     yield None
-    level_obs = metlevel(var.level_type, var.level)
-    varname_baseline = variables.model_class(c.baseline.name).varname(var.name)
-    level_fcst, name_fcst = (
-        (level_obs, varname_baseline) if datafmt == DataFormat.GRIB else ("(0,0,*,*)", varname)
-    )
-    field_fcst = {"level": [level_fcst], "name": name_fcst}
-    if datafmt != DataFormat.GRIB:
-        field_fcst["set_attr_level"] = level_obs
-    field_obs = {"level": [level_obs], "name": varname_baseline}
+    field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
     meta = _meta(c, varname)
     if meta.cat_thresh:
         for x in field_fcst, field_obs:
@@ -161,25 +153,15 @@ def _config_grid_stat(
     mask_grid = [] if polyfile else ["FULL"]
     mask_poly = [polyfile.ref] if polyfile else []
     config = {
-        "fcst": {
-            "field": [field_fcst],
-        },
-        "mask": {
-            "grid": mask_grid,
-            "poly": mask_poly,
-        },
+        "fcst": {"field": [field_fcst]},
+        "mask": {"grid": mask_grid, "poly": mask_poly},
         "model": c.forecast.name,
         "nc_pairs_flag": "FALSE",
-        "obs": {
-            "field": [field_obs],
-        },
+        "obs": {"field": [field_obs]},
         "obtype": c.baseline.name,
         "output_flag": dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), "BOTH"),
         "output_prefix": f"{prefix}",
-        "regrid": {
-            "method": c.regrid.method,
-            "to_grid": c.regrid.to,
-        },
+        "regrid": {"method": c.regrid.method, "to_grid": c.regrid.to},
         "tmp_dir": path.parent,
     }
     if nbrhd := {k: v for k, v in [("shape", meta.nbrhd_shape), ("width", meta.nbrhd_width)] if v}:
@@ -196,43 +178,14 @@ def _config_pb2nc(c: Config, path: Path):
     yield None
     # Specify the union of values needed by either sfc or atm vx and let point_stat restrict its
     # selection of obs from the netCDF file created by pb2nc.
+    _type = ["min", "max", "range", "mean", "stdev", "median", "p80"]
     config: dict = {
-        "mask": {
-            "grid": c.regrid.to or "FULL",
-        },
-        "message_type": [
-            "ADPSFC",
-            "ADPUPA",
-            "AIRCAR",
-            "AIRCFT",
-        ],
-        "obs_bufr_var": [
-            "POB",
-            "QOB",
-            "TOB",
-            "UOB",
-            "VOB",
-            "ZOB",
-        ],
-        "obs_window": {
-            "beg": -1800,
-            "end": 1800,
-        },
+        "mask": {"grid": c.regrid.to or "FULL"},
+        "message_type": ["ADPSFC", "ADPUPA", "AIRCAR", "AIRCFT"],
+        "obs_bufr_var": ["POB", "QOB", "TOB", "UOB", "VOB", "ZOB"],
+        "obs_window": {"beg": -1800, "end": 1800},
         "quality_mark_thresh": 9,
-        "time_summary": {
-            "step": 3600,
-            "width": 3600,
-            "obs_var": [],
-            "type": [
-                "min",
-                "max",
-                "range",
-                "mean",
-                "stdev",
-                "median",
-                "p80",
-            ],
-        },
+        "time_summary": {"step": 3600, "width": 3600, "obs_var": [], "type": _type},
         "tmp_dir": path.parent,
     }
     with atomic(path) as tmp:
@@ -252,15 +205,7 @@ def _config_point_stat(
     yield taskname
     yield asset(path, path.is_file)
     yield None
-    level_obs = metlevel(var.level_type, var.level)
-    varname_baseline = variables.model_class(c.baseline.name).varname(var.name)
-    level_fcst, name_fcst = (
-        (level_obs, varname_baseline) if datafmt == DataFormat.GRIB else ("(0,0,*,*)", varname)
-    )
-    field_fcst = {"level": [level_fcst], "name": name_fcst}
-    if datafmt != DataFormat.GRIB:
-        field_fcst["set_attr_level"] = level_obs
-    field_obs = {"level": [level_obs], "name": varname_baseline}
+    field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
     try:
         regrid_width = {"BILIN": 2, "NEAREST": 1}[c.regrid.method]
     except KeyError as e:
@@ -268,39 +213,16 @@ def _config_point_stat(
         raise WXVXError(msg) from e
     surface = var.level_type in ("heightAboveGround", "surface")
     config = {
-        "fcst": {
-            "field": [field_fcst],
-        },
-        "interp": {
-            "shape": "SQUARE",
-            "type": {
-                "method": "BILIN",
-                "width": 2,
-            },
-            "vld_thresh": 1.0,
-        },
+        "fcst": {"field": [field_fcst]},
+        "interp": {"shape": "SQUARE", "type": {"method": "BILIN", "width": 2}, "vld_thresh": 1.0},
         "message_type": ["SFC" if surface else "ATM"],
-        "message_type_group_map": {
-            "ATM": "ADPUPA,AIRCAR,AIRCFT",
-            "SFC": "ADPSFC",
-        },
+        "message_type_group_map": {"ATM": "ADPUPA,AIRCAR,AIRCFT", "SFC": "ADPSFC"},
         "model": c.forecast.name,
-        "obs": {
-            "field": [field_obs],
-        },
-        "obs_window": {
-            "beg": -900 if surface else -1800,
-            "end": 900 if surface else 1800,
-        },
-        "output_flag": {
-            "cnt": "BOTH",
-        },
+        "obs": {"field": [field_obs]},
+        "obs_window": {"beg": -900 if surface else -1800, "end": 900 if surface else 1800},
+        "output_flag": {"cnt": "BOTH"},
         "output_prefix": f"{prefix}",
-        "regrid": {
-            "method": c.regrid.method,
-            "to_grid": c.regrid.to,
-            "width": regrid_width,
-        },
+        "regrid": {"method": c.regrid.method, "to_grid": c.regrid.to, "width": regrid_width},
         "tmp_dir": path.parent,
     }
     with atomic(path) as tmp:
@@ -535,6 +457,19 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
 
 
 # Support
+
+
+def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
+    level_obs = metlevel(var.level_type, var.level)
+    varname_baseline = variables.model_class(c.baseline.name).varname(var.name)
+    level_fcst, name_fcst = (
+        (level_obs, varname_baseline) if datafmt == DataFormat.GRIB else ("(0,0,*,*)", varname)
+    )
+    field_fcst = {"level": [level_fcst], "name": name_fcst}
+    if datafmt != DataFormat.GRIB:
+        field_fcst["set_attr_level"] = level_obs
+    field_obs = {"level": [level_obs], "name": varname_baseline}
+    return field_fcst, field_obs
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
