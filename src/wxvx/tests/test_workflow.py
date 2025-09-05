@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
-from textwrap import dedent
+from textwrap import dedent, indent
 from threading import Event
 from types import SimpleNamespace as ns
 from typing import cast
@@ -295,26 +295,18 @@ def test_workflow__config_point_stat__atm(c, fakefs, testvars):
     assert dedent(expected).strip() in path.read_text()
 
 
-def test_workflow__config_point_stat__sfc(c, fakefs, testvars):
+@mark.parametrize("fmt", [DataFormat.GRIB, DataFormat.NETCDF, DataFormat.ZARR])
+def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
     workflow._config_point_stat(
-        c=c,
-        path=path,
-        varname="2m_temperature",
-        var=testvars["2t"],
-        prefix="sfc",
-        datafmt=DataFormat.NETCDF,
+        c=c, path=path, varname="2m_temperature", var=testvars["2t"], prefix="sfc", datafmt=fmt
     )
     expected = """
     fcst = {
       field = [
         {
-          level = [
-            "(0,0,*,*)"
-          ];
-          name = "2m_temperature";
-          set_attr_level = "Z002";
+    %s
         }
       ];
     }
@@ -365,7 +357,8 @@ def test_workflow__config_point_stat__sfc(c, fakefs, testvars):
     }
     tmp_dir = "/test";
     """
-    assert dedent(expected).strip() in path.read_text()
+    expected = dedent(expected).strip() % indent(field_data(fmt), "      ")
+    assert path.read_text().strip() == expected
 
 
 def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, logged, testvars):
@@ -843,3 +836,27 @@ def testvars():
         "refc": Var(name="refc", level_type="atmosphere"),
         "t": Var(name="t", level_type="isobaricInhPa", level=900),
     }
+
+
+# Helpers
+
+
+def field_data(fmt: DataFormat) -> str:
+    assert fmt in [DataFormat.GRIB, DataFormat.NETCDF, DataFormat.ZARR]
+    if fmt in [DataFormat.NETCDF, DataFormat.ZARR]:
+        text = """
+        level = [
+          "(0,0,*,*)"
+        ];
+        name = "2m_temperature";
+        set_attr_level = "Z002";
+        """
+    elif fmt == DataFormat.GRIB:
+        text = """
+        level = [
+          "Z002"
+        ];
+        name = "TMP";
+        set_attr_level = "Z002";
+        """
+    return dedent(text).strip()

@@ -254,10 +254,11 @@ def _config_point_stat(
     yield None
     level_obs = metlevel(var.level_type, var.level)
     baseline_class = variables.model_class(c.baseline.name)
-    level_fcst, name_fcst, model = (
-        (level_obs, baseline_class.varname(var.name), c.baseline.name)
+    model = c.forecast.name
+    level_fcst, name_fcst = (
+        (level_obs, baseline_class.varname(var.name))
         if datafmt == DataFormat.GRIB
-        else ("(0,0,*,*)", varname, c.forecast.name)
+        else ("(0,0,*,*)", varname)
     )
     field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
     field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
