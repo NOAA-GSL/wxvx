@@ -664,6 +664,17 @@ def test_workflow__prepare_plot_data(dictkey):
         assert tdf["INTERP_PNTS"].eq(width**2).all()
 
 
+def test_workflow__regrid_width(c):
+    c.regrid = replace(c.regrid, method="BILIN")
+    assert workflow._regrid_width(c=c) == 2
+    c.regrid = replace(c.regrid, method="NEAREST")
+    assert workflow._regrid_width(c=c) == 1
+    c.regrid = replace(c.regrid, method="FOO")
+    with raises(WXVXError) as e:
+        workflow._regrid_width(c=c)
+    assert str(e.value) == "Could not determine 'width' value for regrid method 'FOO'"
+
+
 @mark.parametrize(
     ("fmt", "path"),
     [

@@ -194,23 +194,13 @@ def _config_pb2nc(c: Config, path: Path):
 
 @task
 def _config_point_stat(
-    c: Config,
-    path: Path,
-    varname: str,
-    var: Var,
-    prefix: str,
-    datafmt: DataFormat,
+    c: Config, path: Path, varname: str, var: Var, prefix: str, datafmt: DataFormat
 ):
     taskname = f"Config for point_stat {path}"
     yield taskname
     yield asset(path, path.is_file)
     yield None
     field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
-    try:
-        regrid_width = {"BILIN": 2, "NEAREST": 1}[c.regrid.method]
-    except KeyError as e:
-        msg = "Could not determine 'width' value for regrid method '%s'" % c.regrid.method
-        raise WXVXError(msg) from e
     surface = var.level_type in ("heightAboveGround", "surface")
     config = {
         "fcst": {"field": [field_fcst]},
@@ -222,7 +212,7 @@ def _config_point_stat(
         "obs_window": {"beg": -900 if surface else -1800, "end": 900 if surface else 1800},
         "output_flag": {"cnt": "BOTH"},
         "output_prefix": f"{prefix}",
-        "regrid": {"method": c.regrid.method, "to_grid": c.regrid.to, "width": regrid_width},
+        "regrid": {"method": c.regrid.method, "to_grid": c.regrid.to, "width": _regrid_width(c)},
         "tmp_dir": path.parent,
     }
     with atomic(path) as tmp:
@@ -494,6 +484,14 @@ def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd
     if "INTERP_PNTS" in columns and width is not None:
         plot_data = plot_data[plot_data["INTERP_PNTS"] == width**2]
     return plot_data
+
+
+def _regrid_width(c: Config) -> int:
+    try:
+        return {"BILIN": 2, "NEAREST": 1}[c.regrid.method]
+    except KeyError as e:
+        msg = "Could not determine 'width' value for regrid method '%s'" % c.regrid.method
+        raise WXVXError(msg) from e
 
 
 def _req_grid(
