@@ -143,14 +143,14 @@ def _config_grid_stat(
     yield asset(path, path.is_file)
     yield None
     level_obs = metlevel(var.level_type, var.level)
-    baseline_class = variables.model_class(c.baseline.name)
-    level_fcst, name_fcst, model = (
-        (level_obs, baseline_class.varname(var.name), c.baseline.name)
-        if datafmt == DataFormat.GRIB
-        else ("(0,0,*,*)", varname, c.forecast.name)
+    varname_baseline = variables.model_class(c.baseline.name).varname(var.name)
+    level_fcst, name_fcst = (
+        (level_obs, varname_baseline) if datafmt == DataFormat.GRIB else ("(0,0,*,*)", varname)
     )
-    field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
-    field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
+    field_fcst = {"level": [level_fcst], "name": name_fcst}
+    if datafmt != DataFormat.GRIB:
+        field_fcst["set_attr_level"] = level_obs
+    field_obs = {"level": [level_obs], "name": varname_baseline}
     meta = _meta(c, varname)
     if meta.cat_thresh:
         for x in field_fcst, field_obs:
@@ -168,7 +168,7 @@ def _config_grid_stat(
             "grid": mask_grid,
             "poly": mask_poly,
         },
-        "model": model,
+        "model": c.forecast.name,
         "nc_pairs_flag": "FALSE",
         "obs": {
             "field": [field_obs],
@@ -253,23 +253,20 @@ def _config_point_stat(
     yield asset(path, path.is_file)
     yield None
     level_obs = metlevel(var.level_type, var.level)
-    baseline_class = variables.model_class(c.baseline.name)
-    model = c.forecast.name
+    varname_baseline = variables.model_class(c.baseline.name).varname(var.name)
     level_fcst, name_fcst = (
-        (level_obs, baseline_class.varname(var.name))
-        if datafmt == DataFormat.GRIB
-        else ("(0,0,*,*)", varname)
+        (level_obs, varname_baseline) if datafmt == DataFormat.GRIB else ("(0,0,*,*)", varname)
     )
     field_fcst = {"level": [level_fcst], "name": name_fcst}
     if datafmt != DataFormat.GRIB:
         field_fcst["set_attr_level"] = level_obs
-    field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
-    surface = var.level_type in ("heightAboveGround", "surface")
+    field_obs = {"level": [level_obs], "name": varname_baseline}
     try:
         regrid_width = {"BILIN": 2, "NEAREST": 1}[c.regrid.method]
     except KeyError as e:
         msg = "Could not determine 'width' value for regrid method '%s'" % c.regrid.method
         raise WXVXError(msg) from e
+    surface = var.level_type in ("heightAboveGround", "surface")
     config = {
         "fcst": {
             "field": [field_fcst],
@@ -287,7 +284,7 @@ def _config_point_stat(
             "ATM": "ADPUPA,AIRCAR,AIRCFT",
             "SFC": "ADPSFC",
         },
-        "model": model,
+        "model": c.forecast.name,
         "obs": {
             "field": [field_obs],
         },

@@ -4,6 +4,7 @@ import logging
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from textwrap import dedent
 from typing import Callable
 
 import numpy as np
@@ -207,6 +208,11 @@ def tc(da_with_leadtime):
     cycle = datetime.fromtimestamp(int(da_with_leadtime.time.values[0]), tz=timezone.utc)
     leadtime = timedelta(hours=int(da_with_leadtime.lead_time.values[0]))
     return times.TimeCoords(cycle=cycle, leadtime=leadtime)
+
+
+@fixture
+def tidy(text: str) -> str:
+    return dedent(text).strip()
 
 
 @fixture

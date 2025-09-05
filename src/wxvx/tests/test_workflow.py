@@ -222,26 +222,18 @@ def test_workflow__config_pb2nc__alt_masks(c, fakefs, to):
     assert dedent(expected).strip() in path.read_text()
 
 
-def test_workflow__config_point_stat__atm(c, fakefs, testvars):
+@mark.parametrize("fmt", [DataFormat.GRIB, DataFormat.NETCDF, DataFormat.ZARR])
+def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
     workflow._config_point_stat(
-        c=c,
-        path=path,
-        varname="geopotential",
-        var=testvars["gh"],
-        prefix="atm",
-        datafmt=DataFormat.NETCDF,
+        c=c, path=path, varname="geopotential", var=testvars["gh"], prefix="atm", datafmt=fmt
     )
     expected = """
     fcst = {
       field = [
         {
-          level = [
-            "(0,0,*,*)"
-          ];
-          name = "geopotential";
-          set_attr_level = "P900";
+    %s
         }
       ];
     }
@@ -292,7 +284,9 @@ def test_workflow__config_point_stat__atm(c, fakefs, testvars):
     }
     tmp_dir = "/test";
     """
-    assert dedent(expected).strip() in path.read_text()
+    fcst = field_data(fmt, surface=False)
+    expected = dedent(expected).strip() % respace(fcst)
+    assert path.read_text().strip() == expected
 
 
 @mark.parametrize("fmt", [DataFormat.GRIB, DataFormat.NETCDF, DataFormat.ZARR])
@@ -357,7 +351,8 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars):
     }
     tmp_dir = "/test";
     """
-    expected = dedent(expected).strip() % indent(field_data(fmt), "      ")
+    fcst = field_data(fmt, surface=True)
+    expected = dedent(expected).strip() % respace(fcst)
     assert path.read_text().strip() == expected
 
 
@@ -841,21 +836,42 @@ def testvars():
 # Helpers
 
 
-def field_data(fmt: DataFormat) -> str:
+def field_data(fmt: DataFormat, surface: bool) -> str:
     assert fmt in [DataFormat.GRIB, DataFormat.NETCDF, DataFormat.ZARR]
     if fmt in [DataFormat.NETCDF, DataFormat.ZARR]:
-        text = """
-        level = [
-          "(0,0,*,*)"
-        ];
-        name = "2m_temperature";
-        set_attr_level = "Z002";
-        """
+        if surface:
+            text = """
+            level = [
+              "(0,0,*,*)"
+            ];
+            name = "2m_temperature";
+            set_attr_level = "Z002";
+            """
+        else:
+            text = """
+            level = [
+              "(0,0,*,*)"
+            ];
+            name = "geopotential";
+            set_attr_level = "P900";
+            """
     elif fmt == DataFormat.GRIB:
-        text = """
-        level = [
-          "Z002"
-        ];
-        name = "TMP";
-        """
+        if surface:
+            text = """
+            level = [
+              "Z002"
+            ];
+            name = "TMP";
+            """
+        else:
+            text = """
+            level = [
+              "P900"
+            ];
+            name = "HGT";
+            """
     return dedent(text).strip()
+
+
+def respace(text: str) -> str:
+    return indent(text, "      ")
