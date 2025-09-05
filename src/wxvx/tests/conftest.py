@@ -211,8 +211,8 @@ def tc(da_with_leadtime):
 
 
 @fixture
-def tidy(text: str) -> str:
-    return dedent(text).strip()
+def tidy():
+    return lambda text: dedent(text).strip()
 
 
 @fixture

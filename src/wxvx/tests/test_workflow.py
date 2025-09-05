@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
-from textwrap import dedent, indent
+from textwrap import indent
 from threading import Event
 from types import SimpleNamespace as ns
 from typing import cast
@@ -162,7 +162,7 @@ def test_workflow__config_grid_stat(c, fakefs, testvars):
     assert path.is_file()
 
 
-def test_workflow__config_pb2nc(c, fakefs):
+def test_workflow__config_pb2nc(c, fakefs, tidy):
     path = fakefs / "pb2nc.config"
     assert not path.is_file()
     workflow._config_pb2nc(c=c, path=path)
@@ -205,11 +205,11 @@ def test_workflow__config_pb2nc(c, fakefs):
     }
     tmp_dir = "/test";
     """
-    assert dedent(expected).strip() == path.read_text().strip()
+    assert tidy(expected) == path.read_text().strip()
 
 
 @mark.parametrize("to", ["G104", None])
-def test_workflow__config_pb2nc__alt_masks(c, fakefs, to):
+def test_workflow__config_pb2nc__alt_masks(c, fakefs, tidy, to):
     path = fakefs / "pb2nc.config"
     assert not path.is_file()
     c.regrid = replace(c.regrid, to=to)
@@ -219,11 +219,11 @@ def test_workflow__config_pb2nc__alt_masks(c, fakefs, to):
       grid = "%s";
     }
     """ % (to or "FULL")
-    assert dedent(expected).strip() in path.read_text()
+    assert tidy(expected) in path.read_text()
 
 
 @mark.parametrize("fmt", [DataFormat.GRIB, DataFormat.NETCDF, DataFormat.ZARR])
-def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars):
+def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
     workflow._config_point_stat(
@@ -284,13 +284,13 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars):
     }
     tmp_dir = "/test";
     """
-    fcst = field_data(fmt, surface=False)
-    expected = dedent(expected).strip() % respace(fcst)
+    fcst = tidy(fcst_field(fmt, surface=False))
+    expected = tidy(expected) % respace(fcst)
     assert path.read_text().strip() == expected
 
 
 @mark.parametrize("fmt", [DataFormat.GRIB, DataFormat.NETCDF, DataFormat.ZARR])
-def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars):
+def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
     workflow._config_point_stat(
@@ -351,8 +351,8 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars):
     }
     tmp_dir = "/test";
     """
-    fcst = field_data(fmt, surface=True)
-    expected = dedent(expected).strip() % respace(fcst)
+    fcst = tidy(fcst_field(fmt, surface=True))
+    expected = tidy(expected) % respace(fcst)
     assert path.read_text().strip() == expected
 
 
@@ -390,14 +390,14 @@ def test_workflow__forecast_dataset(da_with_leadtime, fakefs):
     assert (da_with_leadtime == val.ref.HGT).all()
 
 
-def test_workflow__grib_index_data(c, tc):
+def test_workflow__grib_index_data(c, tc, tidy):
     gribidx = """
     1:0:d=2024040103:HGT:900 mb:anl:
     2:1:d=2024040103:FOO:900 mb:anl:
     3:2:d=2024040103:TMP:900 mb:anl:
     """
     idxfile = c.paths.grids_baseline / "hrrr.idx"
-    idxfile.write_text(dedent(gribidx).strip())
+    idxfile.write_text(tidy(gribidx))
 
     @external
     def mock(*_args, **_kwargs):
@@ -550,7 +550,7 @@ def test_workflow__plot(c, dictkey, fakefs, fs):
     xticks.assert_called_once_with(ticks=[0, 6, 12], labels=["000", "006", "012"], rotation=90)
 
 
-def test_workflow__polyfile(fakefs):
+def test_workflow__polyfile(fakefs, tidy):
     path = fakefs / "a.poly"
     assert not path.is_file()
     mask = ((52.6, 225.9), (52.6, 255.0), (21.1, 255.0), (21.1, 225.9))
@@ -563,7 +563,7 @@ def test_workflow__polyfile(fakefs):
     21.1 255.0
     21.1 225.9
     """
-    assert path.read_text().strip() == dedent(expected).strip()
+    assert path.read_text().strip() == tidy(expected)
 
 
 @mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
@@ -776,7 +776,7 @@ def test_workflow__vxvars(c, testvars):
     }
 
 
-def test_workflow__write_runscript(fakefs):
+def test_workflow__write_runscript(fakefs, tidy):
     path = fakefs / "runscript"
     assert not path.exists()
     workflow._write_runscript(path=path, content="foo")
@@ -785,7 +785,7 @@ def test_workflow__write_runscript(fakefs):
 
     foo
     """
-    assert path.read_text().strip() == dedent(expected).strip()
+    assert path.read_text().strip() == tidy(expected)
 
 
 # Fixtures
@@ -836,7 +836,7 @@ def testvars():
 # Helpers
 
 
-def field_data(fmt: DataFormat, surface: bool) -> str:
+def fcst_field(fmt: DataFormat, surface: bool) -> str:
     assert fmt in [DataFormat.GRIB, DataFormat.NETCDF, DataFormat.ZARR]
     if fmt in [DataFormat.NETCDF, DataFormat.ZARR]:
         if surface:
@@ -870,7 +870,7 @@ def field_data(fmt: DataFormat, surface: bool) -> str:
             ];
             name = "HGT";
             """
-    return dedent(text).strip()
+    return text
 
 
 def respace(text: str) -> str:
