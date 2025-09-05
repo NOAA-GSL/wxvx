@@ -5,7 +5,6 @@ Tests for wxvx.cli.
 import logging
 import re
 from pathlib import Path
-from textwrap import dedent
 from unittest.mock import DEFAULT as D
 from unittest.mock import patch
 
@@ -73,7 +72,7 @@ def test_cli_main__exception(logged):
     assert e.value.code == 1
 
 
-def test_cli_main__task_list(caplog):
+def test_cli_main__task_list(caplog, tidy):
     caplog.set_level(logging.INFO)
     with (
         patch.object(cli.sys, "argv", [pkgname, "-c", str(resource_path("config-grid.yaml"))]),
@@ -90,7 +89,7 @@ def test_cli_main__task_list(caplog):
           plots
           stats
         """
-        for line in dedent(expected).strip().split("\n"):
+        for line in tidy(expected).split("\n"):
             assert line in caplog.messages
 
 
