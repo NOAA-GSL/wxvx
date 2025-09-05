@@ -240,14 +240,25 @@ def _config_pb2nc(c: Config, path: Path):
 
 
 @task
-def _config_point_stat(c: Config, path: Path, varname: str, var: Var, prefix: str):
+def _config_point_stat(
+    c: Config,
+    path: Path,
+    varname: str,
+    var: Var,
+    prefix: str,
+    datafmt: DataFormat,
+):
     taskname = f"Config for point_stat {path}"
     yield taskname
     yield asset(path, path.is_file)
     yield None
     level_obs = metlevel(var.level_type, var.level)
     baseline_class = variables.model_class(c.baseline.name)
-    level_fcst, name_fcst, model = ("(0,0,*,*)", varname, c.forecast.name)
+    level_fcst, name_fcst, model = (
+        (level_obs, baseline_class.varname(var.name), c.baseline.name)
+        if datafmt == DataFormat.GRIB
+        else ("(0,0,*,*)", varname, c.forecast.name)
+    )
     field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
     field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
     surface = var.level_type in ("heightAboveGround", "surface")
@@ -511,9 +522,9 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
     forecast_path = Path(render(c.forecast.path, tc))
-    forecast, _ = _req_grid(forecast_path, c, varname, tc, var)
+    forecast, datafmt = _req_grid(forecast_path, c, varname, tc, var)
     obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
-    config = _config_point_stat(c, path.with_suffix(".config"), varname, var, prefix)
+    config = _config_point_stat(c, path.with_suffix(".config"), varname, var, prefix, datafmt)
     yield [forecast, obs, config]
     runscript = path.with_suffix(".sh")
     content = "point_stat -v 4 {forecast} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
