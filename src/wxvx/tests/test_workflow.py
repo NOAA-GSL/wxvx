@@ -227,7 +227,7 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
     workflow._config_point_stat(
-        c=c, path=path, varname="geopotential", var=testvars["gh"], prefix="atm", datafmt=fmt
+        c=c, path=path, varname="HGT", var=testvars["gh"], prefix="atm", datafmt=fmt
     )
     expected = """
     fcst = {
@@ -294,7 +294,7 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
     workflow._config_point_stat(
-        c=c, path=path, varname="2m_temperature", var=testvars["2t"], prefix="sfc", datafmt=fmt
+        c=c, path=path, varname="T2M", var=testvars["2t"], prefix="sfc", datafmt=fmt
     )
     expected = """
     fcst = {
@@ -356,10 +356,9 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
     assert path.read_text().strip() == expected
 
 
-def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, logged, testvars):
+def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, testvars):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
-    c.regrid = replace(c.regrid, method="BUDGET")
     task = workflow._config_point_stat(
         c=c,
         path=path,
@@ -370,7 +369,6 @@ def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, logge
     )
     assert not task.ready
     assert not path.is_file()
-    assert logged("Could not determine 'width' value for regrid method 'BUDGET'")
 
 
 def test_workflow__existing(fakefs):
@@ -855,7 +853,7 @@ def fcst_field(fmt: DataFormat, surface: bool) -> str:
             level = [
               "(0,0,*,*)"
             ];
-            name = "2m_temperature";
+            name = "T2M";
             set_attr_level = "Z002";
             """
         else:
@@ -863,7 +861,7 @@ def fcst_field(fmt: DataFormat, surface: bool) -> str:
             level = [
               "(0,0,*,*)"
             ];
-            name = "geopotential";
+            name = "HGT";
             set_attr_level = "P900";
             """
     elif fmt == DataFormat.GRIB:

@@ -144,12 +144,12 @@ def _config_grid_stat(
     yield None
     field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
     meta = _meta(c, varname)
-    if meta.cat_thresh:
-        for x in field_fcst, field_obs:
-            x["cat_thresh"] = meta.cat_thresh
-    if meta.cnt_thresh:
-        for x in field_fcst, field_obs:
-            x["cnt_thresh"] = meta.cnt_thresh
+    # if meta.cat_thresh:
+    #     for x in field_fcst, field_obs:
+    #         x["cat_thresh"] = meta.cat_thresh
+    # if meta.cnt_thresh:
+    #     for x in field_fcst, field_obs:
+    #         x["cnt_thresh"] = meta.cnt_thresh
     config = {
         "fcst": {"field": [field_fcst]},
         "mask": {"grid": [] if polyfile else ["FULL"], "poly": [polyfile.ref] if polyfile else []},
@@ -457,6 +457,13 @@ def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
     if datafmt != DataFormat.GRIB:
         field_fcst["set_attr_level"] = level_obs
     field_obs = {"level": [level_obs], "name": varname_baseline}
+    meta = _meta(c, varname)
+    if meta.cat_thresh:
+        for x in field_fcst, field_obs:
+            x["cat_thresh"] = meta.cat_thresh
+    if meta.cnt_thresh:
+        for x in field_fcst, field_obs:
+            x["cnt_thresh"] = meta.cnt_thresh
     return field_fcst, field_obs
 
 
