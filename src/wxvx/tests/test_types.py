@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -139,7 +140,7 @@ def test_types_Forecast(config_data, forecast):
     other2 = types.Forecast(**{**cfg, "name": "foo"})
     assert obj != other2
     cfg_no_proj = deepcopy(cfg)
-    del cfg_no_proj.pop["projection"]
+    del cfg_no_proj["projection"]
     default = types.Forecast(**cfg_no_proj)
     assert default.projection == {"proj": "latlon"}
 
