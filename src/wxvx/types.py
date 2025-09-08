@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum, auto
@@ -128,6 +129,9 @@ class Forecast:
             _force(self, "coords", coords)
         if self.mask:
             _force(self, "mask", tuple(tuple(x) for x in self.mask))
+        if self.projection is None:
+            logging.info("No forecast projection specified, defaulting to latlon")
+            _force(self, "projection", {"proj": "latlon"})
 
 
 class Leadtimes:
