@@ -138,8 +138,8 @@ def test_types_Forecast(config_data, forecast):
     assert obj == other1
     other2 = types.Forecast(**{**cfg, "name": "foo"})
     assert obj != other2
-    cfg_no_proj = {**cfg}
-    cfg_no_proj.pop("projection", None)
+    cfg_no_proj = deepcopy(cfg)
+    del cfg_no_proj.pop["projection"]
     default = types.Forecast(**cfg_no_proj)
     assert default.projection == {"proj": "latlon"}
 
