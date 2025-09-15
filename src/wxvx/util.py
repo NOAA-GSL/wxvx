@@ -132,7 +132,9 @@ def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> No
 
 def render(template: str, tc: TimeCoords) -> str:
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    return jinja2.Template(template).render(yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime))
+    return jinja2.Template(template).render(
+        yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime), cycle=tc.cycle, leadtime=tc.leadtime
+    )
 
 
 def resource(relpath: str | Path) -> str:
