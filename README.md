@@ -91,7 +91,7 @@ For `point`, `url` should point to prepbufr data, and `compare` and `name` shoul
 
 ### baseline.url
 
-The `baseline.url` value may include Jinja2 expressions, processed at run-time with [`jinja2.Template.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render). Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle time, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) will be supplied by `wxvx`. Additionally, `cycle` (a `datetime`) and `leadtime` (a `timedelta`) are available. Use `cycle.strftime()` to format date/time components (e.g., `'%Y%m%d'`, `'%H'`), and compute valid time with `(cycle + leadtime)`.
+The `baseline.url` value may include Jinja2 expressions, processed at run-time with [`jinja2.Template.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render). Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle time, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) will be supplied by `wxvx`. Additionally, `cycle` (a [`datetime`](https://docs.python.org/3/library/datetime.html#datetime-objects)) and `leadtime` (a [`timedelta`](https://docs.python.org/3/library/datetime.html#timedelta-objects)) are available for computing arbitrary time strings.
 
 ### cycles
 
