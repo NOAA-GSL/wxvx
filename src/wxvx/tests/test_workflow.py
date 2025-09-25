@@ -638,7 +638,7 @@ def test_workflow__meta(c):
 
 @mark.parametrize("dictkey", ["foo", "bar", "baz"])
 def test_workflow__prepare_plot_data(dictkey):
-    varname, level, dfs, stat, width = TESTDATA[dictkey]
+    _, _, dfs, stat, width = TESTDATA[dictkey]
     node = lambda x: Mock(ref=f"{x}.stat", taskname=x)
     reqs = cast(Sequence[Node], [node("node1"), node("node2")])
     with patch.object(workflow.pd, "read_csv", side_effect=dfs):
