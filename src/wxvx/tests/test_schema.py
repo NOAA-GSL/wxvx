@@ -40,6 +40,11 @@ def test_schema(logged, config_data, fs):
     for key in ["paths", "variables"]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'object'")
+    # Forbidden: baseline.type: point + regrid.to: baseline
+    assert not ok(
+        with_set(with_set(config, "point", "baseline", "type"), "baseline", "regrid", "to")
+    )
+    assert logged("should not be valid")
 
 
 def test_schema_defs_datetime(fs):
