@@ -174,7 +174,7 @@ Options are listed [here](https://metplus.readthedocs.io/projects/met/en/main_v1
 
 ### regrid.to
 
-Options are `baseline` and `forecast` (default: `forecast`).
+Regrid grids and observations to the specified grid. Options are `baseline`, `forecast`, or a [GNNN grid ID](https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/appendixB.html#grids) (default: `forecast`).
 
 ### variables
 
