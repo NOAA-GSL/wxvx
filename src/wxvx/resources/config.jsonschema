@@ -24,34 +24,6 @@
     }
   },
   "additionalProperties": false,
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "baseline": {
-            "properties": {
-              "type": {
-                "const": "point"
-              }
-            }
-          }
-        }
-      },
-      "then": {
-        "properties": {
-          "regrid": {
-            "not": {
-              "properties": {
-                "to": {
-                  "const": "baseline"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  ],
   "properties": {
     "baseline": {
       "additionalProperties": false,
