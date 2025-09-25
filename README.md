@@ -91,7 +91,7 @@ For `point`, `url` should point to prepbufr data, and `compare` and `name` shoul
 
 ### baseline.url
 
-The `baseline.url` value may include Jinja2 expressions, processed at run-time with [`jinja2.Tremplate.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render). Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle time, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) will be supplied by `wxvx`.
+The `baseline.url` value may include Jinja2 expressions, processed at run-time with [`jinja2.Template.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render). Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle time, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) will be supplied by `wxvx`. Additionally, `cycle` (a [`datetime`](https://docs.python.org/3/library/datetime.html#datetime-objects)) and `leadtime` (a [`timedelta`](https://docs.python.org/3/library/datetime.html#timedelta-objects)) are available for computing arbitrary time strings.
 
 ### cycles
 
@@ -134,7 +134,7 @@ An arbitrary value identifying the forecast model being verified. This name will
 
 ### forecast.path
 
-The `forecast.path` value may include Python string-template expressions, processed at run-time with [`jinja2.Tremplate.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render). Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle time, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) will be supplied by `wxvx`.
+The `forecast.path` value may include Python string-template expressions, processed at run-time with [`jinja2.Template.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render). Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle time, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) will be supplied by `wxvx`. Additionally, `cycle` (a [`datetime`](https://docs.python.org/3/library/datetime.html#datetime-objects)) and `leadtime` (a [`timedelta`](https://docs.python.org/3/library/datetime.html#timedelta-objects)) are available for computing arbitrary time strings.
 
 ### leadtimes
 
@@ -154,7 +154,7 @@ leadtimes:
 or
 
 ``` yaml
-cycles: [3, 6, 9]
+leadtimes: [3, 6, 9]
 ```
 
 ### meta

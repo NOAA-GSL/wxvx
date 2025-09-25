@@ -167,6 +167,12 @@ def test_util_render(utc):
     assert util.render(template, tc) == "20250821-2025-06-001"
 
 
+def test_util_render_with_cycle(utc):
+    template = "{{ cycle.strftime('%Y%m%d') }}-{{ (cycle + leadtime).strftime('%H') }}"
+    tc = TimeCoords(cycle=utc(2025, 8, 21, 6), leadtime=1)
+    assert util.render(template, tc) == "20250821-07"
+
+
 def test_util_resource(fs):
     expected = "bar"
     path = Path(fs.create_file("/path/to/foo", contents=expected).path)
