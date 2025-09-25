@@ -24,7 +24,7 @@ requirements:
     - pyyaml 6.0.*
     - requests >=2.32,<3
     - seaborn 0.13.*
-    - uwtools 2.8.*
+    - uwtools >=2.8,<=2.10
     - xarray >=2023.12,<2025.2
     - zarr >=3.0,<3.1
     - {{ python }}
@@ -33,12 +33,12 @@ test:
     - docformatter 1.7.*
     - jq 1.8.*
     - make 4.4.*
-    - mypy 1.16.*
-    - pyfakefs 5.7.*
+    - mypy 1.18.*
+    - pyfakefs 5.9.*
     - pytest 8.4.*
-    - pytest-cov 6.1.*
-    - pytest-xdist 3.7.*
-    - ruff 0.11.*
+    - pytest-cov 7.0.*
+    - pytest-xdist 3.8.*
+    - ruff 0.13.*
     - {{ python }}
 about:
   license: APACHE
