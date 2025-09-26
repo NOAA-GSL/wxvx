@@ -1,6 +1,6 @@
 {
-  "build": "py_4",
-  "buildnum": 4,
+  "build": "py_0",
+  "buildnum": 0,
   "name": "wxvx",
   "packages": {
     "dev": [
@@ -9,22 +9,22 @@
       "jq ==1.8.*",
       "make ==4.4.*",
       "met2go ==11.0.*",
-      "mypy ==1.16.*",
+      "mypy ==1.18.*",
       "netcdf4 >=1.7,<2",
       "pip",
-      "pyfakefs ==5.7.*",
+      "pyfakefs ==5.9.*",
       "pyproj ==3.7.*",
       "pytest ==8.4.*",
-      "pytest-cov ==6.1.*",
-      "pytest-xdist ==3.7.*",
+      "pytest-cov ==7.0.*",
+      "pytest-xdist ==3.8.*",
       "python ==3.13",
       "python-magic ==0.4.*",
       "pyyaml ==6.0.*",
       "requests >=2.32,<3",
-      "ruff ==0.11.*",
+      "ruff ==0.13.*",
       "seaborn ==0.13.*",
       "setuptools",
-      "uwtools ==2.8.*",
+      "uwtools >=2.8,<=2.10",
       "xarray >=2023.12,<2025.2",
       "zarr >=3.0,<3.1"
     ],
@@ -38,10 +38,10 @@
       "pyyaml ==6.0.*",
       "requests >=2.32,<3",
       "seaborn ==0.13.*",
-      "uwtools ==2.8.*",
+      "uwtools >=2.8,<=2.10",
       "xarray >=2023.12,<2025.2",
       "zarr >=3.0,<3.1"
     ]
   },
-  "version": "0.1.0"
+  "version": "0.2.0"
 }

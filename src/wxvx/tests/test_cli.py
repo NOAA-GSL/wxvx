@@ -4,6 +4,7 @@ Tests for wxvx.cli.
 
 import logging
 import re
+from argparse import ArgumentTypeError, Namespace
 from pathlib import Path
 from unittest.mock import DEFAULT as D
 from unittest.mock import patch
@@ -72,10 +73,13 @@ def test_cli_main__exception(logged):
     assert e.value.code == 1
 
 
-def test_cli_main__task_list(caplog, tidy):
+@mark.parametrize("switch", ["-l", "--list"])
+def test_cli_main__task_list(caplog, switch, tidy):
     caplog.set_level(logging.INFO)
     with (
-        patch.object(cli.sys, "argv", [pkgname, "-c", str(resource_path("config-grid.yaml"))]),
+        patch.object(
+            cli.sys, "argv", [pkgname, "-c", str(resource_path("config-grid.yaml")), switch]
+        ),
         patch.object(cli, "use_uwtools_logger"),
     ):
         with raises(SystemExit) as e:
@@ -86,11 +90,11 @@ def test_cli_main__task_list(caplog, tidy):
           grids
           grids_baseline
           grids_forecast
+          obs
           plots
           stats
         """
-        for line in tidy(expected).split("\n"):
-            assert line in caplog.messages
+        assert re.sub(r"INFO     [^ ]+ ", "", caplog.text.strip()) == dedent(expected).strip()
 
 
 def test_cli_main__task_missing(caplog):
@@ -101,6 +105,17 @@ def test_cli_main__task_missing(caplog):
             cli.main()
         assert e.value.code == 1
         assert "No such task: foo" in caplog.messages
+
+
+def test_cli__arg_type_int_greater_than_zero__pass():
+    assert cli._arg_type_int_greater_than_zero("42") == 42
+
+
+@mark.parametrize("val", ["foo", 0])
+def test_cli__arg_type_int_greater_than_zero__fail(val):
+    with raises(ArgumentTypeError) as e:
+        cli._arg_type_int_greater_than_zero(val)
+    assert str(e.value) == "Integer > 0 required"
 
 
 @mark.parametrize("c", ["-c", "--config"])
@@ -129,18 +144,51 @@ def test_cli__parse_args__version(capsys, v):
     assert re.match(r"^\w+ version \d+\.\d+\.\d+ build \d+$", capsys.readouterr().out.strip())
 
 
-def test_cli__parse_args__required_arg_missing():
-    with raises(SystemExit) as e:
-        cli._parse_args([pkgname])
-    assert e.value.code == 2
-
-
 @mark.parametrize("n", ["-n", "--threads"])
 def test_cli__parse_args__threads_bad(capsys, n):
     with raises(SystemExit) as e:
         cli._parse_args([pkgname, "-c", "a.yaml", n, "0"])
+    assert e.value.code == 2
+    assert "argument -n/--threads: Integer > 0 required" in capsys.readouterr().err
+
+
+def test_cli__process_args__bad_task(logged):
+    kwargs = dict(check=False, config=Path("/some/path"), list=False, task="foo")
+    with patch.object(cli, "_show_tasks") as _show_tasks, raises(SystemExit) as e:
+        cli._process_args(args=Namespace(**kwargs))
     assert e.value.code == 1
-    assert capsys.readouterr().err.strip() == "Specify at least 1 thread"
+    _show_tasks.assert_called_once_with()
+    assert logged("No such task: foo")
+
+
+def test_cli__process_args__check_only():
+    args = Namespace(check=True, config=Path("/some/path"), list=False)
+    with patch.object(cli, "_show_tasks") as _show_tasks:
+        cli._process_args(args=args)
+    _show_tasks.assert_not_called()
+
+
+def test_cli__process_args__list_only():
+    args = Namespace(check=False, list=True)
+    with patch.object(cli, "_show_tasks") as _show_tasks, raises(SystemExit) as e:
+        cli._process_args(args=args)
+    assert e.value.code == 0
+    _show_tasks.assert_called_once_with()
+
+
+def test_cli__process_args__list_and_check():
+    args = Namespace(check=True, config=Path("/some/path"), list=True)
+    with patch.object(cli, "_show_tasks") as _show_tasks:
+        cli._process_args(args=args)
+    _show_tasks.assert_called_once_with()
+
+
+def test_cli__process_args__no_config(logged):
+    args = Namespace(check=True, config=None, list=True)
+    with raises(SystemExit) as e:
+        cli._process_args(args=args)
+    assert e.value.code == 1
+    assert logged("No configuration file specified")
 
 
 def test_cli__version():

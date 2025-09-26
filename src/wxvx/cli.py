@@ -2,17 +2,15 @@ import json
 import logging
 import sys
 import traceback
-from argparse import Action, ArgumentParser, HelpFormatter, Namespace
+from argparse import Action, ArgumentParser, ArgumentTypeError, HelpFormatter, Namespace
 from pathlib import Path
-from typing import NoReturn
 
 from iotaa import tasknames
-from uwtools.api.config import get_yaml_config, validate
 from uwtools.api.logging import use_uwtools_logger
 
 from wxvx import workflow
-from wxvx.types import Config
-from wxvx.util import WXVXError, fail, pkgname, resource, resource_path
+from wxvx.types import validated_config
+from wxvx.util import WXVXError, fail, pkgname, resource
 
 # Public
 
@@ -21,19 +19,12 @@ def main() -> None:
     try:
         args = _parse_args(sys.argv)
         use_uwtools_logger(verbose=args.debug)
-        if not args.task:
-            _show_tasks_and_exit(0)
-        if args.task not in tasknames(workflow):
-            logging.error("No such task: %s", args.task)
-            _show_tasks_and_exit(1)
-        config_data = get_yaml_config(args.config)
-        config_data.dereference()
-        if not validate(schema_file=resource_path("config.jsonschema"), config_data=config_data):
-            fail()
+        _process_args(args)
+        c = validated_config(args.config)
         if not args.check:
             logging.info("Preparing task graph for %s", args.task)
             task = getattr(workflow, args.task)
-            task(Config(config_data.data), threads=args.threads)
+            task(c, threads=args.threads)
     except WXVXError as e:
         for line in traceback.format_exc().strip().split("\n"):
             logging.debug(line)
@@ -41,6 +32,17 @@ def main() -> None:
 
 
 # Private
+
+
+def _arg_type_int_greater_than_zero(val: str) -> int:
+    msg = "Integer > 0 required"
+    try:
+        intval = int(val)
+    except ValueError as e:
+        raise ArgumentTypeError(msg) from e
+    if intval < 1:
+        raise ArgumentTypeError(msg)
+    return intval
 
 
 def _parse_args(argv: list[str]) -> Namespace:
@@ -55,13 +57,12 @@ def _parse_args(argv: list[str]) -> Namespace:
         "--config",
         help="Configuration file",
         metavar="FILE",
-        required=True,
         type=Path,
     )
     required.add_argument(
         "-t",
         "--task",
-        help="Execute task (no argument => list available tasks)",
+        help="Task to execute",
         metavar="TASK",
         nargs="?",
         default=None,
@@ -86,12 +87,18 @@ def _parse_args(argv: list[str]) -> Namespace:
         help="Check config and exit",
     )
     optional.add_argument(
+        "-l",
+        "--list",
+        action="store_true",
+        help="List available tasks and exit",
+    )
+    optional.add_argument(
         "-n",
         "--threads",
         help="Number of threads",
         default=1,
         metavar="N",
-        type=int,
+        type=_arg_type_int_greater_than_zero,
     )
     optional.add_argument(
         "-s",
@@ -107,18 +114,29 @@ def _parse_args(argv: list[str]) -> Namespace:
         help="Show version and exit",
         version=f"{Path(argv[0]).name} {_version()}",
     )
-    args = parser.parse_args(argv[1:])
-    if args.threads < 1:
-        print("Specify at least 1 thread", file=sys.stderr)
+    return parser.parse_args(argv[1:])
+
+
+def _process_args(args: Namespace) -> None:
+    if args.list:
+        _show_tasks()
+        if not args.check:
+            sys.exit(0)
+    if not args.config:
+        fail("No configuration file specified")
+    if args.check:
+        return
+    if args.task not in tasknames(workflow):
+        logging.error("No such task: %s", args.task)
+        _show_tasks()
         sys.exit(1)
-    return args
+    return
 
 
-def _show_tasks_and_exit(code: int) -> NoReturn:
+def _show_tasks() -> None:
     logging.info("Available tasks:")
     for taskname in tasknames(workflow):
         logging.info("  %s", taskname)
-    sys.exit(code)
 
 
 def _version() -> str:

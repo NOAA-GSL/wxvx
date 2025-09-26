@@ -3,9 +3,12 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import yaml
 from pytest import fixture, raises
 
 from wxvx import types
+from wxvx.tests.support import with_set
+from wxvx.util import resource_path
 
 # Fixtures
 
@@ -56,6 +59,33 @@ def time(config_data):
 
 
 # Tests
+
+
+def test_types_validated_config(config_data, fakefs, fs):
+    fs.add_real_file(resource_path("config.jsonschema"))
+    path = fakefs / "config.yaml"
+    path.write_text(yaml.dump(config_data))
+    assert types.validated_config(config_path=path)
+
+
+def test_types_validated_config__fail_json_schema(config_data, fakefs, fs, logged):
+    fs.add_real_file(resource_path("config.jsonschema"))
+    path = fakefs / "config.yaml"
+    path.write_text(yaml.dump(with_set(config_data, "foo", "baseline", "type")))
+    with raises(SystemExit) as e:
+        assert types.validated_config(config_path=path)
+    assert logged(r"'foo' is not one of \['grid', 'point'\]")
+    assert e.value.code == 1
+
+
+def test_types_validated_config__fail_regrid_to(config_data, fakefs, fs, logged):
+    fs.add_real_file(resource_path("config.jsonschema"))
+    path = fakefs / "config.yaml"
+    path.write_text(yaml.dump(with_set(config_data, "baseline", "regrid", "to")))
+    with raises(SystemExit) as e:
+        assert types.validated_config(config_path=path)
+    assert logged(r"Cannot regrid to observations per 'regrid.to' config value")
+    assert e.value.code == 1
 
 
 def test_types_Baseline(baseline, config_data):

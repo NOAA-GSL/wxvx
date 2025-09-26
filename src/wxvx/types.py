@@ -9,7 +9,9 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, cast
 
-from wxvx.util import LINETYPE, expand, to_datetime, to_timedelta
+from uwtools.api.config import get_yaml_config, validate
+
+from wxvx.util import LINETYPE, expand, fail, resource_path, to_datetime, to_timedelta
 
 _DatetimeT = str | datetime
 _TimedeltaT = str | int
@@ -29,6 +31,17 @@ VxType = Enum(
         ("POINT", auto()),
     ],
 )
+
+
+def validated_config(config_path: Path) -> Config:
+    yc = get_yaml_config(config_path)
+    yc.dereference()
+    if not validate(schema_file=resource_path("config.jsonschema"), config_data=yc.data):
+        fail()
+    c = Config(yc.data)
+    if c.regrid.to == "OBS":
+        fail("Cannot regrid to observations per 'regrid.to' config value")
+    return c
 
 
 @dataclass(frozen=True)

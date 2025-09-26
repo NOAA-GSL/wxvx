@@ -87,7 +87,7 @@ One of `grid` or `point`.
 
 For `grid`, `url` should point to GRIB data, and `compare` and `name` are required.
 
-For `point`, `url` should point to prepbufr data, and `compare` and `name` should not be specified.
+For `point`, `url` should point to prepbufr data, `compare` and `name` should not be specified, and `regrid.to` must not be `baseline`.
 
 ### baseline.url
 
@@ -174,7 +174,7 @@ Options are listed [here](https://metplus.readthedocs.io/projects/met/en/main_v1
 
 ### regrid.to
 
-Options are `baseline` and `forecast` (default: `forecast`).
+Regrid grids and observations to the specified grid. Options are `baseline`, `forecast`, or a [GNNN grid ID](https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/appendixB.html#grids) (default: `forecast`). Option `baseline` must not be used when `baseline.type` is `point`.
 
 ### variables
 
@@ -192,7 +192,7 @@ A `levels:` value should only be specified if a level type supports it. Currentl
 
 ```
 $ wxvx --help
-usage: wxvx -c FILE [-t [TASK]] [-d] [-h] [-k] [-n N] [-s] [-v]
+usage: wxvx [-c FILE] [-t [TASK]] [-d] [-h] [-k] [-l] [-n N] [-s] [-v]
 
 wxvx
 
@@ -200,7 +200,7 @@ Required arguments:
   -c, --config FILE
       Configuration file
   -t, --task [TASK]
-      Execute task (no argument => list available tasks)
+      Task to execute
 
 Optional arguments:
   -d, --debug
@@ -209,6 +209,8 @@ Optional arguments:
       Show help and exit
   -k, --check
       Check config and exit
+  -l, --list
+      List available tasks and exit
   -n, --threads N
       Number of threads
   -s, --show
