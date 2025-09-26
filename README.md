@@ -87,7 +87,7 @@ One of `grid` or `point`.
 
 For `grid`, `url` should point to GRIB data, and `compare` and `name` are required.
 
-For `point`, `url` should point to prepbufr data, and `compare` and `name` should not be specified.
+For `point`, `url` should point to prepbufr data, `compare` and `name` should not be specified, and `regrid.to` must not be `baseline`.
 
 ### baseline.url
 
@@ -174,7 +174,7 @@ Options are listed [here](https://metplus.readthedocs.io/projects/met/en/main_v1
 
 ### regrid.to
 
-Options are `baseline` and `forecast` (default: `forecast`).
+Regrid grids and observations to the specified grid. Options are `baseline`, `forecast`, or a [GNNN grid ID](https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/appendixB.html#grids) (default: `forecast`). Option `baseline` must not be used when `baseline.type` is `point`.
 
 ### variables
 

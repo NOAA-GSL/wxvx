@@ -6,12 +6,11 @@ from argparse import Action, ArgumentParser, ArgumentTypeError, HelpFormatter, N
 from pathlib import Path
 
 from iotaa import tasknames
-from uwtools.api.config import get_yaml_config, validate
 from uwtools.api.logging import use_uwtools_logger
 
 from wxvx import workflow
-from wxvx.types import Config
-from wxvx.util import WXVXError, fail, pkgname, resource, resource_path
+from wxvx.types import validated_config
+from wxvx.util import WXVXError, fail, pkgname, resource
 
 # Public
 
@@ -21,15 +20,11 @@ def main() -> None:
         args = _parse_args(sys.argv)
         use_uwtools_logger(verbose=args.debug)
         _process_args(args)
-        config_data = get_yaml_config(args.config)
-        config_data.dereference()
-        if not validate(schema_file=resource_path("config.jsonschema"), config_data=config_data):
-            fail()
-        if args.check:
-            return
-        logging.info("Preparing task graph for %s", args.task)
-        task = getattr(workflow, args.task)
-        task(Config(config_data.data), threads=args.threads)
+        c = validated_config(args.config)
+        if not args.check:
+            logging.info("Preparing task graph for %s", args.task)
+            task = getattr(workflow, args.task)
+            task(c, threads=args.threads)
     except WXVXError as e:
         for line in traceback.format_exc().strip().split("\n"):
             logging.debug(line)
