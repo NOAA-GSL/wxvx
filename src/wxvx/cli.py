@@ -127,7 +127,8 @@ def _process_args(args: Namespace) -> None:
     if args.check:
         return
     if args.task not in tasknames(workflow):
-        logging.error("No such task: %s", args.task)
+        msg = "No such task: %s" % args.task if args.task else "No task specified"
+        logging.error(msg)
         _show_tasks()
         sys.exit(1)
     return
