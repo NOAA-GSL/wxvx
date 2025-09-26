@@ -168,7 +168,7 @@ def test_workflow__config_pb2nc(c, fakefs, tidy):
     workflow._config_pb2nc(c=c, path=path)
     expected = """
     mask = {
-      grid = "FCST";
+      grid = "FULL";
     }
     message_type = [
       "ADPSFC",

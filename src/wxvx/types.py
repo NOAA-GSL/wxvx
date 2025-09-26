@@ -24,6 +24,14 @@ Source = Enum(
     ],
 )
 
+ToGridVal = Enum(
+    "ToGridVal",
+    [
+        ("FCST", auto()),
+        ("OBS", auto()),
+    ],
+)
+
 VxType = Enum(
     "VxType",
     [
@@ -39,7 +47,7 @@ def validated_config(config_path: Path) -> Config:
     if not validate(schema_file=resource_path("config.jsonschema"), config_data=yc.data):
         fail()
     c = Config(yc.data)
-    if c.regrid.to == "OBS":
+    if c.regrid.to == ToGridVal.OBS.name:
         fail("Cannot regrid to observations per 'regrid.to' config value")
     return c
 
@@ -216,16 +224,14 @@ class Paths:
 
 @dataclass(frozen=True)
 class Regrid:
-    method: str = "NEAREST"
-    to: str = "forecast"
-
     # See https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/appendixB.html#grids
     # for information on the "GNNN" grid names accepted as regrid-to values.
 
+    method: str = "NEAREST"
+    to: ToGrid | None = None
+
     def __post_init__(self):
-        mapping = {"baseline": "OBS", "forecast": "FCST"}
-        if self.to in mapping:
-            _force(self, "to", mapping[self.to])
+        _force(self, "to", ToGrid(str(self.to) or "forecast"))
 
 
 @dataclass(frozen=True)
@@ -236,6 +242,24 @@ class Time:
 
     def __post_init__(self):
         assert self.leadtime is not None or self.validtime is not None
+
+
+class ToGrid:
+    def __init__(self, val: str):
+        self.val: str | ToGridVal = val
+        mapping = {"baseline": ToGridVal.OBS, "forecast": ToGridVal.FCST}
+        self.val = mapping.get(val, val)
+
+    def __eq__(self, other):
+        return str(self) == str(other)
+
+    def __hash__(self):
+        return hash(str(self))
+
+    def __repr__(self):
+        if isinstance(self.val, ToGridVal):
+            return self.val.name
+        return self.val
 
 
 @dataclass(frozen=True)

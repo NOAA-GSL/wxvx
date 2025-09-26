@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime
 from functools import cache
 from itertools import chain, pairwise, product
@@ -172,7 +173,7 @@ def _config_pb2nc(c: Config, path: Path):
     # selection of obs from the netCDF file created by pb2nc.
     _type = ["min", "max", "range", "mean", "stdev", "median", "p80"]
     config: dict = {
-        "mask": {"grid": c.regrid.to or "FULL"},
+        "mask": {"grid": c.regrid.to if re.match(r"^G\d{3}$", str(c.regrid.to)) else "FULL"},
         "message_type": ["ADPSFC", "ADPUPA", "AIRCAR", "AIRCFT"],
         "obs_bufr_var": ["POB", "QOB", "TOB", "UOB", "VOB", "ZOB"],
         "obs_window": {"beg": -1800, "end": 1800},
@@ -204,7 +205,11 @@ def _config_point_stat(
         "obs_window": {"beg": -900 if surface else -1800, "end": 900 if surface else 1800},
         "output_flag": {"cnt": "BOTH"},
         "output_prefix": f"{prefix}",
-        "regrid": {"method": c.regrid.method, "to_grid": c.regrid.to, "width": _regrid_width(c)},
+        "regrid": {
+            "method": c.regrid.method,
+            "to_grid": c.regrid.to,
+            "width": _regrid_width(c),
+        },
         "tmp_dir": path.parent,
     }
     with atomic(path) as tmp:

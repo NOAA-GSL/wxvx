@@ -3,6 +3,7 @@ from typing import Callable
 from pytest import mark, raises
 
 from wxvx import metconf
+from wxvx.types import ToGridVal
 
 # Public:
 
@@ -79,7 +80,7 @@ def test_metconf_render(tidy):
         },
         "output_prefix": "foo_bar",
         "regrid": {
-            "to_grid": "FCST",
+            "to_grid": ToGridVal.FCST.name,
         },
         "time_summary": {
             "obs_var": [],
