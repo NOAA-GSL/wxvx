@@ -231,7 +231,8 @@ class Regrid:
     to: ToGrid | None = None
 
     def __post_init__(self):
-        _force(self, "to", ToGrid(str(self.to) or "forecast"))
+        _force(self, "to", ToGrid("forecast" if self.to is None else str(self.to)))
+        assert self.to is not None
 
 
 @dataclass(frozen=True)
