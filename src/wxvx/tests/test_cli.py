@@ -4,6 +4,7 @@ Tests for wxvx.cli.
 
 import logging
 import re
+from argparse import ArgumentTypeError
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import DEFAULT as D
@@ -105,6 +106,17 @@ def test_cli_main__task_missing(caplog):
             cli.main()
         assert e.value.code == 1
         assert "No such task: foo" in caplog.messages
+
+
+def test_cli__arg_type_int_greater_than_zero__pass():
+    assert cli._arg_type_int_greater_than_zero("42") == 42
+
+
+@mark.parametrize("val", ["foo", 0])
+def test_cli__arg_type_int_greater_than_zero__fail(val):
+    with raises(ArgumentTypeError) as e:
+        cli._arg_type_int_greater_than_zero(val)
+    assert str(e.value) == "Integer > 0 required"
 
 
 @mark.parametrize("c", ["-c", "--config"])
