@@ -39,11 +39,15 @@ def main() -> None:
 # Private
 
 
-def _arg_type_int_greater_than_zero(val):
-    if not isinstance(val, int) or val < 1:
-        msg = "Integer > 0 required"
+def _arg_type_int_greater_than_zero(val: str) -> int:
+    msg = "Integer > 0 required"
+    try:
+        intval = int(val)
+    except ValueError as e:
+        raise ArgumentTypeError(msg) from e
+    if intval < 1:
         raise ArgumentTypeError(msg)
-    return val
+    return intval
 
 
 def _parse_args(argv: list[str]) -> Namespace:
