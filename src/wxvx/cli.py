@@ -127,7 +127,6 @@ def _process_args(args: Namespace) -> None:
         _show_tasks()
         if not args.check:
             sys.exit(0)
-        return
     if not args.config:
         fail("No configuration file specified")
     if args.check:

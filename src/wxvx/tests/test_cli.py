@@ -4,7 +4,7 @@ Tests for wxvx.cli.
 
 import logging
 import re
-from argparse import ArgumentTypeError
+from argparse import ArgumentTypeError, Namespace
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import DEFAULT as D
@@ -151,6 +151,45 @@ def test_cli__parse_args__threads_bad(capsys, n):
         cli._parse_args([pkgname, "-c", "a.yaml", n, "0"])
     assert e.value.code == 2
     assert "argument -n/--threads: Integer > 0 required" in capsys.readouterr().err
+
+
+def test_cli__process_args__bad_task(logged):
+    kwargs = dict(check=False, config=Path("/some/path"), list=False, task="foo")
+    with patch.object(cli, "_show_tasks") as _show_tasks, raises(SystemExit) as e:
+        cli._process_args(args=Namespace(**kwargs))
+    assert e.value.code == 1
+    _show_tasks.assert_called_once_with()
+    assert logged("No such task: foo")
+
+
+def test_cli__process_args__check_only():
+    args = Namespace(check=True, config=Path("/some/path"), list=False)
+    with patch.object(cli, "_show_tasks") as _show_tasks:
+        cli._process_args(args=args)
+    _show_tasks.assert_not_called()
+
+
+def test_cli__process_args__list_only():
+    args = Namespace(check=False, list=True)
+    with patch.object(cli, "_show_tasks") as _show_tasks, raises(SystemExit) as e:
+        cli._process_args(args=args)
+    assert e.value.code == 0
+    _show_tasks.assert_called_once_with()
+
+
+def test_cli__process_args__list_and_check():
+    args = Namespace(check=True, config=Path("/some/path"), list=True)
+    with patch.object(cli, "_show_tasks") as _show_tasks:
+        cli._process_args(args=args)
+    _show_tasks.assert_called_once_with()
+
+
+def test_cli__process_args__no_config(logged):
+    args = Namespace(check=True, config=None, list=True)
+    with raises(SystemExit) as e:
+        cli._process_args(args=args)
+    assert e.value.code == 1
+    assert logged("No configuration file specified")
 
 
 def test_cli__version():
