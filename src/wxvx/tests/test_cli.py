@@ -73,10 +73,13 @@ def test_cli_main__exception(logged):
     assert e.value.code == 1
 
 
-def test_cli_main__task_list(caplog):
+@mark.parametrize("switch", ["-l", "--list"])
+def test_cli_main__task_list(caplog, switch):
     caplog.set_level(logging.INFO)
     with (
-        patch.object(cli.sys, "argv", [pkgname, "-c", str(resource_path("config-grid.yaml"))]),
+        patch.object(
+            cli.sys, "argv", [pkgname, "-c", str(resource_path("config-grid.yaml")), switch]
+        ),
         patch.object(cli, "use_uwtools_logger"),
     ):
         with raises(SystemExit) as e:
@@ -87,11 +90,11 @@ def test_cli_main__task_list(caplog):
           grids
           grids_baseline
           grids_forecast
+          obs
           plots
           stats
         """
-        for line in dedent(expected).strip().split("\n"):
-            assert line in caplog.messages
+        assert re.sub(r"INFO     [^ ]+ ", "", caplog.text.strip()) == dedent(expected).strip()
 
 
 def test_cli_main__task_missing(caplog):
@@ -130,18 +133,12 @@ def test_cli__parse_args__version(capsys, v):
     assert re.match(r"^\w+ version \d+\.\d+\.\d+ build \d+$", capsys.readouterr().out.strip())
 
 
-def test_cli__parse_args__required_arg_missing():
-    with raises(SystemExit) as e:
-        cli._parse_args([pkgname])
-    assert e.value.code == 2
-
-
 @mark.parametrize("n", ["-n", "--threads"])
 def test_cli__parse_args__threads_bad(capsys, n):
     with raises(SystemExit) as e:
         cli._parse_args([pkgname, "-c", "a.yaml", n, "0"])
-    assert e.value.code == 1
-    assert capsys.readouterr().err.strip() == "Specify at least 1 thread"
+    assert e.value.code == 2
+    assert "argument -n/--threads: Integer > 0 required" in capsys.readouterr().err
 
 
 def test_cli__version():
