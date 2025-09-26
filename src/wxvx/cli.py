@@ -95,7 +95,7 @@ def _parse_args(argv: list[str]) -> Namespace:
         "-l",
         "--list",
         action="store_true",
-        help="List tasks and exit",
+        help="List available tasks and exit",
     )
     optional.add_argument(
         "-n",
