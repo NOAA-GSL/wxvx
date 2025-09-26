@@ -1,6 +1,6 @@
 {
-  "build": "py_5",
-  "buildnum": 5,
+  "build": "py_0",
+  "buildnum": 0,
   "name": "wxvx",
   "packages": {
     "dev": [
@@ -43,5 +43,5 @@
       "zarr >=3.0,<3.1"
     ]
   },
-  "version": "0.1.0"
+  "version": "0.2.0"
 }
