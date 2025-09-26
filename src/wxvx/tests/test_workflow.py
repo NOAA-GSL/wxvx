@@ -168,7 +168,7 @@ def test_workflow__config_pb2nc(c, fakefs, tidy):
     workflow._config_pb2nc(c=c, path=path)
     expected = """
     mask = {
-      grid = "FULL";
+      grid = "";
     }
     message_type = [
       "ADPSFC",
@@ -218,7 +218,7 @@ def test_workflow__config_pb2nc__alt_masks(c, fakefs, tidy, to):
     mask = {
       grid = "%s";
     }
-    """ % (to or "FULL")
+    """ % (to or "")
     assert tidy(expected) in path.read_text()
 
 

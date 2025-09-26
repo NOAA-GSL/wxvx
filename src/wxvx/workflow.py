@@ -173,7 +173,7 @@ def _config_pb2nc(c: Config, path: Path):
     # selection of obs from the netCDF file created by pb2nc.
     _type = ["min", "max", "range", "mean", "stdev", "median", "p80"]
     config: dict = {
-        "mask": {"grid": c.regrid.to if re.match(r"^G\d{3}$", str(c.regrid.to)) else "FULL"},
+        "mask": {"grid": c.regrid.to if re.match(r"^G\d{3}$", str(c.regrid.to)) else ""},
         "message_type": ["ADPSFC", "ADPUPA", "AIRCAR", "AIRCFT"],
         "obs_bufr_var": ["POB", "QOB", "TOB", "UOB", "VOB", "ZOB"],
         "obs_window": {"beg": -1800, "end": 1800},

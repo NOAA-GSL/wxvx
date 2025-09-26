@@ -328,11 +328,11 @@ def test_metconf__mask_bad_key():
 def test_metconf__mask__grid_list(tidy):
     text = """
     grid = [
-      "FULL"
+      "G104"
     ];
     """
     expected = tidy(text).split("\n")
-    assert metconf._mask(k="grid", v=["FULL"], level=0) == expected
+    assert metconf._mask(k="grid", v=["G104"], level=0) == expected
 
 
 def test_metconf__mask__grid_str():
