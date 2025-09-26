@@ -66,6 +66,8 @@ def atomic(path: Path) -> Iterator[Path]:
 
 def classify_data_format(path: str | Path) -> DataFormat:
     path = Path(path)
+    if not path.exists():
+        raise WXVXError("Path not found: %s" % path)
     if path.is_file():
         inferred = magic.from_file(path.resolve())
         for pre, fmt in [
@@ -83,8 +85,7 @@ def classify_data_format(path: str | Path) -> DataFormat:
                 logging.exception(line)
         else:
             return DataFormat.ZARR
-    msg = f"Could not determine format of {path}"
-    raise WXVXError(msg)
+    raise WXVXError("Could not determine format of %s" % path)
 
 
 def classify_url(url: str) -> tuple[Proximity, str | Path]:
