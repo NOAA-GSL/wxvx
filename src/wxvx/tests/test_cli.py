@@ -94,7 +94,7 @@ def test_cli_main__task_list(caplog, switch, tidy):
           plots
           stats
         """
-        assert re.sub(r"INFO     [^ ]+ ", "", caplog.text.strip()) == dedent(expected).strip()
+        assert re.sub(r"INFO     [^ ]+ ", "", caplog.text.strip()) == tidy(expected)
 
 
 def test_cli_main__task_missing(caplog):
