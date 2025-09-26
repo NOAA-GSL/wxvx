@@ -475,7 +475,7 @@ def test_workflow__grid_nc(c_real_fs, check_cf_metadata, da_with_leadtime, tc, t
     level = 900
     path = Path(c_real_fs.paths.grids_forecast, "a.nc")
     da_with_leadtime.to_netcdf(path)
-    object.__setattr__(c_real_fs.forecast, "path", str(path))
+    c_real_fs.forecast._path = str(path)
     val = workflow._grid_nc(c=c_real_fs, varname="HGT", tc=tc, var=testvars["gh"])
     assert ready(val)
     check_cf_metadata(ds=xr.open_dataset(val.ref, decode_timedelta=True), name="HGT", level=level)
