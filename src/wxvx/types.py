@@ -76,7 +76,9 @@ class Config:
         self.cycles = Cycles(raw["cycles"])
         self.forecast = Forecast(**raw["forecast"])
         self.leadtimes = Leadtimes(raw["leadtimes"])
-        self.paths = Paths(grids.get("baseline"), grids["forecast"], paths.get("obs"), paths["run"])
+        self.paths = Paths(
+            grids.get("baseline"), grids.get("forecast"), paths.get("obs"), paths["run"]
+        )
         self.regrid = Regrid(**raw.get("regrid", {}))
         self.variables = raw["variables"]
         self._validate()
