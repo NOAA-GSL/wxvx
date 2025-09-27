@@ -273,9 +273,6 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         yield asset(src, src.is_file)
         yield None
     else:
-        if not c.paths.grids_baseline:
-            msg = "Config value paths.grids.baseline must be set"
-            raise WXVXError(msg)
         outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
         taskname = "Baseline grid %s" % path
@@ -292,6 +289,9 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
 @task
 def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
+    if not c.paths.grids_forecast:
+        msg = "Specify path.grids.forecast when forecast dataset is netCDF or Zarr"
+        raise WXVXError(msg)
     path = c.paths.grids_forecast / yyyymmdd / hh / leadtime / f"{var}.nc"
     taskname = "Forecast grid %s" % path
     yield taskname

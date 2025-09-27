@@ -8,8 +8,8 @@ import yaml
 from pytest import fixture, raises
 
 from wxvx import types
-from wxvx.tests.support import with_set
-from wxvx.util import resource_path
+from wxvx.tests.support import with_del, with_set
+from wxvx.util import WXVXError, resource_path
 
 # Fixtures
 
@@ -73,20 +73,10 @@ def test_types_validated_config__fail_json_schema(config_data, fakefs, fs, logge
     fs.add_real_file(resource_path("config.jsonschema"))
     path = fakefs / "config.yaml"
     path.write_text(yaml.dump(with_set(config_data, "foo", "baseline", "type")))
-    with raises(SystemExit) as e:
-        assert types.validated_config(config_path=path)
+    with raises(WXVXError) as e:
+        types.validated_config(config_path=path)
+    assert str(e.value) == "Config failed schema validation"
     assert logged(r"'foo' is not one of \['grid', 'point'\]")
-    assert e.value.code == 1
-
-
-def test_types_validated_config__fail_regrid_to(config_data, fakefs, fs, logged):
-    fs.add_real_file(resource_path("config.jsonschema"))
-    path = fakefs / "config.yaml"
-    path.write_text(yaml.dump(with_set(config_data, "baseline", "regrid", "to")))
-    with raises(SystemExit) as e:
-        assert types.validated_config(config_path=path)
-    assert logged(r"Cannot regrid to observations per 'regrid.to' config value")
-    assert e.value.code == 1
 
 
 def test_types_Baseline(baseline, config_data):
@@ -116,6 +106,30 @@ def test_types_Config(baseline, config_data, cycles, forecast, leadtimes, paths,
     assert obj != other
     for f in (repr, str):
         assert re.match(r"^Config(.*)$", f(obj))
+
+
+def test_types_Config__bad_paths_grids(config_data):
+    with raises(WXVXError) as e:
+        types.Config(
+            raw=with_del(
+                with_set(config_data, "grid", "baseline", "type"), "paths", "grids", "baseline"
+            )
+        )
+    assert str(e.value) == "Specify path.grids.baseline when baseline.type is 'grid'"
+
+
+def test_types_Config__bad_paths_obs(config_data):
+    with raises(WXVXError) as e:
+        types.Config(
+            raw=with_del(with_set(config_data, "point", "baseline", "type"), "paths", "obs")
+        )
+    assert str(e.value) == "Specify path.obs when baseline.type is 'point'"
+
+
+def test_types_Config__bad_regrid_to(config_data):
+    with raises(WXVXError) as e:
+        types.Config(raw=with_set(config_data, "baseline", "regrid", "to"))
+    assert str(e.value) == "Cannot regrid to observations per regrid.to config value"
 
 
 def test_types_Coords(config_data, coords):
