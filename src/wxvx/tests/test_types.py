@@ -8,7 +8,7 @@ from pytest import fixture, raises
 
 from wxvx import types
 from wxvx.tests.support import with_set
-from wxvx.util import resource_path
+from wxvx.util import WXVXError, resource_path
 
 # Fixtures
 
@@ -72,20 +72,19 @@ def test_types_validated_config__fail_json_schema(config_data, fakefs, fs, logge
     fs.add_real_file(resource_path("config.jsonschema"))
     path = fakefs / "config.yaml"
     path.write_text(yaml.dump(with_set(config_data, "foo", "baseline", "type")))
-    with raises(SystemExit) as e:
-        assert types.validated_config(config_path=path)
+    with raises(WXVXError) as e:
+        types.validated_config(config_path=path)
+    assert str(e.value) == "Config failed schema validation"
     assert logged(r"'foo' is not one of \['grid', 'point'\]")
-    assert e.value.code == 1
 
 
-def test_types_validated_config__fail_regrid_to(config_data, fakefs, fs, logged):
+def test_types_validated_config__fail_regrid_to(config_data, fakefs, fs):
     fs.add_real_file(resource_path("config.jsonschema"))
     path = fakefs / "config.yaml"
     path.write_text(yaml.dump(with_set(config_data, "baseline", "regrid", "to")))
-    with raises(SystemExit) as e:
-        assert types.validated_config(config_path=path)
-    assert logged(r"Cannot regrid to observations per 'regrid.to' config value")
-    assert e.value.code == 1
+    with raises(WXVXError) as e:
+        types.validated_config(config_path=path)
+    assert str(e.value) == "Cannot regrid to observations per 'regrid.to' config value"
 
 
 def test_types_Baseline(baseline, config_data):

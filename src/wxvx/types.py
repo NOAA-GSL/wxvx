@@ -11,7 +11,7 @@ from typing import Any, cast
 
 from uwtools.api.config import get_yaml_config, validate
 
-from wxvx.util import LINETYPE, expand, fail, resource_path, to_datetime, to_timedelta
+from wxvx.util import LINETYPE, WXVXError, expand, resource_path, to_datetime, to_timedelta
 
 _DatetimeT = str | datetime
 _TimedeltaT = str | int
@@ -37,11 +37,13 @@ def validated_config(config_path: Path) -> Config:
     yc = get_yaml_config(config_path)
     yc.dereference()
     if not validate(schema_file=resource_path("config.jsonschema"), config_data=yc.data):
-        fail()
-    c = Config(yc.data)
-    if c.regrid.to == "OBS":
-        fail("Cannot regrid to observations per 'regrid.to' config value")
-    return c
+        msg = "Config failed schema validation"
+        raise WXVXError(msg)
+    return Config(yc.data)
+
+
+# Here and below, any assert statements relate to config requirements that should have been enforced
+# by a prior schema check. If an assertion is triggered, it's a bug in this code, not a user issue.
 
 
 @dataclass(frozen=True)
@@ -52,8 +54,9 @@ class Baseline:
     type: VxType
 
     def __post_init__(self):
-        assert self.type in ["grid", "point"]
-        newval = {"grid": VxType.GRID, "point": VxType.POINT}
+        keys = ["grid", "point"]
+        assert self.type in keys
+        newval = dict(zip(keys, [VxType.GRID, VxType.POINT]))
         _force(self, "type", newval.get(str(self.type), self.type))
 
 
@@ -68,6 +71,7 @@ class Config:
         self.paths = Paths(grids.get("baseline"), grids["forecast"], paths.get("obs"), paths["run"])
         self.regrid = Regrid(**raw.get("regrid", {}))
         self.variables = raw["variables"]
+        self._validate()
 
     KEYS = ("baseline", "cycles", "forecast", "leadtimes", "paths", "variables")
 
@@ -80,6 +84,11 @@ class Config:
     def __repr__(self):
         parts = ["%s=%s" % (x, getattr(self, x)) for x in self.KEYS]
         return "%s(%s)" % (self.__class__.__name__, ", ".join(parts))
+
+    def _validate(self) -> None:
+        if self.regrid.to == "OBS":
+            msg = "Cannot regrid to observations per 'regrid.to' config value"
+            raise WXVXError(msg)
 
 
 @dataclass(frozen=True)
