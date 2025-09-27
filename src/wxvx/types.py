@@ -86,6 +86,9 @@ class Config:
         return "%s(%s)" % (self.__class__.__name__, ", ".join(parts))
 
     def _validate(self) -> None:
+        if self.baseline.type == VxType.POINT and not self.paths.obs:
+            msg = "Specify path.obs when baseline.type is 'point'"
+            raise WXVXError(msg)
         if self.regrid.to == "OBS":
             msg = "Cannot regrid to observations per 'regrid.to' config value"
             raise WXVXError(msg)

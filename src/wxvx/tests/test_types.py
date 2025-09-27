@@ -7,7 +7,7 @@ import yaml
 from pytest import fixture, raises
 
 from wxvx import types
-from wxvx.tests.support import with_set
+from wxvx.tests.support import with_del, with_set
 from wxvx.util import WXVXError, resource_path
 
 # Fixtures
@@ -107,7 +107,15 @@ def test_types_Config(baseline, config_data, cycles, forecast, leadtimes, paths,
         assert re.match(r"^Config(.*)$", f(obj))
 
 
-def test_types_Config__validate_fail_regrid_to(config_data):
+def test_types_Config__bad_paths_obs(config_data):
+    with raises(WXVXError) as e:
+        types.Config(
+            raw=with_del(with_set(config_data, "point", "baseline", "type"), "paths", "obs")
+        )
+    assert str(e.value) == "Specify path.obs when baseline.type is 'point'"
+
+
+def test_types_Config__bad_regrid_to(config_data):
     with raises(WXVXError) as e:
         types.Config(raw=with_set(config_data, "baseline", "regrid", "to"))
     assert str(e.value) == "Cannot regrid to observations per 'regrid.to' config value"
