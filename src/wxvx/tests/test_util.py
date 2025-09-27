@@ -52,7 +52,7 @@ def test_util_classify_data_format__file_missing(fakefs):
     path = fakefs / "no-souch-file"
     with raises(util.WXVXError) as e:
         util.classify_data_format(path=path)
-    assert str(e.value) == f"Could not determine format of {path}"
+    assert str(e.value) == f"Path not found: {path}"
 
 
 def test_util_classify_data_format__file_unrecognized(fakefs):
@@ -88,7 +88,7 @@ def test_util_classify_data_format__zarr_missing(fakefs):
     path = fakefs / "no-such-dir"
     with raises(util.WXVXError) as e:
         util.classify_data_format(path=path)
-    assert str(e.value) == f"Could not determine format of {path}"
+    assert str(e.value) == f"Path not found: {path}"
 
 
 @mark.parametrize(

@@ -24,6 +24,14 @@ Source = Enum(
     ],
 )
 
+ToGridVal = Enum(
+    "ToGridVal",
+    [
+        ("FCST", auto()),
+        ("OBS", auto()),
+    ],
+)
+
 VxType = Enum(
     "VxType",
     [
@@ -41,10 +49,8 @@ def validated_config(config_path: Path) -> Config:
         raise WXVXError(msg)
     return Config(yc.data)
 
-
-# Here and below, any assert statements relate to config requirements that should have been enforced
-# by a prior schema check. If an assertion is triggered, it's a bug in this code, not a user issue.
-
+# Below, assert statements relate to config requirements that should have been enforced by a prior
+# schema check. If an assertion is triggered, it's a wxvx bug, not a user issue.
 
 @dataclass(frozen=True)
 class Baseline:
@@ -140,28 +146,63 @@ class Cycles:
         return sorted(map(to_datetime, self.raw))
 
 
-@dataclass(frozen=True)
 class Forecast:
-    coords: Coords
-    name: str
-    path: str
-    projection: dict | None = None
-    mask: tuple[tuple[float, float]] | None = None
+    KEYS = (
+        "coords",
+        "mask",
+        "name",
+        "path",
+        "_projection",  # use '_projection' (not 'projection') to avoid triggering the property.
+    )
 
-    KEYS = ("coords", "mask", "name", "path", "projection")
+    def __init__(
+        self,
+        name: str,
+        path: str,
+        coords: Coords | dict | None = None,
+        mask: list[list[float]] | None = None,
+        projection: dict | None = None,
+    ):
+        self._name = name
+        self._path = path
+        self._coords = coords
+        self._mask = mask
+        self._projection = projection
+
+    def __eq__(self, other):
+        return all(getattr(self, k) == getattr(other, k) for k in self.KEYS)
 
     def __hash__(self):
         return _hash(self)
 
-    def __post_init__(self):
-        if isinstance(self.coords, dict):
-            coords = Coords(**self.coords)
-            _force(self, "coords", coords)
-        if self.mask:
-            _force(self, "mask", tuple(tuple(x) for x in self.mask))
-        if self.projection is None:
+    def __repr__(self):
+        parts = ["%s=%s" % (x, getattr(self, x)) for x in self.KEYS]
+        return "%s(%s)" % (self.__class__.__name__, ", ".join(parts))
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def path(self) -> str:
+        return self._path
+
+    @property
+    def coords(self) -> Coords | None:
+        if isinstance(self._coords, dict):
+            self._coords = Coords(**self._coords)
+        return self._coords
+
+    @property
+    def mask(self) -> list[list[float]] | None:
+        return self._mask
+
+    @property
+    def projection(self) -> dict:
+        if self._projection is None:
             logging.info("No forecast projection specified, defaulting to latlon")
-            _force(self, "projection", {"proj": "latlon"})
+            self._projection = {"proj": "latlon"}
+        return self._projection
 
 
 class Leadtimes:
@@ -202,16 +243,15 @@ class Paths:
 
 @dataclass(frozen=True)
 class Regrid:
-    method: str = "NEAREST"
-    to: str = "forecast"
-
     # See https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/appendixB.html#grids
     # for information on the "GNNN" grid names accepted as regrid-to values.
 
+    method: str = "NEAREST"
+    to: ToGrid | None = None
+
     def __post_init__(self):
-        mapping = {"baseline": "OBS", "forecast": "FCST"}
-        if self.to in mapping:
-            _force(self, "to", mapping[self.to])
+        _force(self, "to", ToGrid("forecast" if self.to is None else str(self.to)))
+        assert self.to is not None
 
 
 @dataclass(frozen=True)
@@ -222,6 +262,24 @@ class Time:
 
     def __post_init__(self):
         assert self.leadtime is not None or self.validtime is not None
+
+
+class ToGrid:
+    def __init__(self, val: str):
+        self.val: str | ToGridVal = val
+        mapping = {"baseline": ToGridVal.OBS, "forecast": ToGridVal.FCST}
+        self.val = mapping.get(val, val)
+
+    def __eq__(self, other):
+        return str(self) == str(other)
+
+    def __hash__(self):
+        return hash(str(self))
+
+    def __repr__(self):
+        if isinstance(self.val, ToGridVal):
+            return self.val.name
+        return self.val
 
 
 @dataclass(frozen=True)

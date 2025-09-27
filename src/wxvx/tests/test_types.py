@@ -2,6 +2,7 @@ import re
 from copy import deepcopy
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Callable, cast
 
 import yaml
 from pytest import fixture, raises
@@ -235,13 +236,13 @@ def test_types_Paths(paths, config_data):
 def test_types_Regrid(regrid, config_data):
     obj = regrid
     assert obj.method == "NEAREST"
-    assert obj.to == "FCST"
+    assert str(obj.to) == types.ToGridVal.FCST.name
     cfg = config_data["regrid"]
     other1 = types.Regrid(**cfg)
     assert obj == other1
     other2 = types.Regrid(**{**cfg, "to": "baseline"})
     assert obj != other2
-    assert other2.to == "OBS"
+    assert str(other2.to) == types.ToGridVal.OBS.name
 
 
 def test_types_Time(config_data, time):
@@ -254,6 +255,17 @@ def test_types_Time(config_data, time):
     assert obj == other1
     other2 = types.Time(**{**cfg, "inittime": "foo"})
     assert obj != other2
+
+
+def test_types_ToGrid():
+    for f in [repr, str]:
+        f = cast(Callable, f)
+        assert f(types.ToGrid(val="baseline")) == types.ToGridVal.OBS.name
+        assert f(types.ToGrid(val="forecast")) == types.ToGridVal.FCST.name
+        assert f(types.ToGrid(val="G104")) == "G104"
+    assert hash(types.ToGrid(val="G104")) == hash(types.ToGrid(val="G104"))
+    assert types.ToGrid(val="G104") == types.ToGrid(val="G104")
+    assert types.ToGrid(val="baseline") != types.ToGrid(val="forecast")
 
 
 def test_types_VarMeta():

@@ -11,7 +11,7 @@ import numpy as np
 import xarray as xr
 from pyproj import Proj
 
-from wxvx.types import VarMeta
+from wxvx.types import Coords, VarMeta
 from wxvx.util import WXVXError
 
 if TYPE_CHECKING:
@@ -244,6 +244,9 @@ class PREPBUFR(GFS):
 
 
 def da_construct(c: Config, da: xr.DataArray) -> xr.DataArray:
+    # This function is called only for netCDF/Zarr forecast datasets, for which 'coords' config
+    # blocks will have been provided. So, for the typechecker, assert that this is the case.
+    assert isinstance(c.forecast.coords, Coords)
     inittime = _da_val(da, c.forecast.coords.time.inittime, "initialization time", np.datetime64)
     leadtime = c.forecast.coords.time.leadtime
     validtime = c.forecast.coords.time.validtime
@@ -266,6 +269,9 @@ def da_construct(c: Config, da: xr.DataArray) -> xr.DataArray:
 
 
 def da_select(c: Config, ds: xr.Dataset, varname: str, tc: TimeCoords, var: Var) -> xr.DataArray:
+    # This function is called only for netCDF/Zarr forecast datasets, for which 'coords' config
+    # blocks will have been provided. So, for the typechecker, assert that this is the case.
+    assert isinstance(c.forecast.coords, Coords)
     coords = ds.coords.keys()
     dt = lambda x: np.datetime64(str(x.isoformat()))
     try:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime
 from functools import cache
 from itertools import chain, pairwise, product
@@ -25,7 +26,17 @@ from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.times import TimeCoords, gen_validtimes, hh, tcinfo, yyyymmdd
 from wxvx.types import Cycles, Source, VxType
-from wxvx.util import LINETYPE, Proximity, WXVXError, atomic, classify_url, mpexec, render
+from wxvx.util import (
+    LINETYPE,
+    DataFormat,
+    Proximity,
+    WXVXError,
+    atomic,
+    classify_data_format,
+    classify_url,
+    mpexec,
+    render,
+)
 from wxvx.variables import VARMETA, Var, da_construct, da_select, ds_construct, metlevel
 
 if TYPE_CHECKING:
@@ -51,8 +62,9 @@ def grids(c: Config, baseline: bool = True, forecast: bool = True):
     for var, varname in _vxvars(c).items():
         for tc in gen_validtimes(c.cycles, c.leadtimes):
             if forecast:
-                forecast_grid = _grid_nc(c, varname, tc, var)
-                reqs.append(forecast_grid)
+                forecast_path = Path(render(c.forecast.path, tc))
+                req, _ = _req_grid(forecast_path, c, varname, tc, var)
+                reqs.append(req)
             if baseline:
                 baseline_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
                 reqs.append(baseline_grid)
@@ -88,7 +100,7 @@ def obs(c: Config):
         tc_valid = TimeCoords(tc.validtime)
         url = render(c.baseline.url, tc_valid)
         yyyymmdd, hh, _ = tcinfo(tc_valid)
-        reqs.append(_prepbufr(url, c.paths.obs / yyyymmdd / hh))
+        reqs.append(_req_prepbufr(url, c.paths.obs / yyyymmdd / hh))
     yield reqs
 
 
@@ -124,51 +136,25 @@ def _config_grid_stat(
     varname: str,
     var: Var,
     prefix: str,
-    source: Source,
+    datafmt: DataFormat,
     polyfile: Node | None,
 ):
     taskname = f"Config for grid_stat {path}"
     yield taskname
     yield asset(path, path.is_file)
     yield None
-    level_obs = metlevel(var.level_type, var.level)
-    baseline_class = variables.model_class(c.baseline.name)
-    attrs = {
-        Source.BASELINE: (level_obs, baseline_class.varname(var.name), c.baseline.name),
-        Source.FORECAST: ("(0,0,*,*)", varname, c.forecast.name),
-    }
-    level_fcst, name_fcst, model = attrs[source]
-    field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
-    field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
+    field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
     meta = _meta(c, varname)
-    if meta.cat_thresh:
-        for x in field_fcst, field_obs:
-            x["cat_thresh"] = meta.cat_thresh
-    if meta.cnt_thresh:
-        for x in field_fcst, field_obs:
-            x["cnt_thresh"] = meta.cnt_thresh
-    mask_grid = [] if polyfile else ["FULL"]
-    mask_poly = [polyfile.ref] if polyfile else []
     config = {
-        "fcst": {
-            "field": [field_fcst],
-        },
-        "mask": {
-            "grid": mask_grid,
-            "poly": mask_poly,
-        },
-        "model": model,
+        "fcst": {"field": [field_fcst]},
+        "mask": {"grid": [] if polyfile else ["FULL"], "poly": [polyfile.ref] if polyfile else []},
+        "model": c.forecast.name,
         "nc_pairs_flag": "FALSE",
-        "obs": {
-            "field": [field_obs],
-        },
+        "obs": {"field": [field_obs]},
         "obtype": c.baseline.name,
         "output_flag": dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), "BOTH"),
         "output_prefix": f"{prefix}",
-        "regrid": {
-            "method": c.regrid.method,
-            "to_grid": c.regrid.to,
-        },
+        "regrid": {"method": c.regrid.method, "to_grid": c.regrid.to},
         "tmp_dir": path.parent,
     }
     if nbrhd := {k: v for k, v in [("shape", meta.nbrhd_shape), ("width", meta.nbrhd_width)] if v}:
@@ -185,43 +171,14 @@ def _config_pb2nc(c: Config, path: Path):
     yield None
     # Specify the union of values needed by either sfc or atm vx and let point_stat restrict its
     # selection of obs from the netCDF file created by pb2nc.
+    _type = ["min", "max", "range", "mean", "stdev", "median", "p80"]
     config: dict = {
-        "mask": {
-            "grid": c.regrid.to or "FULL",
-        },
-        "message_type": [
-            "ADPSFC",
-            "ADPUPA",
-            "AIRCAR",
-            "AIRCFT",
-        ],
-        "obs_bufr_var": [
-            "POB",
-            "QOB",
-            "TOB",
-            "UOB",
-            "VOB",
-            "ZOB",
-        ],
-        "obs_window": {
-            "beg": -1800,
-            "end": 1800,
-        },
+        "mask": {"grid": c.regrid.to if re.match(r"^G\d{3}$", str(c.regrid.to)) else ""},
+        "message_type": ["ADPSFC", "ADPUPA", "AIRCAR", "AIRCFT"],
+        "obs_bufr_var": ["POB", "QOB", "TOB", "UOB", "VOB", "ZOB"],
+        "obs_window": {"beg": -1800, "end": 1800},
         "quality_mark_thresh": 9,
-        "time_summary": {
-            "step": 3600,
-            "width": 3600,
-            "obs_var": [],
-            "type": [
-                "min",
-                "max",
-                "range",
-                "mean",
-                "stdev",
-                "median",
-                "p80",
-            ],
-        },
+        "time_summary": {"step": 3600, "width": 3600, "obs_var": [], "type": _type},
         "tmp_dir": path.parent,
     }
     with atomic(path) as tmp:
@@ -229,55 +186,29 @@ def _config_pb2nc(c: Config, path: Path):
 
 
 @task
-def _config_point_stat(c: Config, path: Path, varname: str, var: Var, prefix: str):
+def _config_point_stat(
+    c: Config, path: Path, varname: str, var: Var, prefix: str, datafmt: DataFormat
+):
     taskname = f"Config for point_stat {path}"
     yield taskname
     yield asset(path, path.is_file)
     yield None
-    level_obs = metlevel(var.level_type, var.level)
-    baseline_class = variables.model_class(c.baseline.name)
-    level_fcst, name_fcst, model = ("(0,0,*,*)", varname, c.forecast.name)
-    field_fcst = {"level": [level_fcst], "name": name_fcst, "set_attr_level": level_obs}
-    field_obs = {"level": [level_obs], "name": baseline_class.varname(var.name)}
+    field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
     surface = var.level_type in ("heightAboveGround", "surface")
-    try:
-        regrid_width = {"BILIN": 2, "NEAREST": 1}[c.regrid.method]
-    except KeyError as e:
-        msg = "Could not determine 'width' value for regrid method '%s'" % c.regrid.method
-        raise WXVXError(msg) from e
     config = {
-        "fcst": {
-            "field": [field_fcst],
-        },
-        "interp": {
-            "shape": "SQUARE",
-            "type": {
-                "method": "BILIN",
-                "width": 2,
-            },
-            "vld_thresh": 1.0,
-        },
+        "fcst": {"field": [field_fcst]},
+        "interp": {"shape": "SQUARE", "type": {"method": "BILIN", "width": 2}, "vld_thresh": 1.0},
         "message_type": ["SFC" if surface else "ATM"],
-        "message_type_group_map": {
-            "ATM": "ADPUPA,AIRCAR,AIRCFT",
-            "SFC": "ADPSFC",
-        },
-        "model": model,
-        "obs": {
-            "field": [field_obs],
-        },
-        "obs_window": {
-            "beg": -900 if surface else -1800,
-            "end": 900 if surface else 1800,
-        },
-        "output_flag": {
-            "cnt": "BOTH",
-        },
+        "message_type_group_map": {"ATM": "ADPUPA,AIRCAR,AIRCFT", "SFC": "ADPSFC"},
+        "model": c.forecast.name,
+        "obs": {"field": [field_obs]},
+        "obs_window": {"beg": -900 if surface else -1800, "end": 900 if surface else 1800},
+        "output_flag": {"cnt": "BOTH"},
         "output_prefix": f"{prefix}",
         "regrid": {
             "method": c.regrid.method,
             "to_grid": c.regrid.to,
-            "width": regrid_width,
+            "width": _regrid_width(c),
         },
         "tmp_dir": path.parent,
     }
@@ -398,7 +329,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     yield asset(path, path.is_file)
     rundir = c.paths.run / "stats" / yyyymmdd / hh
     cfgfile = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
-    prepbufr = _prepbufr(url, path.parent)
+    prepbufr = _req_prepbufr(url, path.parent)
     yield {"cfgfile": cfgfile, "prepbufr": prepbufr}
     runscript = cfgfile.ref.with_suffix(".sh")
     content = f"pb2nc -v 4 {prepbufr.ref} {path} {cfgfile.ref} >{path.stem}.log 2>&1"
@@ -464,16 +395,19 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
     baseline = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
-    forecast = (
-        _grid_grib(c, tc, var) if source == Source.BASELINE else _grid_nc(c, varname, tc, var)
-    )
+    forecast: Node
+    if source == Source.BASELINE:
+        forecast, datafmt = _grid_grib(c, tc, var), DataFormat.GRIB
+    else:
+        forecast_path = Path(render(c.forecast.path, tc))
+        forecast, datafmt = _req_grid(forecast_path, c, varname, tc, var)
     reqs = [baseline, forecast]
     polyfile = None
     if mask := c.forecast.mask:
         polyfile = _polyfile(c.paths.run / "stats" / "mask.poly", mask)
         reqs.append(polyfile)
     path_config = path.with_suffix(".config")
-    config = _config_grid_stat(c, path_config, varname, var, prefix, source, polyfile)
+    config = _config_grid_stat(c, path_config, varname, var, prefix, datafmt, polyfile)
     reqs.append(config)
     yield reqs
     runscript = path.with_suffix(".sh")
@@ -496,9 +430,10 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
-    forecast = _grid_nc(c, varname, tc, var)
+    forecast_path = Path(render(c.forecast.path, tc))
+    forecast, datafmt = _req_grid(forecast_path, c, varname, tc, var)
     obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
-    config = _config_point_stat(c, path.with_suffix(".config"), varname, var, prefix)
+    config = _config_point_stat(c, path.with_suffix(".config"), varname, var, prefix, datafmt)
     yield [forecast, obs, config]
     runscript = path.with_suffix(".sh")
     content = "point_stat -v 4 {forecast} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
@@ -509,6 +444,26 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
 
 
 # Support
+
+
+def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
+    level_obs = metlevel(var.level_type, var.level)
+    varname_baseline = variables.model_class(c.baseline.name).varname(var.name)
+    level_fcst, name_fcst = (
+        (level_obs, varname_baseline) if datafmt == DataFormat.GRIB else ("(0,0,*,*)", varname)
+    )
+    field_fcst = {"level": [level_fcst], "name": name_fcst}
+    if datafmt != DataFormat.GRIB:
+        field_fcst["set_attr_level"] = level_obs
+    field_obs = {"level": [level_obs], "name": varname_baseline}
+    meta = _meta(c, varname)
+    if meta.cat_thresh:
+        for x in field_fcst, field_obs:
+            x["cat_thresh"] = meta.cat_thresh
+    if meta.cnt_thresh:
+        for x in field_fcst, field_obs:
+            x["cnt_thresh"] = meta.cnt_thresh
+    return field_fcst, field_obs
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
@@ -535,7 +490,24 @@ def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd
     return plot_data
 
 
-def _prepbufr(url: str, outdir: Path) -> Node:
+def _regrid_width(c: Config) -> int:
+    try:
+        return {"BILIN": 2, "NEAREST": 1}[c.regrid.method]
+    except KeyError as e:
+        msg = "Could not determine 'width' value for regrid method '%s'" % c.regrid.method
+        raise WXVXError(msg) from e
+
+
+def _req_grid(
+    path: Path, c: Config, varname: str, tc: TimeCoords, var: Var
+) -> tuple[Node, DataFormat]:
+    data_format = classify_data_format(path)
+    if data_format == DataFormat.GRIB:
+        return _existing(path), data_format
+    return _grid_nc(c, varname, tc, var), data_format
+
+
+def _req_prepbufr(url: str, outdir: Path) -> Node:
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
         return _existing(src)

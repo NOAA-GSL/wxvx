@@ -6,7 +6,6 @@ import logging
 import re
 from argparse import ArgumentTypeError, Namespace
 from pathlib import Path
-from textwrap import dedent
 from unittest.mock import DEFAULT as D
 from unittest.mock import patch
 
@@ -75,7 +74,7 @@ def test_cli_main__exception(logged):
 
 
 @mark.parametrize("switch", ["-l", "--list"])
-def test_cli_main__task_list(caplog, switch):
+def test_cli_main__task_list(caplog, switch, tidy):
     caplog.set_level(logging.INFO)
     with (
         patch.object(
@@ -95,7 +94,7 @@ def test_cli_main__task_list(caplog, switch):
           plots
           stats
         """
-        assert re.sub(r"INFO     [^ ]+ ", "", caplog.text.strip()) == dedent(expected).strip()
+        assert re.sub(r"INFO     [^ ]+ ", "", caplog.text.strip()) == tidy(expected)
 
 
 def test_cli_main__task_missing(caplog):

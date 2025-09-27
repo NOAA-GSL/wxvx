@@ -238,7 +238,6 @@
         }
       },
       "required": [
-        "coords",
         "name",
         "path"
       ],

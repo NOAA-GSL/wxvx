@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Callable, NoReturn
 
+from wxvx.types import ToGridVal
+
 # Public:
 
 
@@ -157,7 +159,7 @@ def _regrid(k: str, v: Any, level: int) -> list[str]:
             return _kvpair(k, _bare(v), level)
         # Scalar: custom.
         case "to_grid":
-            f = _bare if v in ("FCST", "OBS") else _quoted
+            f = _bare if v in [x.name for x in ToGridVal] else _quoted
             return _kvpair(k, f(v), level)
     return _fail(k)
 

@@ -1,14 +1,14 @@
-from textwrap import dedent
 from typing import Callable
 
 from pytest import mark, raises
 
 from wxvx import metconf
+from wxvx.types import ToGridVal
 
 # Public:
 
 
-def test_metconf_render():
+def test_metconf_render(tidy):
     config = {
         "fcst": {
             "field": [
@@ -80,7 +80,7 @@ def test_metconf_render():
         },
         "output_prefix": "foo_bar",
         "regrid": {
-            "to_grid": "FCST",
+            "to_grid": ToGridVal.FCST.name,
         },
         "time_summary": {
             "obs_var": [],
@@ -180,7 +180,7 @@ def test_metconf_render():
     }
     tmp_dir = "/path/to/dir";
     """
-    expected = dedent(text).strip()
+    expected = tidy(text)
     assert metconf.render(config=config).strip() == expected
 
 
@@ -213,7 +213,7 @@ def test_metconf__fail():
         metconf._fail(k=key)
 
 
-def test_metconf__field_mapping():
+def test_metconf__field_mapping(tidy):
     text = """
     {
       cnt_thresh = [
@@ -226,7 +226,7 @@ def test_metconf__field_mapping():
       name = "foo";
     }
     """
-    expected = dedent(text).strip()
+    expected = tidy(text)
     assert (
         metconf._field_mapping(
             d={"name": "foo", "cnt_thresh": [1, 2], "level": ["(0,0,*,*)"]}, level=0
@@ -239,7 +239,7 @@ def test_metconf__field_mapping_kvpairs():
     _fail(metconf._field_mapping_kvpairs)
 
 
-def test_metconf__field_sequence():
+def test_metconf__field_sequence(tidy):
     text = """
     field = [
       {
@@ -264,7 +264,7 @@ def test_metconf__field_sequence():
       }
     ];
     """
-    expected = dedent(text).strip().split("\n")
+    expected = tidy(text).split("\n")
     d1 = {"name": "foo", "cnt_thresh": [1, 2], "level": ["(0,0,*,*)"]}
     d2 = {"name": "bar", "cat_thresh": [3, 4], "level": ["P1000"]}
     assert metconf._field_sequence(k="field", v=[d1, d2], level=0) == expected
@@ -283,18 +283,18 @@ def test_metconf__interp__kvpair(k, v):
     assert metconf._interp(k=k, v=v, level=1) == [f"  {k} = {v};"]
 
 
-def test_metconf__interp__type():
+def test_metconf__interp__type(tidy):
     text = """
     type = {
       method = BILIN;
       width = 2;
     }
     """
-    expected = dedent(text).strip().split("\n")
+    expected = tidy(text).split("\n")
     assert metconf._interp(k="type", v={"method": "BILIN", "width": 2}, level=0) == expected
 
 
-def test_metconf__key_val_map_list():
+def test_metconf__key_val_map_list(tidy):
     text = """
     maplist = [
       {
@@ -307,7 +307,7 @@ def test_metconf__key_val_map_list():
       }
     ];
     """
-    expected = dedent(text).strip().split("\n")
+    expected = tidy(text).split("\n")
     assert metconf._key_val_map_list(k="maplist", v={"1": "one", "2": "two"}, level=0) == expected
 
 
@@ -325,14 +325,14 @@ def test_metconf__mask_bad_key():
         metconf._mask(k="foo", v=[], level=0)
 
 
-def test_metconf__mask__grid_list():
+def test_metconf__mask__grid_list(tidy):
     text = """
     grid = [
-      "FULL"
+      "G104"
     ];
     """
-    expected = dedent(text).strip().split("\n")
-    assert metconf._mask(k="grid", v=["FULL"], level=0) == expected
+    expected = tidy(text).split("\n")
+    assert metconf._mask(k="grid", v=["G104"], level=0) == expected
 
 
 def test_metconf__mask__grid_str():
@@ -367,14 +367,14 @@ def test_metconf__regrid():
         metconf._regrid(k="foo", v="bar", level=0)
 
 
-def test_metconf__sequence():
+def test_metconf__sequence(tidy):
     text = """
     s = [
       FOO,
         BAR
     ];
     """
-    expected = dedent(text).strip().split("\n")
+    expected = tidy(text).split("\n")
     v = ["foo", "  bar"]
     handler = lambda x: x.upper()
     assert metconf._sequence(k="s", v=v, handler=handler, level=0) == expected
@@ -394,14 +394,14 @@ def test_metconf__time_summary__scalar(k, v):
 
 
 @mark.parametrize(("k", "v"), [("obs_var", ["foo", "bar"]), ("type", ["min", "max"])])
-def test_metconf__time_summary__sequence(k, v):
+def test_metconf__time_summary__sequence(k, tidy, v):
     text = f'''
     {k} = [
       "{v[0]}",
       "{v[1]}"
     ];
     '''  # noqa: Q001
-    expected = dedent(text).strip().split("\n")
+    expected = tidy(text).split("\n")
     assert metconf._time_summary(k=k, v=v, level=0) == expected
 
 
