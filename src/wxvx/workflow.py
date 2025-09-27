@@ -336,7 +336,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
         raise WXVXError(msg)
     path = (c.paths.obs / yyyymmdd / hh / url.split("/")[-1]).with_suffix(".nc")
     yield asset(path, path.is_file)
-    rundir = c.paths.run / "stats" / yyyymmdd / hh
+    rundir = c.paths.run / "pb2nc" / yyyymmdd / hh
     cfgfile = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
     prepbufr = _req_prepbufr(url, path.parent)
     yield {"cfgfile": cfgfile, "prepbufr": prepbufr}
