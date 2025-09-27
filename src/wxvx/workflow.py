@@ -273,9 +273,6 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         yield asset(src, src.is_file)
         yield None
     else:
-        if not c.paths.grids_baseline:
-            msg = "Config value paths.grids.baseline must be set"
-            raise WXVXError(msg)
         outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
         taskname = "Baseline grid %s" % path
