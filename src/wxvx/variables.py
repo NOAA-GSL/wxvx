@@ -269,8 +269,8 @@ def da_construct(c: Config, da: xr.DataArray) -> xr.DataArray:
 
 
 def da_select(c: Config, ds: xr.Dataset, varname: str, tc: TimeCoords, var: Var) -> xr.DataArray:
-    # This function is called only for netCDF/Zarr forecast datasets, for which coords config blocks
-    # will have been provided. So, for the typecheckers, assert that this is the case.
+    # This function is called only for netCDF/Zarr forecast datasets, for which 'coords' config
+    # blocks will have been provided. So, for the typechecker, assert that this is the case.
     assert isinstance(c.forecast.coords, Coords)
     coords = ds.coords.keys()
     dt = lambda x: np.datetime64(str(x.isoformat()))
