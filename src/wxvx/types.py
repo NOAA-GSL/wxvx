@@ -86,6 +86,8 @@ class Config:
         return "%s(%s)" % (self.__class__.__name__, ", ".join(parts))
 
     def _validate(self) -> None:
+        # Validation tests involving disparate config subtrees, which are awkward to define in JSON
+        # Schema (or that give poor user feedback when so defined) are performed here.
         if self.baseline.type == VxType.GRID and not self.paths.grids_baseline:
             msg = "Specify path.grids.baseline when baseline.type is 'grid'"
             raise WXVXError(msg)
