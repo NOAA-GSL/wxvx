@@ -29,6 +29,7 @@ def fetch(taskname: str, url: str, path: Path, headers: dict[str, str] | None = 
                 f.write(chunk)
         logging.info("%s: Wrote %s", taskname, path)
         return True
+    logging.warning("%s: Could not fetch %s", taskname, url)
     return False
 
 

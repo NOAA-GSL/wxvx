@@ -18,7 +18,7 @@ URL = "https://some.url"
     ("code", "out", "byterange", "ret"),
     [(200, "foo", False, True), (206, "foo", True, True), (404, "", False, False)],
 )
-def test_net_fetch_fail(code, fs, out, byterange, ret):
+def test_net_fetch__fail(byterange, code, fs, logged, out, ret):
     response = Mock()
     response.status_code = code
     response.iter_content.return_value = iter([bytes(out, encoding="utf-8")])
@@ -31,6 +31,7 @@ def test_net_fetch_fail(code, fs, out, byterange, ret):
         URL, allow_redirects=True, stream=True, timeout=net.TIMEOUT, headers=headers
     )
     assert path.read_text(encoding="utf-8") == out
+    assert logged(f"Could not fetch {URL}" if code == 404 else f"Wrote {path}")
 
 
 def test_net_status():
