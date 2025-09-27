@@ -109,23 +109,6 @@ def test_workflow_grids_forecast(c, fmt, n_grids, noop):
         assert len(workflow.grids_forecast(c=c).ref) == n_grids
 
 
-@fixture
-def obs_info(c):
-    url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.baseline = replace(c.baseline, type="point", url=url)
-    expected = [
-        c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.x"
-        for (yyyymmdd, hh) in [
-            ("20241219", "18"),
-            ("20241220", "00"),
-            ("20241220", "06"),
-            ("20241220", "12"),
-            ("20241220", "18"),
-        ]
-    ]
-    return c, expected
-
-
 def test_workflow_ncobs(c, obs_info):
     c, expected = obs_info
     assert workflow.ncobs(c).ref == [x.with_suffix(".nc") for x in expected]
@@ -826,6 +809,23 @@ def noop():
         yield asset(None, lambda: False)
 
     return noop
+
+
+@fixture
+def obs_info(c):
+    url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
+    c.baseline = replace(c.baseline, type="point", url=url)
+    expected = [
+        c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.x"
+        for (yyyymmdd, hh) in [
+            ("20241219", "18"),
+            ("20241220", "00"),
+            ("20241220", "06"),
+            ("20241220", "12"),
+            ("20241220", "18"),
+        ]
+    ]
+    return c, expected
 
 
 @fixture
