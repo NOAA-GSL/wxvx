@@ -49,8 +49,10 @@ def validated_config(config_path: Path) -> Config:
         raise WXVXError(msg)
     return Config(yc.data)
 
+
 # Below, assert statements relate to config requirements that should have been enforced by a prior
 # schema check. If an assertion is triggered, it's a wxvx bug, not a user issue.
+
 
 @dataclass(frozen=True)
 class Baseline:
