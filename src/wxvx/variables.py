@@ -244,8 +244,8 @@ class PREPBUFR(GFS):
 
 
 def da_construct(c: Config, da: xr.DataArray) -> xr.DataArray:
-    # This function is called only for netCDF/Zarr forecast datasets, for which coords config blocks
-    # will have been provided. So, for the typecheckers, assert that this is the case.
+    # This function is called only for netCDF/Zarr forecast datasets, for which 'coords' config
+    # blocks will have been provided. So, for the typechecker, assert that this is the case.
     assert isinstance(c.forecast.coords, Coords)
     inittime = _da_val(da, c.forecast.coords.time.inittime, "initialization time", np.datetime64)
     leadtime = c.forecast.coords.time.leadtime
