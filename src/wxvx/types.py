@@ -86,6 +86,9 @@ class Config:
         return "%s(%s)" % (self.__class__.__name__, ", ".join(parts))
 
     def _validate(self) -> None:
+        if self.baseline.type == VxType.GRID and not self.paths.grids_baseline:
+            msg = "Specify path.grids.baseline when baseline.type is 'grid'"
+            raise WXVXError(msg)
         if self.baseline.type == VxType.POINT and not self.paths.obs:
             msg = "Specify path.obs when baseline.type is 'point'"
             raise WXVXError(msg)
