@@ -132,9 +132,13 @@ class Cycles:
 
 
 class Forecast:
-    # Use '_projection' as a key instead of 'projection' to avoid triggering the property.
-
-    KEYS = ("coords", "mask", "name", "path", "_projection")
+    KEYS = (
+        "coords",
+        "mask",
+        "name",
+        "path",
+        "_projection",  # use '_projection' (not 'projection') to avoid triggering the property.
+    )
 
     def __init__(
         self,
