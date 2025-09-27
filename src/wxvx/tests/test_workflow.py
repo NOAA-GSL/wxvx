@@ -109,34 +109,34 @@ def test_workflow_grids_forecast(c, fmt, n_grids, noop):
         assert len(workflow.grids_forecast(c=c).ref) == n_grids
 
 
-def test_workflow_ncobs(c):
+@fixture
+def obs_info(c):
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
     c.baseline = replace(c.baseline, type="point", url=url)
+    yyyymmdd_hh = [
+        ("20241219", "18"),
+        ("20241220", "00"),
+        ("20241220", "06"),
+        ("20241220", "12"),
+        ("20241220", "18"),
+    ]
+    return c, yyyymmdd_hh
+
+
+def test_workflow_ncobs(c, obs_info):
+    c, yyyymmdd_hh = obs_info
     expected = [
         c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nc"
-        for (yyyymmdd, hh) in [
-            ("20241219", "18"),
-            ("20241220", "00"),
-            ("20241220", "06"),
-            ("20241220", "12"),
-            ("20241220", "18"),
-        ]
+        for (yyyymmdd, hh) in yyyymmdd_hh
     ]
     assert workflow.ncobs(c).ref == expected
 
 
-def test_workflow_obs(c):
-    url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.baseline = replace(c.baseline, type="point", url=url)
+def test_workflow_obs(c, obs_info):
+    c, yyyymmdd_hh = obs_info
     expected = [
         c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nr"
-        for (yyyymmdd, hh) in [
-            ("20241219", "18"),
-            ("20241220", "00"),
-            ("20241220", "06"),
-            ("20241220", "12"),
-            ("20241220", "18"),
-        ]
+        for (yyyymmdd, hh) in yyyymmdd_hh
     ]
     assert workflow.obs(c).ref == expected
 
