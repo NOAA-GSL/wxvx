@@ -103,7 +103,7 @@ class Config:
             msg = "Specify path.obs when baseline.type is 'point'"
             raise WXVXError(msg)
         if self.regrid.to == "OBS":
-            msg = "Cannot regrid to observations per 'regrid.to' config value"
+            msg = "Cannot regrid to observations per regrid.to config value"
             raise WXVXError(msg)
 
 

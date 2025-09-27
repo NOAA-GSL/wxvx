@@ -129,7 +129,7 @@ def test_types_Config__bad_paths_obs(config_data):
 def test_types_Config__bad_regrid_to(config_data):
     with raises(WXVXError) as e:
         types.Config(raw=with_set(config_data, "baseline", "regrid", "to"))
-    assert str(e.value) == "Cannot regrid to observations per 'regrid.to' config value"
+    assert str(e.value) == "Cannot regrid to observations per regrid.to config value"
 
 
 def test_types_Coords(config_data, coords):
