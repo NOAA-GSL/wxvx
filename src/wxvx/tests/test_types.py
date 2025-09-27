@@ -78,15 +78,6 @@ def test_types_validated_config__fail_json_schema(config_data, fakefs, fs, logge
     assert logged(r"'foo' is not one of \['grid', 'point'\]")
 
 
-def test_types_validated_config__fail_regrid_to(config_data, fakefs, fs):
-    fs.add_real_file(resource_path("config.jsonschema"))
-    path = fakefs / "config.yaml"
-    path.write_text(yaml.dump(with_set(config_data, "baseline", "regrid", "to")))
-    with raises(WXVXError) as e:
-        types.validated_config(config_path=path)
-    assert str(e.value) == "Cannot regrid to observations per 'regrid.to' config value"
-
-
 def test_types_Baseline(baseline, config_data):
     obj = baseline
     assert obj.name == "GFS"
@@ -114,6 +105,12 @@ def test_types_Config(baseline, config_data, cycles, forecast, leadtimes, paths,
     assert obj != other
     for f in (repr, str):
         assert re.match(r"^Config(.*)$", f(obj))
+
+
+def test_types_Config__validate_fail_regrid_to(config_data):
+    with raises(WXVXError) as e:
+        types.Config(raw=with_set(config_data, "baseline", "regrid", "to"))
+    assert str(e.value) == "Cannot regrid to observations per 'regrid.to' config value"
 
 
 def test_types_Coords(config_data, coords):
