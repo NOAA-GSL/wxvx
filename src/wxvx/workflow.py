@@ -89,11 +89,20 @@ def grids_forecast(c: Config):
 
 
 @tasks
+def ncobs(c: Config):
+    taskname = "Baseline netCDF from obs for %s" % c.baseline.name
+    _enforce_point_baseline_type(c, taskname)
+    yield taskname
+    yield [
+        _netcdf_from_obs(c, TimeCoords(tc.validtime))
+        for tc in gen_validtimes(c.cycles, c.leadtimes)
+    ]
+
+
+@tasks
 def obs(c: Config):
     taskname = "Baseline obs for %s" % c.baseline.name
-    if c.baseline.type == VxType.GRID:
-        msg = "%s: This task requires that config value baseline.type be set to 'point'"
-        raise WXVXError(msg % taskname)
+    _enforce_point_baseline_type(c, taskname)
     yield taskname
     reqs = []
     for tc in gen_validtimes(c.cycles, c.leadtimes):
@@ -464,6 +473,12 @@ def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
         for x in field_fcst, field_obs:
             x["cnt_thresh"] = meta.cnt_thresh
     return field_fcst, field_obs
+
+
+def _enforce_point_baseline_type(c: Config, taskname: str):
+    if c.baseline.type != VxType.POINT:
+        msg = "%s: This task requires that config value baseline.type be set to 'point'"
+        raise WXVXError(msg % taskname)
 
 
 def _meta(c: Config, varname: str) -> VarMeta:

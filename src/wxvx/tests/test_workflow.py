@@ -125,14 +125,6 @@ def test_workflow_obs(c):
     assert workflow.obs(c).ref == expected
 
 
-def test_workflow_obs__bad_baseline_type(c):
-    c.baseline = replace(c.baseline, type="grid")
-    with raises(WXVXError) as e:
-        workflow.obs(c)
-    expected = "This task requires that config value baseline.type be set to 'point'"
-    assert expected in str(e.value)
-
-
 def test_workflow_plots(c, noop):
     with patch.object(workflow, "_plot", noop):
         val = workflow.plots(c=c)
@@ -634,6 +626,14 @@ def test_workflow__stats_vs_obs(c, fakefs, fmt, tc, testvars):
 
 
 # Support Tests
+
+
+def test_workflow__enforce_point_baseline_type(c):
+    c.baseline = replace(c.baseline, type="grid")
+    with raises(WXVXError) as e:
+        workflow._enforce_point_baseline_type(c=c, taskname="foo")
+    expected = "foo: This task requires that config value baseline.type be set to 'point'"
+    assert str(e.value) == expected
 
 
 def test_workflow__meta(c):
