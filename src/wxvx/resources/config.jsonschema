@@ -311,9 +311,6 @@
               "type": "string"
             }
           },
-          "required": [
-            "forecast"
-          ],
           "type": "object"
         },
         "obs": {
@@ -324,7 +321,6 @@
         }
       },
       "required": [
-        "grids",
         "run"
       ],
       "type": "object"
