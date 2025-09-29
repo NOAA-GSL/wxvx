@@ -62,7 +62,7 @@ def grids(c: Config, baseline: bool = True, forecast: bool = True):
     for var, varname in _vxvars(c).items():
         for tc in gen_validtimes(c.cycles, c.leadtimes):
             if forecast:
-                forecast_path = Path(render(c.forecast.path, tc))
+                forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
                 req, _ = _req_grid(forecast_path, c, varname, tc, var)
                 reqs.append(req)
             if baseline:
@@ -98,7 +98,7 @@ def obs(c: Config):
     reqs = []
     for tc in gen_validtimes(c.cycles, c.leadtimes):
         tc_valid = TimeCoords(tc.validtime)
-        url = render(c.baseline.url, tc_valid)
+        url = render(c.baseline.url, tc_valid, context=c.raw)
         yyyymmdd, hh, _ = tcinfo(tc_valid)
         reqs.append(_req_prepbufr(url, c.paths.obs / yyyymmdd / hh))
     yield reqs
@@ -265,7 +265,7 @@ def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
 @task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    url = render(c.baseline.url, tc)
+    url = render(c.baseline.url, tc, context=c.raw)
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
         assert isinstance(src, Path)
@@ -296,7 +296,7 @@ def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
     taskname = "Forecast grid %s" % path
     yield taskname
     yield asset(path, path.is_file)
-    fd = _forecast_dataset(Path(render(c.forecast.path, tc)))
+    fd = _forecast_dataset(Path(render(c.forecast.path, tc, context=c.raw)))
     yield fd
     src = da_select(c, fd.ref, varname, tc, var)
     da = da_construct(c, src)
@@ -321,7 +321,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     yyyymmdd, hh, _ = tcinfo(tc)
     taskname = "netCDF from prepbufr at %s %sZ" % (yyyymmdd, hh)
     yield taskname
-    url = render(c.baseline.url, tc)
+    url = render(c.baseline.url, tc, context=c.raw)
     if not c.paths.obs:
         msg = "Config value paths.obs must be set"
         raise WXVXError(msg)
@@ -399,7 +399,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     if source == Source.BASELINE:
         forecast, datafmt = _grid_grib(c, tc, var), DataFormat.GRIB
     else:
-        forecast_path = Path(render(c.forecast.path, tc))
+        forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
         forecast, datafmt = _req_grid(forecast_path, c, varname, tc, var)
     reqs = [baseline, forecast]
     polyfile = None
@@ -430,7 +430,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
-    forecast_path = Path(render(c.forecast.path, tc))
+    forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
     forecast, datafmt = _req_grid(forecast_path, c, varname, tc, var)
     obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
     config = _config_point_stat(c, path.with_suffix(".config"), varname, var, prefix, datafmt)

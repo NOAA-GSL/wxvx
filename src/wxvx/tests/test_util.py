@@ -167,6 +167,13 @@ def test_util_render(utc):
     assert util.render(template, tc) == "20250821-2025-06-001"
 
 
+def test_util_render_with_context(utc):
+    template = "{{ meta.workdir }}/file_{{ yyyymmdd }}{{ hh }}_f{{ '%03d' % fh }}.nc"
+    tc = TimeCoords(cycle=utc(2025, 8, 21, 6), leadtime=6)
+    ctx = {"meta": {"workdir": "/meta/dir"}}
+    assert util.render(template, tc, context=ctx) == "/meta/dir/file_2025082106_f006.nc"
+
+
 def test_util_render_with_cycle(utc):
     template = "{{ cycle.strftime('%Y%m%d') }}-{{ (cycle + leadtime).strftime('%H') }}"
     tc = TimeCoords(cycle=utc(2025, 8, 21, 6), leadtime=1)

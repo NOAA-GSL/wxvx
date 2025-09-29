@@ -74,6 +74,7 @@ class Config:
         self.forecast = Forecast(**raw["forecast"])
         self.leadtimes = Leadtimes(raw["leadtimes"])
         self.paths = Paths(grids.get("baseline"), grids["forecast"], paths.get("obs"), paths["run"])
+        self.raw = raw
         self.regrid = Regrid(**raw.get("regrid", {}))
         self.variables = raw["variables"]
 

@@ -131,11 +131,17 @@ def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> No
     get_pool().apply(run, [cmd], kwargs)
 
 
-def render(template: str, tc: TimeCoords) -> str:
+def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    return jinja2.Template(template).render(
-        yyyymmdd=yyyymmdd, hh=hh, fh=int(leadtime), cycle=tc.cycle, leadtime=tc.leadtime
-    )
+    ctx = {
+        "yyyymmdd": yyyymmdd,
+        "hh": hh,
+        "fh": int(leadtime),
+        "cycle": tc.cycle,
+        "leadtime": tc.leadtime,
+    }
+    ctx.update(context or {})
+    return jinja2.Template(template).render(**ctx)
 
 
 def resource(relpath: str | Path) -> str:
