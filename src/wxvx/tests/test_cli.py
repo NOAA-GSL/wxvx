@@ -90,6 +90,7 @@ def test_cli_main__task_list(caplog, switch, tidy):
           grids
           grids_baseline
           grids_forecast
+          ncobs
           obs
           plots
           stats

@@ -89,11 +89,20 @@ def grids_forecast(c: Config):
 
 
 @tasks
+def ncobs(c: Config):
+    taskname = "Baseline netCDF from obs for %s" % c.baseline.name
+    _enforce_point_baseline_type(c, taskname)
+    yield taskname
+    yield [
+        _netcdf_from_obs(c, TimeCoords(tc.validtime))
+        for tc in gen_validtimes(c.cycles, c.leadtimes)
+    ]
+
+
+@tasks
 def obs(c: Config):
     taskname = "Baseline obs for %s" % c.baseline.name
-    if c.baseline.type == VxType.GRID:
-        msg = "%s: This task requires that config value baseline.type be set to 'point'"
-        raise WXVXError(msg % taskname)
+    _enforce_point_baseline_type(c, taskname)
     yield taskname
     reqs = []
     for tc in gen_validtimes(c.cycles, c.leadtimes):
@@ -273,9 +282,6 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         yield asset(src, src.is_file)
         yield None
     else:
-        if not c.paths.grids_baseline:
-            msg = "Config value paths.grids.baseline must be set"
-            raise WXVXError(msg)
         outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
         taskname = "Baseline grid %s" % path
@@ -292,6 +298,9 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
 @task
 def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
+    if not c.paths.grids_forecast:
+        msg = "Specify path.grids.forecast when forecast dataset is netCDF or Zarr"
+        raise WXVXError(msg)
     path = c.paths.grids_forecast / yyyymmdd / hh / leadtime / f"{var}.nc"
     taskname = "Forecast grid %s" % path
     yield taskname
@@ -327,7 +336,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
         raise WXVXError(msg)
     path = (c.paths.obs / yyyymmdd / hh / url.split("/")[-1]).with_suffix(".nc")
     yield asset(path, path.is_file)
-    rundir = c.paths.run / "stats" / yyyymmdd / hh
+    rundir = c.paths.run / "pb2nc" / yyyymmdd / hh
     cfgfile = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
     prepbufr = _req_prepbufr(url, path.parent)
     yield {"cfgfile": cfgfile, "prepbufr": prepbufr}
@@ -464,6 +473,12 @@ def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
         for x in field_fcst, field_obs:
             x["cnt_thresh"] = meta.cnt_thresh
     return field_fcst, field_obs
+
+
+def _enforce_point_baseline_type(c: Config, taskname: str):
+    if c.baseline.type != VxType.POINT:
+        msg = "%s: This task requires that config value baseline.type be set to 'point'"
+        raise WXVXError(msg % taskname)
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
