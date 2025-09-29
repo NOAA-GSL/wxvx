@@ -169,9 +169,9 @@ def test_util_render(utc):
 
 def test_util_render_with_context(utc):
     template = "{{ meta.workdir }}/file_{{ yyyymmdd }}{{ hh }}_f{{ '%03d' % fh }}.nc"
-    tc = TimeCoords(cycle=utc(2025, 8, 21, 6), leadtime=6)
+    tc = TimeCoords(cycle=utc(2025, 8, 21, 6), leadtime=1)
     ctx = {"meta": {"workdir": "/meta/dir"}}
-    assert util.render(template, tc, context=ctx) == "/meta/dir/file_2025082106_f006.nc"
+    assert util.render(template, tc, context=ctx) == "/meta/dir/file_2025082106_f001.nc"
 
 
 def test_util_render_with_cycle(utc):
