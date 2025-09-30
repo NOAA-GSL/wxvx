@@ -91,7 +91,11 @@ For `point`, `url` should point to prepbufr data, `compare` and `name` should no
 
 ### baseline.url
 
-The `baseline.url` value may include Jinja2 expressions, processed at run-time with [`jinja2.Template.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render). Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle time, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) will be supplied by `wxvx`. Additionally, `cycle` (a [`datetime`](https://docs.python.org/3/library/datetime.html#datetime-objects)) and `leadtime` (a [`timedelta`](https://docs.python.org/3/library/datetime.html#timedelta-objects)) are available for computing arbitrary time strings.
+The `baseline.url` value may include Jinja2 expressions, processed at run-time with [`jinja2.Template.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render):
+
+- Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle hour, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) -- as well as `cycle` (a [`datetime`](https://docs.python.org/3/library/datetime.html#datetime-objects)) and `leadtime` (a [`timedelta`](https://docs.python.org/3/library/datetime.html#timedelta-objects)), useful for computing arbitrary time strings -- will be supplied by `wxvx` for use in expressions.
+- The syntax `'{{ "VAR" | env }}'` can be used to insert the value of the `VAR` environment variable, using the `wxvx`-supplied `env` Jinja2 filter.
+- Values defined in the user-specified [`meta:`](###meta) section (or any other section in the config) can be accessed with e.g. `'{{ meta.foo.bar }}'` to insert the value of key `bar` nested under keys `meta` and `foo`.
 
 ### cycles
 
