@@ -91,7 +91,7 @@ For `point`, `url` should point to prepbufr data, `compare` and `name` should no
 
 ### baseline.url
 
-The `baseline.url` value specifies the location of the baseline data. Values may be local-filesystem paths (optionally prefixed with `file://`) or HTTP URLs prefixed with `http://` or `https://` and may contain Jinja2 [expressions](#expressions).
+Specifies the location of the baseline data. Values may be local-filesystem paths (optionally prefixed with `file://`) or HTTP URLs prefixed with `http://` or `https://` and may contain Jinja2 [expressions](#expressions).
 
 ### cycles
 
@@ -134,7 +134,7 @@ An arbitrary value identifying the forecast model being verified. This name will
 
 ### forecast.path
 
-The `forecast.path` value specifies the location of the forecast data. Values must be local-filesystem paths and may contain Jinja2 [expressions](#expressions).
+Specifies the location of the forecast data. Values must be local-filesystem paths and may contain Jinja2 [expressions](#expressions).
 
 ### leadtimes
 
