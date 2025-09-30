@@ -3,6 +3,7 @@ Tests for wxvx.util.
 """
 
 import logging
+import os
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
@@ -178,6 +179,13 @@ def test_util_render_with_cycle(utc):
     template = "{{ cycle.strftime('%Y%m%d') }}-{{ (cycle + leadtime).strftime('%H') }}"
     tc = TimeCoords(cycle=utc(2025, 8, 21, 6), leadtime=1)
     assert util.render(template, tc) == "20250821-07"
+
+
+def test_util_render_with_env_var(utc):
+    template = '{{ "FOO" | env }}-{{ cycle.strftime("%Y%m%d") }}'
+    tc = TimeCoords(cycle=utc(2025, 8, 21, 6), leadtime=1)
+    with patch.object(os, "environ", {"FOO": "bar"}):
+        assert util.render(template, tc) == "bar-20250821"
 
 
 def test_util_resource(fs):

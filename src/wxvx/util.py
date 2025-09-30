@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from contextlib import contextmanager
 from datetime import datetime, timedelta
@@ -142,7 +143,9 @@ def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:
     }
     ctx = context or {}
     ctx.update(timevars)
-    return jinja2.Template(template).render(**ctx)
+    env = jinja2.Environment(autoescape=True)
+    env.filters.update({"env": lambda x: os.environ[x]})
+    return env.from_string(template).render(**ctx)
 
 
 def resource(relpath: str | Path) -> str:
