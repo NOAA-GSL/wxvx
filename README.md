@@ -91,11 +91,7 @@ For `point`, `url` should point to prepbufr data, `compare` and `name` should no
 
 ### baseline.url
 
-The `baseline.url` value may include Jinja2 expressions, processed at run-time with [`jinja2.Template.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render):
-
-- Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle hour, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) -- as well as `cycle` (a [`datetime`](https://docs.python.org/3/library/datetime.html#datetime-objects)) and `leadtime` (a [`timedelta`](https://docs.python.org/3/library/datetime.html#timedelta-objects)), useful for computing arbitrary time strings -- will be supplied by `wxvx` for use in expressions.
-- The syntax `'{{ "VAR" | env }}'` can be used to insert the value of the `VAR` environment variable, using the `wxvx`-supplied `env` Jinja2 filter.
-- Values defined in the user-specified [`meta:`](###meta) section (or any other section in the config) can be accessed with e.g. `'{{ meta.foo.bar }}'` to insert the value of key `bar` nested under keys `meta` and `foo`.
+The `baseline.url` value specifies the location of the baseline data. Values may be local-filesystem paths (optionally prefixed with `file://`) or HTTP URLs prefixed with `http://` or `https://` and may contain Jinja2 [expressions](#expressions).
 
 ### cycles
 
@@ -138,7 +134,7 @@ An arbitrary value identifying the forecast model being verified. This name will
 
 ### forecast.path
 
-The `forecast.path` value may include Python string-template expressions, processed at run-time with [`jinja2.Template.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render). Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle time, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) will be supplied by `wxvx`. Additionally, `cycle` (a [`datetime`](https://docs.python.org/3/library/datetime.html#datetime-objects)) and `leadtime` (a [`timedelta`](https://docs.python.org/3/library/datetime.html#timedelta-objects)) are available for computing arbitrary time strings.
+The `forecast.path` value specifies the location of the forecast data. Values must be local-filesystem paths and may contain Jinja2 [expressions](#expressions).
 
 ### leadtimes
 
@@ -193,6 +189,14 @@ Currently supported level types are: `atmosphere`, `heightAboveGround`, `isobari
 ### variables.*.levels
 
 A `levels:` value should only be specified if a level type supports it. Currently, these are: `heightAboveGround`, `isobaricInhPa`.
+
+## Expressions
+
+Some values may include Jinja2 expressions, processed at run-time with [`jinja2.Template.render()`](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render):
+
+- Variables `yyyymmdd` (cycle date, a `str`), `hh` (cycle hour, a `str`), and `fh` (forecast hour, aka leadtime, an `int`) -- as well as `cycle` (a [`datetime`](https://docs.python.org/3/library/datetime.html#datetime-objects)) and `leadtime` (a [`timedelta`](https://docs.python.org/3/library/datetime.html#timedelta-objects)), useful for computing arbitrary time strings -- will be supplied by `wxvx` for use in expressions.
+- The syntax `'{{ "VAR" | env }}'` can be used to insert the value of the `VAR` environment variable, using the `wxvx`-supplied `env` Jinja2 filter.
+- Values defined in the user-specified [`meta:`](#meta) section (or any other section in the config) can be accessed with e.g. `'{{ meta.foo.bar }}'` to insert the value of key `bar` nested under keys `meta` and `foo`.
 
 ## Use
 
