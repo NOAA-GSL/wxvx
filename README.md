@@ -178,7 +178,9 @@ Regrid grids and observations to the specified grid. Options are `baseline`, `fo
 
 ### variables
 
-The `variables:` block is an arbitrarily long mapping from forecast-dataset variable names to generic descriptions of the named variables. Generic-description attributes (names and level types) follow ECMWF conventions: See the [Parameter Database](https://codes.ecmwf.int/grib/param-db/) for names, and [this list](https://codes.ecmwf.int/grib/format/edition-independent/3/) or the output of [`grib_ls`](https://confluence.ecmwf.int/display/ECC/grib_ls) run on a GRIB file containing the variable in question, for level types.
+The `variables:` block is a mapping from forecast-dataset variable names (keys) to generic descriptions of the named variables (values). Generic-description attributes (names and level types) follow ECMWF conventions: See the [Parameter Database](https://codes.ecmwf.int/grib/param-db/) for names, and [this list](https://codes.ecmwf.int/grib/format/edition-independent/3/) or the output of [`grib_ls`](https://confluence.ecmwf.int/display/ECC/grib_ls) run on a GRIB file containing the variable in question, for level types.
+
+For netCDF- or Zarr-formatted forecast datasets, each key is used to select the correct dataset variable, so must correspond to a variable name in the dataset. For GRIB-formatted forecast datasets, variable selection is done only using the generic desciption given by each key's value, so the keys must be unique but are otherwise arbitrary.
 
 ### variables.*.level_type
 
