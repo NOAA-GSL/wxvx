@@ -79,6 +79,7 @@ class Config:
         self.paths = Paths(
             grids.get("baseline"), grids.get("forecast"), paths.get("obs"), paths["run"]
         )
+        self.raw = raw
         self.regrid = Regrid(**raw.get("regrid", {}))
         self.variables = raw["variables"]
         self._validate()
