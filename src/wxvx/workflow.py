@@ -141,6 +141,7 @@ def stats(c: Config):
 @task
 def _config_grid_stat(
     c: Config,
+    model_name: str,
     path: Path,
     varname: str,
     var: Var,
@@ -157,7 +158,7 @@ def _config_grid_stat(
     config = {
         "fcst": {"field": [field_fcst]},
         "mask": {"grid": [] if polyfile else ["FULL"], "poly": [polyfile.ref] if polyfile else []},
-        "model": c.forecast.name,
+        "model": model_name,
         "nc_pairs_flag": "FALSE",
         "obs": {"field": [field_obs]},
         "obtype": c.baseline.name,
@@ -407,16 +408,18 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     forecast: Node
     if source == Source.BASELINE:
         forecast, datafmt = _grid_grib(c, tc, var), DataFormat.GRIB
+        model_name = c.baseline.name
     else:
         forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
         forecast, datafmt = _req_grid(forecast_path, c, varname, tc, var)
+        model_name = c.forecast.name
     reqs = [baseline, forecast]
     polyfile = None
     if mask := c.forecast.mask:
         polyfile = _polyfile(c.paths.run / "stats" / "mask.poly", mask)
         reqs.append(polyfile)
     path_config = path.with_suffix(".config")
-    config = _config_grid_stat(c, path_config, varname, var, prefix, datafmt, polyfile)
+    config = _config_grid_stat(c, model_name, path_config, varname, var, prefix, datafmt, polyfile)
     reqs.append(config)
     yield reqs
     runscript = path.with_suffix(".sh")
