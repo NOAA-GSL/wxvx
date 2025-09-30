@@ -134,12 +134,14 @@ def test_workflow_stats(c, noop):
     assert len(val.ref) == len(c.variables) + 1  # for 2x SPFH levels
 
 
-def test_workflow__config_grid_stat(c, fakefs, testvars):
+@mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
+def test_workflow__config_grid_stat(c, source, fakefs, testvars):
     path = fakefs / "refc.config"
     assert not path.is_file()
     workflow._config_grid_stat(
         c=c,
         path=path,
+        source=source,
         varname="REFC",
         var=testvars["refc"],
         prefix="foo",
@@ -214,7 +216,13 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
     workflow._config_point_stat(
-        c=c, path=path, varname="HGT", var=testvars["gh"], prefix="atm", datafmt=fmt
+        c=c,
+        path=path,
+        source=Source.FORECAST,
+        varname="HGT",
+        var=testvars["gh"],
+        prefix="atm",
+        datafmt=fmt,
     )
     expected = """
     fcst = {
@@ -281,7 +289,13 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
     path = fakefs / "point_stat.config"
     assert not path.is_file()
     workflow._config_point_stat(
-        c=c, path=path, varname="T2M", var=testvars["2t"], prefix="sfc", datafmt=fmt
+        c=c,
+        path=path,
+        source=Source.FORECAST,
+        varname="T2M",
+        var=testvars["2t"],
+        prefix="sfc",
+        datafmt=fmt,
     )
     expected = """
     fcst = {
@@ -349,6 +363,7 @@ def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, testv
     task = workflow._config_point_stat(
         c=c,
         path=path,
+        source=Source.FORECAST,
         varname="geopotential",
         var=testvars["gh"],
         prefix="atm",
