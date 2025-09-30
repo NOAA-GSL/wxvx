@@ -132,6 +132,12 @@ def test_types_Config__bad_regrid_to(config_data):
     assert str(e.value) == "Cannot regrid to observations per regrid.to config value"
 
 
+def test_types_Config__bad_same_names(config_data):
+    with raises(WXVXError) as e:
+        types.Config(raw=with_set(config_data, config_data["baseline"]["name"], "forecast", "name"))
+    assert str(e.value) == "baseline.name and forecast.name must differ"
+
+
 def test_types_Coords(config_data, coords):
     obj = coords
     assert hash(obj)

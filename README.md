@@ -79,7 +79,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 
 ### baseline.name
 
-Name of the baseline to verify against. Currently supported values are: `GFS`, `HRRR`, `PREPBUFR`. This value guides `wxvx` in identification of baseline data (grids or obs) corresponding to the forecast variable being verified. This name will also appear in MET stat output.
+Name of the baseline to verify against. Currently supported values are: `GFS`, `HRRR`, `PREPBUFR`. This value guides `wxvx` in identification of baseline data (grids or obs) corresponding to the forecast variable being verified. This name will also appear in MET stat output. This name must differ from `forecast.name`.
 
 ### baseline.type
 
@@ -130,7 +130,7 @@ The `forecast.mask` value may be omitted, or set to the YAML value `null`, in wh
 
 ### forecast.name
 
-An arbitrary value identifying the forecast model being verified. This name will appear in MET stat output.
+An arbitrary value identifying the forecast model being verified. This name will appear in MET stat output. This name must differ from `baseline.name`.
 
 ### forecast.path
 

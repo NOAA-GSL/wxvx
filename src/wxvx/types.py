@@ -97,8 +97,12 @@ class Config:
         return "%s(%s)" % (self.__class__.__name__, ", ".join(parts))
 
     def _validate(self) -> None:
-        # Validation tests involving disparate config subtrees, which are awkward to define in JSON
-        # Schema (or that give poor user feedback when so defined) are performed here.
+        # Validation tests that span disparate config subtrees are awkward to express in
+        # JSON Schema (or yield poor user-facing feedback) and are instead enforced here
+        # with explicit checks.
+        if self.baseline.name == self.forecast.name:
+            msg = "baseline.name and forecast.name must differ"
+            raise WXVXError(msg)
         if self.baseline.type == VxType.GRID and not self.paths.grids_baseline:
             msg = "Specify path.grids.baseline when baseline.type is 'grid'"
             raise WXVXError(msg)
