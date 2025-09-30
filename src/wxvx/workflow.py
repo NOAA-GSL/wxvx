@@ -158,7 +158,7 @@ def _config_grid_stat(
     config = {
         "fcst": {"field": [field_fcst]},
         "mask": {"grid": [] if polyfile else ["FULL"], "poly": [polyfile.ref] if polyfile else []},
-        "model": c.baseline.name if source == Source.BASELINE else c.forecast.name,
+        "model": _model(c, source),
         "nc_pairs_flag": "FALSE",
         "obs": {"field": [field_obs]},
         "obtype": c.baseline.name,
@@ -210,7 +210,7 @@ def _config_point_stat(
         "interp": {"shape": "SQUARE", "type": {"method": "BILIN", "width": 2}, "vld_thresh": 1.0},
         "message_type": ["SFC" if surface else "ATM"],
         "message_type_group_map": {"ATM": "ADPUPA,AIRCAR,AIRCFT", "SFC": "ADPSFC"},
-        "model": c.baseline.name if source == Source.BASELINE else c.forecast.name,
+        "model": _model(c, source),
         "obs": {"field": [field_obs]},
         "obs_window": {"beg": -900 if surface else -1800, "end": 900 if surface else 1800},
         "output_flag": {"cnt": "BOTH"},
@@ -486,6 +486,13 @@ def _enforce_point_baseline_type(c: Config, taskname: str):
 
 def _meta(c: Config, varname: str) -> VarMeta:
     return VARMETA[c.variables[varname]["name"]]
+
+
+def _model(c: Config, source: Source) -> str:
+    model = c.forecast.name if source == Source.FORECAST else c.baseline.name
+    if c.forecast.name == c.baseline.name:
+        model = f"{model} ({source.name.lower()})"
+    return model
 
 
 def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd.DataFrame:
