@@ -133,14 +133,15 @@ def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> No
 
 def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    ctx = {
+    timevars = {
         "yyyymmdd": yyyymmdd,
         "hh": hh,
         "fh": int(leadtime),
         "cycle": tc.cycle,
         "leadtime": tc.leadtime,
     }
-    ctx.update(context or {})
+    ctx = context or {}
+    ctx.update(timevars)
     return jinja2.Template(template).render(**ctx)
 
 
