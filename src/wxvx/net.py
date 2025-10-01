@@ -12,7 +12,13 @@ if TYPE_CHECKING:
 
 from requests import Session
 
-TIMEOUT = (5, 30)  # (connect_timeout, read_timeout)
+# Use a lower connect timeout to avoid wasted time when running (possibly accidentally) on a system,
+# like an HPC compute node, without internet access. The client will wait this many seconds for the
+# remote host to respond to a connection request before giving up. Specify a higher read timeout to
+# accommodate remote hosts already connected that may just be temporarily unable to respond, maybe
+# due to transient network issues.
+
+TIMEOUT = (5, 30)  # (connect, read)
 
 
 def fetch(taskname: str, url: str, path: Path, headers: dict[str, str] | None = None) -> bool:
