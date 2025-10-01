@@ -35,6 +35,7 @@ DataFormat = Enum(
         ("GRIB", auto()),
         ("NETCDF", auto()),
         ("ZARR", auto()),
+        ("UNKNOWN", auto()),
     ],
 )
 
@@ -68,7 +69,8 @@ def atomic(path: Path) -> Iterator[Path]:
 def classify_data_format(path: str | Path) -> DataFormat:
     path = Path(path)
     if not path.exists():
-        raise WXVXError("Path not found: %s" % path)
+        logging.warning("Path not found: %s", path)
+        return DataFormat.UNKNOWN
     if path.is_file():
         inferred = magic.from_file(path.resolve())
         for pre, fmt in [

@@ -495,6 +495,14 @@ def test_workflow__local_file_from_http(c):
     assert path.exists()
 
 
+def test_workflow__missing(fakefs):
+    path = fakefs / "missing"
+    node = workflow._missing(path)
+    assert node.ref == path
+    assert not node.ready
+    assert str(node).startswith(f"Missing path {path}")
+
+
 def test_workflow__netcdf_from_obs(c, tc):
     yyyymmdd, hh, _ = tcinfo(tc)
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
@@ -706,6 +714,16 @@ def test_workflow__req_grid__grib(c, tc, testvars):
     # is an existing local path.
     assert req.taskname.startswith("Existing path")
     assert datafmt == DataFormat.GRIB
+
+
+def test_workflow__req_grid__missing(c, tc, testvars):
+    path = Path("/path/to/a.grib2")
+    with patch.object(workflow, "classify_data_format", return_value=DataFormat.UNKNOWN):
+        req, datafmt = workflow._req_grid(path=path, c=c, varname="foo", tc=tc, var=testvars["2t"])
+    # For missing forecast datasets, the requirement is a missing-file external task that blocks
+    # further execution.
+    assert req.taskname.startswith("Missing path")
+    assert datafmt == DataFormat.UNKNOWN
 
 
 def test_workflow__req_prepbufr(fakefs):

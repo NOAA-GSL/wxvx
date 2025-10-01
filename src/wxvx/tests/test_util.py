@@ -49,11 +49,10 @@ def test_util_classify_data_format__file(expected, fakefs, inferred):
         assert util.classify_data_format(path=path) == expected
 
 
-def test_util_classify_data_format__file_missing(fakefs):
+def test_util_classify_data_format__file_missing(fakefs, logged):
     path = fakefs / "no-souch-file"
-    with raises(util.WXVXError) as e:
-        util.classify_data_format(path=path)
-    assert str(e.value) == f"Path not found: {path}"
+    assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
+    assert logged(f"Path not found: {path}")
 
 
 def test_util_classify_data_format__file_unrecognized(fakefs):
@@ -85,11 +84,10 @@ def test_util_classify_data_format__zarr_corrupt(fakefs):
     assert str(e.value) == f"Could not determine format of {path}"
 
 
-def test_util_classify_data_format__zarr_missing(fakefs):
+def test_util_classify_data_format__zarr_missing(fakefs, logged):
     path = fakefs / "no-such-dir"
-    with raises(util.WXVXError) as e:
-        util.classify_data_format(path=path)
-    assert str(e.value) == f"Path not found: {path}"
+    assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
+    assert logged(f"Path not found: {path}")
 
 
 @mark.parametrize(

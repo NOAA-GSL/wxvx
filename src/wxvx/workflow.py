@@ -66,8 +66,8 @@ def grids(c: Config, baseline: bool = True, forecast: bool = True):
         for tc in gen_validtimes(c.cycles, c.leadtimes):
             if forecast:
                 forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
-                req, _ = _req_grid(forecast_path, c, varname, tc, var)
-                reqs.append(req)
+                forecast_grid, _ = _req_grid(forecast_path, c, varname, tc, var)
+                reqs.append(forecast_grid)
             if baseline:
                 baseline_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
                 reqs.append(baseline_grid)
@@ -329,6 +329,13 @@ def _local_file_from_http(outdir: Path, url: str, desc: str):
     fetch(taskname, url, path)
 
 
+@external
+def _missing(path: Path):
+    taskname = "Missing path %s" % path
+    yield taskname
+    yield asset(path, lambda: False)
+
+
 @task
 def _netcdf_from_obs(c: Config, tc: TimeCoords):
     yyyymmdd, hh, _ = tcinfo(tc)
@@ -408,14 +415,14 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     template = "grid_stat_%s_%02d0000L_%s_%s0000V.stat"
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
-    baseline = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
-    forecast: Node
+    baseline_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
+    forecast_grid: Node
     if source == Source.BASELINE:
-        forecast, datafmt = _grid_grib(c, tc, var), DataFormat.GRIB
+        forecast_grid, datafmt = _grid_grib(c, tc, var), DataFormat.GRIB
     else:
         forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
-        forecast, datafmt = _req_grid(forecast_path, c, varname, tc, var)
-    reqs = [baseline, forecast]
+        forecast_grid, datafmt = _req_grid(forecast_path, c, varname, tc, var)
+    reqs = [baseline_grid, forecast_grid]
     polyfile = None
     if mask := c.forecast.mask:
         polyfile = _polyfile(c.paths.run / "stats" / "mask.poly", mask)
@@ -427,7 +434,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     runscript = path.with_suffix(".sh")
     content = f"""
     export OMP_NUM_THREADS=1
-    grid_stat -v 4 {forecast.ref} {baseline.ref} {config.ref} >{path.stem}.log 2>&1
+    grid_stat -v 4 {forecast_grid.ref} {baseline_grid.ref} {config.ref} >{path.stem}.log 2>&1
     """
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
@@ -445,15 +452,19 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
     forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
-    forecast, datafmt = _req_grid(forecast_path, c, varname, tc, var)
+    forecast_grid, datafmt = _req_grid(forecast_path, c, varname, tc, var)
     obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
     config = _config_point_stat(
         c, path.with_suffix(".config"), source, varname, var, prefix, datafmt
     )
-    yield [forecast, obs, config]
+    yield [forecast_grid, obs, config]
     runscript = path.with_suffix(".sh")
     content = "point_stat -v 4 {forecast} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
-        forecast=forecast.ref, obs=obs.ref, config=config.ref, rundir=rundir, log=f"{path.stem}.log"
+        forecast=forecast_grid.ref,
+        obs=obs.ref,
+        config=config.ref,
+        rundir=rundir,
+        log=f"{path.stem}.log",
     )
     _write_runscript(runscript, content)
     mpexec(str(runscript), rundir, taskname)
@@ -524,6 +535,8 @@ def _req_grid(
     path: Path, c: Config, varname: str, tc: TimeCoords, var: Var
 ) -> tuple[Node, DataFormat]:
     data_format = classify_data_format(path)
+    if data_format is DataFormat.UNKNOWN:
+        return _missing(path), data_format
     if data_format == DataFormat.GRIB:
         return _existing(path), data_format
     return _grid_nc(c, varname, tc, var), data_format
