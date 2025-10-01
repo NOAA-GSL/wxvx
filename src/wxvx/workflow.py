@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+import threading
 from datetime import datetime
 from functools import cache
 from itertools import chain, pairwise, product
@@ -43,6 +44,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
 
     from wxvx.types import Config, VarMeta
+
+plotlock = threading.Lock()
 
 # Public tasks
 
@@ -365,21 +368,22 @@ def _plot(
     yield reqs
     leadtimes = ["%03d" % (td.total_seconds() // 3600) for td in c.leadtimes.values]  # noqa: PD011
     plot_data = _prepare_plot_data(reqs, stat, width)
-    sns.set(style="darkgrid")
-    plt.figure(figsize=(10, 6), constrained_layout=True)
     hue = "LABEL" if "LABEL" in plot_data.columns else "MODEL"
-    sns.lineplot(data=plot_data, x="FCST_LEAD", y=stat, hue=hue, marker="o", linewidth=2)
     w = f"(width={width}) " if width else ""
-    plt.title(
-        "%s %s %s%s vs %s at %s" % (desc, stat, w, c.forecast.name, c.baseline.name, cyclestr)
-    )
-    plt.xlabel("Leadtime")
-    plt.ylabel(f"{stat} ({meta.units})")
-    plt.xticks(ticks=[int(lt) for lt in leadtimes], labels=leadtimes, rotation=90)
-    plt.legend(title="Model", bbox_to_anchor=(1.02, 1), loc="upper left")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(path, bbox_inches="tight")
-    plt.close()
+    with plotlock:
+        sns.set(style="darkgrid")
+        plt.figure(figsize=(10, 6), constrained_layout=True)
+        sns.lineplot(data=plot_data, x="FCST_LEAD", y=stat, hue=hue, marker="o", linewidth=2)
+        plt.title(
+            "%s %s %s%s vs %s at %s" % (desc, stat, w, c.forecast.name, c.baseline.name, cyclestr)
+        )
+        plt.xlabel("Leadtime")
+        plt.ylabel(f"{stat} ({meta.units})")
+        plt.xticks(ticks=[int(lt) for lt in leadtimes], labels=leadtimes, rotation=90)
+        plt.legend(title="Model", bbox_to_anchor=(1.02, 1), loc="upper left")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(path, bbox_inches="tight")
+        plt.close()
 
 
 @task
