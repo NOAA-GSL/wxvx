@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 from requests import Session
 
-TIMEOUT = 30
+TIMEOUT = (5, 30)  # (connect_timeout, read_timeout)
 
 
 def fetch(taskname: str, url: str, path: Path, headers: dict[str, str] | None = None) -> bool:
