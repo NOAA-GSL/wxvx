@@ -481,6 +481,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
 def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
     level_obs = metlevel(var.level_type, var.level)
     varname_baseline = variables.model_class(c.baseline.name).varname(var.name)
+    assert datafmt != DataFormat.UNKNOWN
     level_fcst, name_fcst = (
         (level_obs, varname_baseline) if datafmt == DataFormat.GRIB else ("(0,0,*,*)", varname)
     )
