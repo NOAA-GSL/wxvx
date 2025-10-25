@@ -429,7 +429,8 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
         reqs.append(polyfile)
     path_config = path.with_suffix(".config")
     config = _config_grid_stat(c, path_config, source, varname, var, prefix, datafmt, polyfile)
-    reqs.append(config)
+    if datafmt != DataFormat.UNKNOWN:
+        reqs.append(config)
     yield reqs
     runscript = path.with_suffix(".sh")
     content = f"""
@@ -451,13 +452,17 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield asset(path, path.is_file)
+    obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
+    reqs: list[Node] = [obs]
     forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
     forecast_grid, datafmt = _req_grid(forecast_path, c, varname, tc, var)
-    obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
+    reqs.append(forecast_grid)
     config = _config_point_stat(
         c, path.with_suffix(".config"), source, varname, var, prefix, datafmt
     )
-    yield [forecast_grid, obs, config]
+    if datafmt != DataFormat.UNKNOWN:
+        reqs.append(config)
+    yield reqs
     runscript = path.with_suffix(".sh")
     content = "point_stat -v 4 {forecast} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
         forecast=forecast_grid.ref,
