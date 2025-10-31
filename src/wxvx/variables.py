@@ -250,10 +250,10 @@ def da_construct(c: Config, da: xr.DataArray) -> xr.DataArray:
     inittime = _da_val(da, c.forecast.coords.time.inittime, "initialization time", np.datetime64)
     leadtime = c.forecast.coords.time.leadtime
     validtime = c.forecast.coords.time.validtime
-    assert bool(leadtime) ^ bool(validtime)  # enforced by wxvx.types.Time initializer
-    if leadtime:
+    if leadtime is not None:
         time = inittime + _da_val(da, leadtime, "leadtime", np.timedelta64)
-    elif validtime:
+    else:
+        assert validtime is not None
         time = _da_val(da, validtime, "validtime", np.datetime64)
     return xr.DataArray(
         data=da.expand_dims(dim=["forecast_reference_time", "time"]),
