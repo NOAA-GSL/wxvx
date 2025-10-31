@@ -893,37 +893,33 @@ def fcst_field(fmt: DataFormat, surface: bool) -> str:
     assert fmt in [DataFormat.GRIB, DataFormat.NETCDF, DataFormat.ZARR]
     if fmt in [DataFormat.NETCDF, DataFormat.ZARR]:
         if surface:
-            text = """
+            return """
             level = [
               "(0,0,*,*)"
             ];
             name = "T2M";
             set_attr_level = "Z002";
             """
-        else:
-            text = """
-            level = [
-              "(0,0,*,*)"
-            ];
-            name = "HGT";
-            set_attr_level = "P900";
-            """
-    elif fmt == DataFormat.GRIB:
-        if surface:
-            text = """
-            level = [
-              "Z002"
-            ];
-            name = "TMP";
-            """
-        else:
-            text = """
-            level = [
-              "P900"
-            ];
-            name = "HGT";
-            """
-    return text
+        return """
+        level = [
+          "(0,0,*,*)"
+        ];
+        name = "HGT";
+        set_attr_level = "P900";
+        """
+    if surface:
+        return """
+        level = [
+          "Z002"
+        ];
+        name = "TMP";
+        """
+    return """
+    level = [
+      "P900"
+    ];
+    name = "HGT";
+    """
 
 
 def respace(text: str) -> str:
