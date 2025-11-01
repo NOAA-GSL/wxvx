@@ -82,31 +82,34 @@ TESTDATA = {
 
 
 @mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
-def test_workflow_grids(c, fmt, n_grids, noop):
+@mark.parametrize("compare", [True, False])
+def test_workflow_grids(c, compare, fmt, ngrids, noop):
+    c.baseline = replace(c.baseline, compare=compare)
     with (
         patch.object(workflow, "_grid_grib", noop),
         patch.object(workflow, "_grid_nc", noop),
         patch.object(workflow, "classify_data_format", return_value=fmt),
     ):
-        assert len(workflow.grids(c=c).ref) == n_grids * 3  # forecast, baseline, and comp grids
-        assert len(workflow.grids(c=c, baseline=True, forecast=True).ref) == n_grids * 3
-        assert len(workflow.grids(c=c, baseline=True, forecast=False).ref) == n_grids * 2
-        assert len(workflow.grids(c=c, baseline=False, forecast=True).ref) == n_grids
+        ntypes = 3 if compare else 2  # forecast, baseline, and optionally comp grids
+        assert len(workflow.grids(c=c).ref) == ngrids * ntypes
+        assert len(workflow.grids(c=c, baseline=True, forecast=True).ref) == ngrids * ntypes
+        assert len(workflow.grids(c=c, baseline=True, forecast=False).ref) == ngrids * (ntypes - 1)
+        assert len(workflow.grids(c=c, baseline=False, forecast=True).ref) == ngrids
         assert len(workflow.grids(c=c, baseline=False, forecast=False).ref) == 0
 
 
-def test_workflow_grids_baseline(c, n_grids, noop):
+def test_workflow_grids_baseline(c, ngrids, noop):
     with patch.object(workflow, "_grid_grib", noop):
-        assert len(workflow.grids_baseline(c=c).ref) == n_grids * 2
+        assert len(workflow.grids_baseline(c=c).ref) == ngrids * 2
 
 
 @mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
-def test_workflow_grids_forecast(c, fmt, n_grids, noop):
+def test_workflow_grids_forecast(c, fmt, ngrids, noop):
     with (
         patch.object(workflow, "_grid_nc", noop),
         patch.object(workflow, "classify_data_format", return_value=fmt),
     ):
-        assert len(workflow.grids_forecast(c=c).ref) == n_grids
+        assert len(workflow.grids_forecast(c=c).ref) == ngrids
 
 
 def test_workflow_ncobs(c, obs_info):
@@ -828,7 +831,7 @@ def test_workflow__write_runscript(fakefs, tidy):
 
 
 @fixture
-def n_grids(c):
+def ngrids(c):
     n_validtimes = len(list(gen_validtimes(c.cycles, c.leadtimes)))
     n_var_level_pairs = len(list(workflow._varnames_and_levels(c)))
     return n_validtimes * n_var_level_pairs

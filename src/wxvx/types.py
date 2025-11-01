@@ -63,7 +63,8 @@ class Baseline:
 
     def __post_init__(self):
         keys = ["grid", "point"]
-        assert self.type in keys
+        if isinstance(self.type, str):
+            assert self.type in keys
         newval = dict(zip(keys, [VxType.GRID, VxType.POINT]))
         _force(self, "type", newval.get(str(self.type), self.type))
 
