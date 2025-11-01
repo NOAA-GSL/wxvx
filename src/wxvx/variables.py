@@ -475,8 +475,8 @@ def _narrow(da: xr.DataArray, key: str, value: Any) -> xr.DataArray:
     # it to a scalar by selecting the single element matching the 'value' argument. If it is already
     # a scalar, raise an exception if it does not match 'value'. For example, an array with a series
     # of forecast cycles might have a vector-valued 'key' = 'time' coordinate variable, while one
-    # with a single forecast cycle might have a scalar 'time'. In either case, this function should
-    # return an array with a scalar 'time' coordinate variable with the expected value.
+    # with a single forecast cycle might have a scalar 'time'. Either way, this function should
+    # return a DataArray with a scalar 'time' coordinate variable with the expected value.
     try:
         coords = da[key].values
     except KeyError:
