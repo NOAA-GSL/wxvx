@@ -81,8 +81,8 @@ TESTDATA = {
 # Task Tests
 
 
-@mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
 @mark.parametrize("compare", [True, False])
+@mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
 def test_workflow_grids(c, compare, fmt, ngrids, noop):
     c.baseline = replace(c.baseline, compare=compare)
     with (
@@ -576,8 +576,12 @@ def test_workflow__polyfile(fakefs, tidy):
     assert path.read_text().strip() == tidy(expected)
 
 
+@mark.parametrize("mask", [True, False])
 @mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
-def test_workflow__stats_vs_grid(c, fakefs, source, tc, testvars):
+def test_workflow__stats_vs_grid(c, fakefs, mask, source, tc, testvars):
+    if not mask:
+        c.forecast._mask = None
+
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
