@@ -616,8 +616,8 @@ def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars)
             mpexec.assert_called_once_with(str(runscript), rundir, taskname)
 
 
-@mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
-def test_workflow__stats_vs_obs(c, fakefs, fmt, tc, testvars):
+@mark.parametrize("datafmt", [DataFormat.NETCDF, DataFormat.ZARR, DataFormat.UNKNOWN])
+def test_workflow__stats_vs_obs(c, datafmt, fakefs, tc, testvars):
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
@@ -631,7 +631,7 @@ def test_workflow__stats_vs_obs(c, fakefs, fmt, tc, testvars):
     kwargs = dict(
         c=c, varname="T2M", tc=tc, var=testvars["2t"], prefix="foo", source=Source.BASELINE
     )
-    with patch.object(workflow, "classify_data_format", return_value=fmt):
+    with patch.object(workflow, "classify_data_format", return_value=datafmt):
         stat = taskfunc(**kwargs, dry_run=True).ref
         cfgfile = stat.with_suffix(".config")
         runscript = stat.with_suffix(".sh")
@@ -645,10 +645,11 @@ def test_workflow__stats_vs_obs(c, fakefs, fmt, tc, testvars):
         ):
             stat.parent.mkdir(parents=True)
             taskfunc(**kwargs)
-        assert stat.is_file()
-        assert cfgfile.is_file()
-        assert runscript.is_file()
-        mpexec.assert_called_once_with(str(runscript), rundir, taskname)
+        if datafmt != DataFormat.UNKNOWN:
+            assert stat.is_file()
+            assert cfgfile.is_file()
+            assert runscript.is_file()
+            mpexec.assert_called_once_with(str(runscript), rundir, taskname)
 
 
 # Support Tests
