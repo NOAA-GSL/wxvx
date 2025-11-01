@@ -152,7 +152,26 @@ def test_variables_da_select__fail_bad_var(c, da_with_leadtime, tc):
     assert str(e.value) == msg
 
 
-def test_variables_ds_construct(c, check_cf_metadata):
+def test_variables_ds_construct__latlon(c, check_cf_metadata):
+    c.forecast._projection = {"proj": "longlat"}
+    name = "HGT"
+    one = np.array([1], dtype="float32")
+    da = xr.DataArray(
+        data=one.reshape((1, 1, 1, 1)),
+        coords=dict(
+            forecast_reference_time=np.array([0], dtype="datetime64[ns]"),
+            time=np.array([1], dtype="timedelta64[ns]"),
+            latitude=[1],
+            longitude=[1],
+        ),
+        dims=("forecast_reference_time", "time", "latitude", "longitude"),
+        name=name,
+    )
+    ds = variables.ds_construct(c=c, da=da, level=None, taskname="test")
+    check_cf_metadata(ds=ds, name=name)
+
+
+def test_variables_ds_construct__lcc(c, check_cf_metadata):
     name = "HGT"
     one = np.array([1], dtype="float32")
     da = xr.DataArray(
