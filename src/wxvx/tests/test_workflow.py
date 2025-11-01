@@ -576,9 +576,10 @@ def test_workflow__polyfile(fakefs, tidy):
     assert path.read_text().strip() == tidy(expected)
 
 
+@mark.parametrize("datafmt", [DataFormat.NETCDF, DataFormat.UNKNOWN])
 @mark.parametrize("mask", [True, False])
 @mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
-def test_workflow__stats_vs_grid(c, fakefs, mask, source, tc, testvars):
+def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars):
     if not mask:
         c.forecast._mask = None
 
@@ -594,7 +595,7 @@ def test_workflow__stats_vs_grid(c, fakefs, mask, source, tc, testvars):
         % str(source).split(".")[1].lower()
     )
     kwargs = dict(c=c, varname="T2M", tc=tc, var=testvars["2t"], prefix="foo", source=source)
-    with patch.object(workflow, "classify_data_format", return_value=DataFormat.NETCDF):
+    with patch.object(workflow, "classify_data_format", return_value=datafmt):
         stat = taskfunc(**kwargs, dry_run=True).ref
         cfgfile = stat.with_suffix(".config")
         runscript = stat.with_suffix(".sh")
@@ -608,10 +609,11 @@ def test_workflow__stats_vs_grid(c, fakefs, mask, source, tc, testvars):
         ):
             stat.parent.mkdir(parents=True)
             taskfunc(**kwargs)
-        assert stat.is_file()
-        assert cfgfile.is_file()
-        assert runscript.is_file()
-        mpexec.assert_called_once_with(str(runscript), rundir, taskname)
+        if datafmt != DataFormat.UNKNOWN:
+            assert stat.is_file()
+            assert cfgfile.is_file()
+            assert runscript.is_file()
+            mpexec.assert_called_once_with(str(runscript), rundir, taskname)
 
 
 @mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
