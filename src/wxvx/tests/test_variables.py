@@ -7,7 +7,7 @@ import xarray as xr
 from pytest import fixture, mark, raises
 
 from wxvx import variables
-from wxvx.util import WXVXError
+from wxvx.util import WXVXError, render
 
 # Fixtures
 
@@ -148,7 +148,9 @@ def test_variables_da_select__fail_bad_var(c, da_with_leadtime, tc):
     kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname="FOO", tc=tc, var=var)
     with raises(WXVXError) as e:
         variables.da_select(**kwargs)
-    msg = f"Variable FOO valid at {tc.validtime.isoformat()} not found in {c.forecast.path}"
+    ts = tc.validtime.isoformat()
+    forecast_path = render(c.forecast.path, tc, context=c.raw)
+    msg = f"Variable FOO valid at {ts} not found in {forecast_path}"
     assert str(e.value) == msg
 
 

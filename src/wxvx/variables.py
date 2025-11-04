@@ -12,7 +12,7 @@ import xarray as xr
 from pyproj import Proj
 
 from wxvx.types import Coords, VarMeta
-from wxvx.util import WXVXError
+from wxvx.util import WXVXError, render
 
 if TYPE_CHECKING:
     from wxvx.times import TimeCoords
@@ -290,7 +290,8 @@ def da_select(c: Config, ds: xr.Dataset, varname: str, tc: TimeCoords, var: Var)
         if key_level in coords and var.level is not None:
             da = _narrow(da, key_level, var.level)
     except KeyError as e:
-        msg = "Variable %s valid at %s not found in %s" % (varname, tc, c.forecast.path)
+        forecast_path = render(c.forecast.path, tc, context=c.raw)
+        msg = "Variable %s valid at %s not found in %s" % (varname, tc, forecast_path)
         raise WXVXError(msg) from e
     return da
 
