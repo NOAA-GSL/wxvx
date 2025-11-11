@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 from warnings import catch_warnings, simplefilter
 
+import eccodes as ec  # type: ignore[import-untyped, import-not-found]
 import matplotlib as mpl
 
 mpl.use("Agg")
@@ -281,10 +282,16 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     url = render(c.baseline.url, tc, context=c.raw)
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
-        assert isinstance(src, Path)
-        yield "GRIB file %s providing %s grid" % (src, var)
-        yield asset(src, src.is_file)
-        yield None
+        outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
+        idx_path = outdir / f"{src.name}.ecidx"
+        yield "GRIB file %s providing %s grid at %s %sZ %s" % (src, var, yyyymmdd, hh, leadtime)
+        # yield asset(idx_path, lambda: _exists_with_message(idx_path, var, tc))
+        # yield _index_grib(c, src, tc)
+        ok = {"ready": False}
+        yield asset(ok, lambda: ok["ready"])
+        msg = _grib_message(c, tc, src, var)
+        yield msg
+        ok["ready"] = msg.ref["ready"]
     else:
         outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
@@ -297,6 +304,23 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         fb, lb = var_idx.firstbyte, var_idx.lastbyte
         headers = {"Range": "bytes=%s" % (f"{fb}-{lb}" if lb else fb)}
         fetch(taskname, url, path, headers)
+
+
+@task
+def _grib_message(c: Config, tc: TimeCoords, path: Path, var: Var):
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    taskname = "GRIB message for %s in %s at %s %sZ %s" % (var, path, yyyymmdd, hh, leadtime)
+    yield taskname
+    # outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
+    # idx_path = outdir / f"{path.name}.ecidx"
+    # yield asset(idx_path, lambda: _exists_with_message(idx_path, var, tc))
+    # yield _index_grib(c, path, tc)
+    ok = {"ready": False}
+    yield asset(ok, lambda: ok["ready"])
+    idx = _index_grib(c, path, tc)
+    yield idx
+    idx_path = idx.ref
+    ok["ready"] = _exists_with_message(idx_path, var, tc)
 
 
 @task
@@ -317,6 +341,23 @@ def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
     with atomic(path) as tmp:
         ds.to_netcdf(tmp, encoding={varname: {"zlib": True, "complevel": 9}})
     logging.info("%s: Wrote %s", taskname, path)
+
+
+@task
+def _index_grib(c: Config, path: Path, tc: TimeCoords):
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
+    outdir.mkdir(parents=True, exist_ok=True)
+    grib_path = path.resolve()
+    idx_path = outdir / f"{path.name}.ecidx"
+    taskname = "GRIB index file created for %s" % grib_path
+    yield taskname
+    yield asset(idx_path, idx_path.is_file)
+    yield _existing(grib_path) 
+    grib_index_keys = ["shortName", "typeOfLevel", "level", "dataDate", "dataTime", "stepRange"]
+    idx = ec.codes_index_new_from_file(str(grib_path), ",".join(grib_index_keys))
+    ec.codes_index_write(idx, str(idx_path))
+    ec.codes_index_release(idx)
 
 
 @task
@@ -497,6 +538,24 @@ def _enforce_point_baseline_type(c: Config, taskname: str):
     if c.baseline.type != VxType.POINT:
         msg = "%s: This task requires that config value baseline.type be set to 'point'"
         raise WXVXError(msg % taskname)
+
+
+def _exists_with_message(idxpath: Path, var: Var, tc: TimeCoords):
+    yyyymmdd, hh, _ = tcinfo(tc)
+    idx = ec.codes_index_read(str(idxpath))
+    ec.codes_index_reset(idx)
+    ec.codes_index_select(idx, "shortName", var.name)
+    if var.level_type:
+            ec.codes_index_select(idx, "typeOfLevel", var.level_type)
+    if getattr(var, "level", None) is not None:
+            ec.codes_index_select(idx, "level", int(var.level))
+    ec.codes_index_select(idx, "dataDate", int(yyyymmdd))
+    ec.codes_index_select(idx, "dataTime", int(hh) * 100)
+    gid = ec.codes_new_from_index(idx)
+    if gid is None:
+        return False
+    ec.codes_release(gid)
+    return True
 
 
 def _meta(c: Config, varname: str) -> VarMeta:

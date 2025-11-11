@@ -380,6 +380,16 @@ def test_workflow__existing(fakefs):
     assert ready(workflow._existing(path=path))
 
 
+@mark.parametrize("found", [True, False])
+def test_workflow__exists_with_message(found, fakefs, tc, testvars):
+    idx_path = fakefs / "foo.ecidx"
+    ec = Mock()
+    ec.codes_new_from_index.return_value = (object() if found else None)
+    with patch.object(workflow, "ec", ec):
+        msg = workflow._exists_with_message(path=idx_path, var=testvars["gh"], tc=tc)
+    assert msg is found
+
+
 def test_workflow__forecast_dataset(da_with_leadtime, fakefs):
     path = fakefs / "forecast"
     assert not ready(workflow._forecast_dataset(path=path))
@@ -480,6 +490,21 @@ def test_workflow__grid_nc__no_paths_grids_forecast(config_data, tc, testvars):
     with raises(WXVXError) as e:
         workflow._grid_nc(c=c, varname="HGT", tc=tc, var=testvars["gh"])
     assert str(e.value) == "Specify path.grids.forecast when forecast dataset is netCDF or Zarr"
+
+
+def test_workflow__index_grib(c, fakefs, tc):
+    grib = fakefs / "gfs.t00z.pgrb2.0p25.f000"
+    grib.parent.mkdir(parents=True, exist_ok=True)
+    grib.write_bytes(b"foo")
+    ec = Mock()
+    ec.codes_index_new_from_file = Mock(return_value=object())
+    ec.codes_index_write = Mock(side_effect=lambda _idx, out: Path(out).write_bytes(b"bar"))
+    ec.codes_index_release = Mock()
+    with patch.object(workflow, "ec", ec):
+        workflow._index_grib(c=c, path=grib, tc=tc)
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    idx_path = c.paths.grids_baseline / yyyymmdd / hh / leadtime / f"{grib.stem}.ecidx"
+    assert idx_path.is_file()
 
 
 def test_workflow__local_file_from_http(c):
