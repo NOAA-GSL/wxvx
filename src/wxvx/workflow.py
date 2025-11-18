@@ -143,6 +143,21 @@ def stats(c: Config):
 
 
 @task
+def _build_grib_index(c: Config, grib_path: Path, tc: TimeCoords):
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
+    outdir.mkdir(parents=True, exist_ok=True)
+    path = outdir / f"{grib_path.name}.ecidx"
+    taskname = "Create GRIB index %s" % path
+    yield taskname
+    yield asset(path, path.is_file)
+    yield _existing(grib_path)
+    grib_index_keys = ["shortName", "typeOfLevel", "level"]
+    idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
+    ec.codes_index_write(idx, str(path))
+
+
+@task
 def _config_grid_stat(
     c: Config,
     path: Path,
@@ -286,7 +301,7 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         yield "GRIB file %s providing %s grid at %s %sZ %s" % (src, var, yyyymmdd, hh, leadtime)
         ok = {"ready": False}
         yield asset(src, lambda: ok["ready"])
-        msg = _grib_message(c, tc, src, var)
+        msg = _verify_grib_message(c, tc, src, var)
         yield msg
         ok["ready"] = msg.ref["ready"]
     else:
@@ -301,18 +316,6 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         fb, lb = var_idx.firstbyte, var_idx.lastbyte
         headers = {"Range": "bytes=%s" % (f"{fb}-{lb}" if lb else fb)}
         fetch(taskname, url, path, headers)
-
-
-@task
-def _grib_message(c: Config, tc: TimeCoords, path: Path, var: Var):
-    yyyymmdd, hh, leadtime = tcinfo(tc)
-    taskname = "GRIB message for %s in %s at %s %sZ %s" % (var, path, yyyymmdd, hh, leadtime)
-    yield taskname
-    ok = {"ready": False}
-    yield asset(ok, lambda: ok["ready"])
-    idx = _index_grib(c, path, tc)
-    yield idx
-    ok["ready"] = _exists_with_message(idx.ref, var)
 
 
 @task
@@ -333,21 +336,6 @@ def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
     with atomic(path) as tmp:
         ds.to_netcdf(tmp, encoding={varname: {"zlib": True, "complevel": 9}})
     logging.info("%s: Wrote %s", taskname, path)
-
-
-@task
-def _index_grib(c: Config, grib_path: Path, tc: TimeCoords):
-    yyyymmdd, hh, leadtime = tcinfo(tc)
-    outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
-    outdir.mkdir(parents=True, exist_ok=True)
-    path = outdir / f"{grib_path.name}.ecidx"
-    taskname = "GRIB index %s created" % path
-    yield taskname
-    yield asset(path, path.is_file)
-    yield _existing(grib_path)
-    grib_index_keys = ["shortName", "typeOfLevel", "level"]
-    idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
-    ec.codes_index_write(idx, str(path))
 
 
 @task
@@ -506,6 +494,18 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     mpexec(str(runscript), rundir, taskname)
 
 
+@task
+def _verify_grib_message(c: Config, tc: TimeCoords, path: Path, var: Var):
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    taskname = "Verify GRIB message for %s in %s at %s %sZ %s" % (var, path, yyyymmdd, hh, leadtime)
+    yield taskname
+    ok = {"ready": False}
+    yield asset(ok, lambda: ok["ready"])
+    idx = _build_grib_index(c, path, tc)
+    yield idx
+    ok["ready"] = _message_exists(idx.ref, var)
+
+
 # Support
 
 
@@ -536,7 +536,7 @@ def _enforce_point_baseline_type(c: Config, taskname: str):
         raise WXVXError(msg % taskname)
 
 
-def _exists_with_message(path, var: Var):
+def _message_exists(path, var: Var):
     idx = ec.codes_index_read(str(path))
     ec.codes_index_select(idx, "shortName", var.name)
     ec.codes_index_select(idx, "typeOfLevel", var.level_type)
@@ -546,7 +546,7 @@ def _exists_with_message(path, var: Var):
         count += 1
         ec.codes_release(gid)
     if count > 1:
-        logging.warning("More than one matching GRIB message was found.")
+        logging.warning("Found %d GRIB messages matching %s in index %s.", count, var, path)
     return count > 0
 
 

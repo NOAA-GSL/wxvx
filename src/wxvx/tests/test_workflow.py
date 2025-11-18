@@ -137,6 +137,18 @@ def test_workflow_stats(c, noop):
     assert len(val.ref) == len(c.variables) + 1  # for 2x SPFH levels
 
 
+def test_workflow__build_grib_index(c, fakefs, tc):
+    grib = fakefs / "gfs.t00z.pgrb2.0p25.f000"
+    grib.parent.mkdir(parents=True, exist_ok=True)
+    grib.touch()
+    with patch.object(workflow, "ec") as ec:
+        ec.codes_index_write.side_effect = lambda _idx, p: Path(p).touch()
+        assert ready(workflow._build_grib_index(c=c, grib_path=grib, tc=tc))
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    idx_path = c.paths.grids_baseline / yyyymmdd / hh / leadtime / f"{grib.name}.ecidx"
+    assert idx_path.is_file()
+
+
 @mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
 def test_workflow__config_grid_stat(c, source, fakefs, testvars):
     path = fakefs / "refc.config"
@@ -383,16 +395,6 @@ def test_workflow__existing(fakefs):
     assert ready(workflow._existing(path=path))
 
 
-@mark.parametrize("found", [True, False])
-def test_workflow__exists_with_message(found, fakefs, testvars):
-    idx_path = fakefs / "foo.ecidx"
-    ec = Mock()
-    ec.codes_new_from_index.return_value = object() if found else None
-    with patch.object(workflow, "ec", ec):
-        msg = workflow._exists_with_message(path=idx_path, var=testvars["gh"])
-    assert msg is found
-
-
 def test_workflow__forecast_dataset(da_with_leadtime, fakefs):
     path = fakefs / "forecast"
     assert not ready(workflow._forecast_dataset(path=path))
@@ -437,11 +439,18 @@ def test_workflow__grib_index_data(c, tc, tidy):
 )
 def test_workflow__grid_grib__local(template, config_data, gen_config, fakefs, tc, testvars):
     grib_path = fakefs / "gfs.t00z.pgrb2.0p25.f000"
-    grib_path.write_text("foo")
+    grib_path.touch()
     config_data["baseline"]["url"] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
-    val = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
-    assert ready(val)
+    idx_path = fakefs / "gfs.t00z.pgrb2.0p25.f000.ecidx"
+    idx_path.touch()
+    idx_node = workflow._existing(idx_path)
+    with (
+        patch.object(workflow, "_build_grib_index", return_value=idx_node),
+        patch.object(workflow, "_message_exists", return_value=True),
+    ):
+        val = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
+        assert ready(val)
 
 
 def test_workflow__grid_grib__remote(c, tc, testvars):
@@ -495,21 +504,6 @@ def test_workflow__grid_nc__no_paths_grids_forecast(config_data, tc, testvars):
     assert str(e.value) == "Specify path.grids.forecast when forecast dataset is netCDF or Zarr"
 
 
-def test_workflow__index_grib(c, fakefs, tc):
-    grib = fakefs / "gfs.t00z.pgrb2.0p25.f000"
-    grib.parent.mkdir(parents=True, exist_ok=True)
-    grib.write_bytes(b"foo")
-    ec = Mock()
-    ec.codes_index_new_from_file = Mock(return_value=object())
-    ec.codes_index_write = Mock(side_effect=lambda _idx, out: Path(out).write_bytes(b"bar"))
-    ec.codes_index_release = Mock()
-    with patch.object(workflow, "ec", ec):
-        workflow._index_grib(c=c, grib_path=grib, tc=tc)
-    yyyymmdd, hh, leadtime = tcinfo(tc)
-    idx_path = c.paths.grids_baseline / yyyymmdd / hh / leadtime / f"{grib.stem}.ecidx"
-    assert idx_path.is_file()
-
-
 def test_workflow__local_file_from_http(c):
     url = f"{c.baseline.url}.idx"
     val = workflow._local_file_from_http(outdir=c.paths.grids_baseline, url=url, desc="Test")
@@ -521,6 +515,15 @@ def test_workflow__local_file_from_http(c):
         workflow._local_file_from_http(outdir=c.paths.grids_baseline, url=url, desc="Test")
     fetch.assert_called_once_with(ANY, url, ANY)
     assert path.exists()
+
+
+@mark.parametrize(("msgs", "expected"), [(0, False), (1, True), (2, True)])
+def test_workflow__message_exists(msgs, expected, fakefs, testvars):
+    idx_path = fakefs / "foo.ecidx"
+    with patch.object(workflow, "ec") as ec:
+        ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
+        found = workflow._message_exists(path=idx_path, var=testvars["gh"])
+    assert found is expected
 
 
 def test_workflow__missing(fakefs):
@@ -675,6 +678,20 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, tc, testvars):
             assert cfgfile.is_file()
             assert runscript.is_file()
             mpexec.assert_called_once_with(str(runscript), rundir, taskname)
+
+
+@mark.parametrize("found", [True, False])
+def test__workflow__verify_grib_message(c, tc, fakefs, testvars, found):
+    grib_path = fakefs / "gfs.t00z.pgrb2.0p25.f000"
+    idx_path = fakefs / "gfs.t00z.pgrb2.0p25.f000.ecidx"
+    idx_path.touch()
+    idx_node = workflow._existing(path=idx_path)
+    with (
+        patch.object(workflow, "_message_exists", return_value=found) as _message_exists,
+        patch.object(workflow, "_build_grib_index", return_value=idx_node) as _build_grib_index,
+    ):
+        node = workflow._verify_grib_message(c=c, tc=tc, path=grib_path, var=testvars["gh"])
+        assert node.ref["ready"] is found
 
 
 # Support Tests
