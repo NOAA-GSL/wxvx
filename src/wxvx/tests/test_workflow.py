@@ -139,7 +139,6 @@ def test_workflow_stats(c, noop):
 
 def test_workflow__build_grib_index(c, fakefs, tc):
     grib = fakefs / "gfs.t00z.pgrb2.0p25.f000"
-    grib.parent.mkdir(parents=True, exist_ok=True)
     grib.touch()
     with patch.object(workflow, "ec") as ec:
         ec.codes_index_write.side_effect = lambda _idx, p: Path(p).touch()
@@ -433,20 +432,15 @@ def test_workflow__grib_index_data(c, tc, tidy):
 @mark.parametrize(
     "template",
     [
-        "{root}/gfs.t00z.pgrb2.0p25.f000",
-        "file://{root}/gfs.t00z.pgrb2.0p25.f000",
+        "{root}/foo",
+        "file://{root}/foo",
     ],
 )
 def test_workflow__grid_grib__local(template, config_data, gen_config, fakefs, tc, testvars):
-    grib_path = fakefs / "gfs.t00z.pgrb2.0p25.f000"
-    grib_path.touch()
     config_data["baseline"]["url"] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
-    idx_path = fakefs / "gfs.t00z.pgrb2.0p25.f000.ecidx"
-    idx_path.touch()
-    idx_node = workflow._existing(idx_path)
     with (
-        patch.object(workflow, "_build_grib_index", return_value=idx_node),
+        patch.object(workflow, "_build_grib_index"),
         patch.object(workflow, "_message_exists", return_value=True),
     ):
         val = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
@@ -518,8 +512,8 @@ def test_workflow__local_file_from_http(c):
 
 
 @mark.parametrize(("msgs", "expected"), [(0, False), (1, True), (2, True)])
-def test_workflow__message_exists(msgs, expected, fakefs, testvars):
-    idx_path = fakefs / "foo.ecidx"
+def test_workflow__message_exists(msgs, expected, testvars):
+    idx_path = Path("foo.ecidx")
     with patch.object(workflow, "ec") as ec:
         ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
         found = workflow._message_exists(path=idx_path, var=testvars["gh"])
