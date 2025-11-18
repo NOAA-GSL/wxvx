@@ -430,7 +430,7 @@ def test_workflow__grib_index_data(c, tc, tidy):
 
 
 @mark.parametrize("template", ["{root}/foo", "file://{root}/foo"])
-def test_workflow__grid_grib__local(template, config_data, gen_config, fakefs, tc, testvars):
+def test_workflow__grid_grib__local(config_data, fakefs, gen_config, tc, template, testvars):
     config_data["baseline"]["url"] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
     with (
@@ -669,7 +669,7 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, tc, testvars):
 
 
 @mark.parametrize("found", [True, False])
-def test__workflow__verify_grib_message(c, tc, fakefs, testvars, found):
+def test__workflow__verify_grib_message(c, fakefs, found, tc, testvars):
     grib_path = fakefs / "foo"
     idx_path = fakefs / "foo.ecidx"
     idx_path.touch()
@@ -678,7 +678,7 @@ def test__workflow__verify_grib_message(c, tc, fakefs, testvars, found):
         patch.object(workflow, "_message_exists", return_value=found) as _message_exists,
         patch.object(workflow, "_build_grib_index", return_value=idx_node) as _build_grib_index,
     ):
-        node = workflow._verify_grib_message(c=c, tc=tc, path=grib_path, var=testvars["gh"])
+        node = workflow._verify_grib_message(c=c, path=grib_path, tc=tc, var=testvars["gh"])
         assert node.ref["ready"] is found
 
 

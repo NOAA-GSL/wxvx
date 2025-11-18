@@ -300,7 +300,7 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         yield "GRIB file %s providing %s grid at %s %sZ %s" % (src, var, yyyymmdd, hh, leadtime)
         ok = {"ready": False}
         yield asset(src, lambda: ok["ready"])
-        msg = _verify_grib_message(c, tc, src, var)
+        msg = _verify_grib_message(c, src, tc, var)
         yield msg
         ok["ready"] = msg.ref["ready"]
     else:
@@ -494,7 +494,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
 
 
 @task
-def _verify_grib_message(c: Config, tc: TimeCoords, path: Path, var: Var):
+def _verify_grib_message(c: Config, path: Path, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     taskname = "Verify GRIB message for %s in %s at %s %sZ %s" % (var, path, yyyymmdd, hh, leadtime)
     yield taskname
