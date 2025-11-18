@@ -138,7 +138,7 @@ def test_workflow_stats(c, noop):
 
 
 def test_workflow__build_grib_index(c, fakefs, tc):
-    grib = fakefs / "gfs.t00z.pgrb2.0p25.f000"
+    grib = fakefs / "foo"
     grib.touch()
     with patch.object(workflow, "ec") as ec:
         ec.codes_index_write.side_effect = lambda _idx, p: Path(p).touch()
@@ -670,8 +670,8 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, tc, testvars):
 
 @mark.parametrize("found", [True, False])
 def test__workflow__verify_grib_message(c, tc, fakefs, testvars, found):
-    grib_path = fakefs / "gfs.t00z.pgrb2.0p25.f000"
-    idx_path = fakefs / "gfs.t00z.pgrb2.0p25.f000.ecidx"
+    grib_path = fakefs / "foo"
+    idx_path = fakefs / "foo.ecidx"
     idx_path.touch()
     idx_node = workflow._existing(path=idx_path)
     with (
