@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 from warnings import catch_warnings, simplefilter
 
-import eccodes as ec  # type: ignore[import-untyped, import-not-found]
+import eccodes as ec  # type: ignore[import-untyped]
 import matplotlib as mpl
 
 mpl.use("Agg")
@@ -297,7 +297,6 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     url = render(c.baseline.url, tc, context=c.raw)
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
-        outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
         yield "GRIB file %s providing %s grid at %s %sZ %s" % (src, var, yyyymmdd, hh, leadtime)
         ok = {"ready": False}
         yield asset(src, lambda: ok["ready"])
@@ -536,7 +535,7 @@ def _enforce_point_baseline_type(c: Config, taskname: str):
         raise WXVXError(msg % taskname)
 
 
-def _message_exists(path, var: Var):
+def _message_exists(path: Path, var: Var) -> bool:
     idx = ec.codes_index_read(str(path))
     ec.codes_index_select(idx, "shortName", var.name)
     ec.codes_index_select(idx, "typeOfLevel", var.level_type)
