@@ -673,10 +673,9 @@ def test__workflow__verify_grib_message(c, fakefs, found, tc, testvars):
     grib_path = fakefs / "foo"
     idx_path = fakefs / "foo.ecidx"
     idx_path.touch()
-    idx_node = workflow._existing(path=idx_path)
     with (
         patch.object(workflow, "_message_exists", return_value=found) as _message_exists,
-        patch.object(workflow, "_build_grib_index", return_value=idx_node) as _build_grib_index,
+        patch.object(workflow, "_build_grib_index") as _build_grib_index,
     ):
         node = workflow._verify_grib_message(c=c, path=grib_path, tc=tc, var=testvars["gh"])
         assert node.ref["ready"] is found
