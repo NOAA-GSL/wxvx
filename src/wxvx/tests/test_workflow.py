@@ -429,13 +429,7 @@ def test_workflow__grib_index_data(c, tc, tidy):
     }
 
 
-@mark.parametrize(
-    "template",
-    [
-        "{root}/foo",
-        "file://{root}/foo",
-    ],
-)
+@mark.parametrize("template", ["{root}/foo", "file://{root}/foo"])
 def test_workflow__grid_grib__local(template, config_data, gen_config, fakefs, tc, testvars):
     config_data["baseline"]["url"] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
