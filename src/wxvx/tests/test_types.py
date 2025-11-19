@@ -1,8 +1,9 @@
 import re
+from collections.abc import Callable
 from copy import deepcopy
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Callable, cast
+from typing import cast
 
 import yaml
 from pytest import fixture, raises

@@ -147,7 +147,7 @@ class Var:
         keys = sorted(self._keys)
         vals = [
             f"{k}='{v}'" if isinstance(v, str) else f"{k}={v}"
-            for k, v in zip(keys, [getattr(self, key) for key in keys])
+            for k, v in zip(keys, [getattr(self, key) for key in keys], strict=True)
         ]
         return "%s(%s)" % (self.__class__.__name__, ", ".join(vals))
 
@@ -317,6 +317,7 @@ def ds_construct(c: Config, da: xr.DataArray, taskname: str, level: float | None
                 _da_to_latitude(da, dims_lat),
                 _da_to_longitude(da, dims_lon),
             ],
+            strict=True,
         )
     )
     if not latlon:

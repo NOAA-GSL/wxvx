@@ -65,7 +65,7 @@ class Baseline:
         keys = ["grid", "point"]
         if isinstance(self.type, str):
             assert self.type in keys
-        newval = dict(zip(keys, [VxType.GRID, VxType.POINT]))
+        newval = dict(zip(keys, [VxType.GRID, VxType.POINT], strict=True))
         _force(self, "type", newval.get(str(self.type), self.type))
 
 
