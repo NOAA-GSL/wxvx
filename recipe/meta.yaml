@@ -16,7 +16,7 @@ requirements:
     - setuptools
     - {{ python }}
   run:
-    - iotaa >=1.4
+    - iotaa >=1.4.1
     - met2go 11.0.*
     - netcdf4 >=1.7,<2
     - pyproj 3.7.*
