@@ -5,7 +5,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from textwrap import dedent
-from typing import Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 import xarray as xr
@@ -13,6 +13,9 @@ from pytest import fixture
 
 from wxvx import times
 from wxvx.types import Config
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logging.getLogger().setLevel(logging.DEBUG)
 

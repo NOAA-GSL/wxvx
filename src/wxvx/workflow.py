@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import xarray as xr
-from iotaa import Node, asset, external, task, tasks
+from iotaa import Asset, Node, collection, external, task
 
 from wxvx import variables
 from wxvx.metconf import render as render_metconf
@@ -50,7 +50,7 @@ plotlock = threading.Lock()
 # Public tasks
 
 
-@tasks
+@collection
 def grids(c: Config, baseline: bool = True, forecast: bool = True):
     baseline = baseline and c.baseline.type == VxType.GRID
     if baseline and not forecast:
@@ -77,21 +77,21 @@ def grids(c: Config, baseline: bool = True, forecast: bool = True):
     yield reqs
 
 
-@tasks
+@collection
 def grids_baseline(c: Config):
     taskname = "Baseline grids for %s" % c.baseline.name
     yield taskname
     yield grids(c, baseline=True, forecast=False)
 
 
-@tasks
+@collection
 def grids_forecast(c: Config):
     taskname = "Forecast grids for %s" % c.forecast.name
     yield taskname
     yield grids(c, baseline=False, forecast=True)
 
 
-@tasks
+@collection
 def ncobs(c: Config):
     taskname = "Baseline netCDF from obs for %s" % c.baseline.name
     _enforce_point_baseline_type(c, taskname)
@@ -102,7 +102,7 @@ def ncobs(c: Config):
     ]
 
 
-@tasks
+@collection
 def obs(c: Config):
     taskname = "Baseline obs for %s" % c.baseline.name
     _enforce_point_baseline_type(c, taskname)
@@ -116,7 +116,7 @@ def obs(c: Config):
     yield reqs
 
 
-@tasks
+@collection
 def plots(c: Config):
     taskname = "Plots for %s vs %s" % (c.forecast.name, c.baseline.name)
     yield taskname
@@ -128,7 +128,7 @@ def plots(c: Config):
     ]
 
 
-@tasks
+@collection
 def stats(c: Config):
     taskname = "Stats for %s vs %s" % (c.forecast.name, c.baseline.name)
     yield taskname
@@ -154,7 +154,7 @@ def _config_grid_stat(
 ):
     taskname = f"Config for grid_stat {path}"
     yield taskname
-    yield asset(path, path.is_file)
+    yield Asset(path, path.is_file)
     yield None
     field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
     meta = _meta(c, varname)
@@ -180,7 +180,7 @@ def _config_grid_stat(
 def _config_pb2nc(c: Config, path: Path):
     taskname = f"Config for pb2nc {path}"
     yield taskname
-    yield asset(path, path.is_file)
+    yield Asset(path, path.is_file)
     yield None
     # Specify the union of values needed by either sfc or atm vx and let point_stat restrict its
     # selection of obs from the netCDF file created by pb2nc.
@@ -204,7 +204,7 @@ def _config_point_stat(
 ):
     taskname = f"Config for point_stat {path}"
     yield taskname
-    yield asset(path, path.is_file)
+    yield Asset(path, path.is_file)
     yield None
     field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
     surface = var.level_type in ("heightAboveGround", "surface")
@@ -233,7 +233,7 @@ def _config_point_stat(
 def _existing(path: Path):
     taskname = "Existing path %s" % path
     yield taskname
-    yield asset(path, path.exists)
+    yield Asset(path, path.exists)
 
 
 @task
@@ -241,7 +241,7 @@ def _forecast_dataset(path: Path):
     taskname = "Forecast dataset %s" % path
     yield taskname
     ds = xr.Dataset()
-    yield asset(ds, lambda: bool(ds))
+    yield Asset(ds, lambda: bool(ds))
     yield _existing(path)
     logging.info("%s: Opening forecast %s", taskname, path)
     with catch_warnings():
@@ -257,7 +257,7 @@ def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
     taskname = "GRIB index data %s %sZ %s" % (yyyymmdd, hh, leadtime)
     yield taskname
     idxdata: dict[str, Var] = {}
-    yield asset(idxdata, lambda: bool(idxdata))
+    yield Asset(idxdata, lambda: bool(idxdata))
     idxfile = _local_file_from_http(outdir, url, "GRIB index file")
     yield idxfile
     lines = idxfile.ref.read_text(encoding="utf-8").strip().split("\n")
@@ -283,14 +283,14 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     if proximity == Proximity.LOCAL:
         assert isinstance(src, Path)
         yield "GRIB file %s providing %s grid" % (src, var)
-        yield asset(src, src.is_file)
+        yield Asset(src, src.is_file)
         yield None
     else:
         outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
         taskname = "Baseline grid %s" % path
         yield taskname
-        yield asset(path, path.is_file)
+        yield Asset(path, path.is_file)
         idxdata = _grib_index_data(c, outdir, tc, url=f"{url}.idx")
         yield idxdata
         var_idx = idxdata.ref[str(var)]
@@ -308,7 +308,7 @@ def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
     path = c.paths.grids_forecast / yyyymmdd / hh / leadtime / f"{var}.nc"
     taskname = "Forecast grid %s" % path
     yield taskname
-    yield asset(path, path.is_file)
+    yield Asset(path, path.is_file)
     fd = _forecast_dataset(Path(render(c.forecast.path, tc, context=c.raw)))
     yield fd
     src = da_select(c, fd.ref, varname, tc, var)
@@ -324,7 +324,7 @@ def _local_file_from_http(outdir: Path, url: str, desc: str):
     path = outdir / Path(urlparse(url).path).name
     taskname = "%s %s" % (desc, path)
     yield taskname
-    yield asset(path, path.is_file)
+    yield Asset(path, path.is_file)
     yield None
     fetch(taskname, url, path)
 
@@ -333,7 +333,7 @@ def _local_file_from_http(outdir: Path, url: str, desc: str):
 def _missing(path: Path):
     taskname = "Missing path %s" % path
     yield taskname
-    yield asset(path, lambda: False)
+    yield Asset(path, lambda: False)
 
 
 @task
@@ -346,7 +346,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
         msg = "Config value paths.obs must be set"
         raise WXVXError(msg)
     path = (c.paths.obs / yyyymmdd / hh / url.split("/")[-1]).with_suffix(".nc")
-    yield asset(path, path.is_file)
+    yield Asset(path, path.is_file)
     rundir = c.paths.run / "pb2nc" / yyyymmdd / hh
     cfgfile = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
     prepbufr = _req_prepbufr(url, path.parent)
@@ -370,7 +370,7 @@ def _plot(
     yield taskname
     rundir = c.paths.run / "plots" / yyyymmdd(cycle) / hh(cycle)
     path = rundir / f"{var}-{stat}{'-width-' + str(width) if width else ''}-plot.png"
-    yield asset(path, path.is_file)
+    yield Asset(path, path.is_file)
     reqs = _statreqs(c, varname, level, cycle)
     yield reqs
     leadtimes = ["%03d" % (td.total_seconds() // 3600) for td in c.leadtimes.values]  # noqa: PD011
@@ -397,7 +397,7 @@ def _plot(
 def _polyfile(path: Path, mask: tuple[tuple[float, float]]):
     taskname = "Poly file %s" % path
     yield taskname
-    yield asset(path, path.is_file)
+    yield Asset(path, path.is_file)
     yield None
     content = "MASK\n%s\n" % "\n".join(f"{lat} {lon}" for lat, lon in mask)
     with atomic(path) as tmp:
@@ -414,7 +414,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
     template = "grid_stat_%s_%02d0000L_%s_%s0000V.stat"
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
-    yield asset(path, path.is_file)
+    yield Asset(path, path.is_file)
     baseline_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
     forecast_grid: Node
     if source == Source.BASELINE:
@@ -451,7 +451,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     template = "point_stat_%s_%02d0000L_%s_%s0000V.stat"
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
-    yield asset(path, path.is_file)
+    yield Asset(path, path.is_file)
     obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
     reqs: list[Node] = [obs]
     forecast_path = Path(render(c.forecast.path, tc, context=c.raw))

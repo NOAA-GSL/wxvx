@@ -15,7 +15,7 @@ from unittest.mock import ANY, Mock, patch
 
 import pandas as pd
 import xarray as xr
-from iotaa import Node, asset, external, ready
+from iotaa import Asset, Node, external, ready
 from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
@@ -405,7 +405,7 @@ def test_workflow__grib_index_data(c, tc, tidy):
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
-        yield asset(idxfile, idxfile.exists)
+        yield Asset(idxfile, idxfile.exists)
 
     with patch.object(workflow, "_local_file_from_http", mock):
         val = workflow._grib_index_data(
@@ -448,7 +448,7 @@ def test_workflow__grid_grib__remote(c, tc, testvars):
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
-        yield asset(idxdata, ready.is_set)
+        yield Asset(idxdata, ready.is_set)
 
     with patch.object(workflow, "_grib_index_data", wraps=mock) as _grib_index_data:
         val = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
@@ -519,7 +519,7 @@ def test_workflow__netcdf_from_obs(c, tc):
         task = workflow._netcdf_from_obs(c=c, tc=tc)
     assert path.is_file()
     assert task.ready
-    cfgfile = cast(dict, task.requirements)["cfgfile"].ref
+    cfgfile = cast(dict, task.req)["cfgfile"].ref
     assert cfgfile.is_file()
     runscript = cfgfile.with_suffix(".sh")
     assert runscript.is_file()
@@ -539,7 +539,7 @@ def test_workflow__plot(c, dictkey, fakefs, fs):
     @external
     def _stat(x: str):
         yield x
-        yield asset(fakefs / f"{x}.stat", lambda: True)
+        yield Asset(fakefs / f"{x}.stat", lambda: True)
 
     fs.add_real_directory(os.environ["CONDA_PREFIX"])
     varname, level, dfs, stat, width = TESTDATA[dictkey]
@@ -586,7 +586,7 @@ def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars)
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
-        yield asset(Path("/some/file"), lambda: True)
+        yield Asset(Path("/some/file"), lambda: True)
 
     taskfunc = workflow._stats_vs_grid
     rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
@@ -621,7 +621,7 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, tc, testvars):
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
-        yield asset(Path("/some/file"), lambda: True)
+        yield Asset(Path("/some/file"), lambda: True)
 
     taskfunc = workflow._stats_vs_obs
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
@@ -853,7 +853,7 @@ def noop():
     @external
     def noop(*_args, **_kwargs):
         yield "mock"
-        yield asset(None, lambda: False)
+        yield Asset(None, lambda: False)
 
     return noop
 

@@ -3,7 +3,8 @@ Granular tests of config.schema.
 """
 
 import json
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from pyfakefs.fake_filesystem import FakeFilesystem
 from uwtools.api.config import validate

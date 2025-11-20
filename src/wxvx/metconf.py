@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Callable, NoReturn
+from typing import TYPE_CHECKING, Any, NoReturn
 
 from wxvx.types import ToGridVal
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 # Public:
 
