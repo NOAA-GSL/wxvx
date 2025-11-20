@@ -12,7 +12,6 @@ from unittest.mock import patch
 import yaml
 from pytest import mark, raises
 
-import wxvx
 from wxvx import cli
 from wxvx.types import Config
 from wxvx.util import WXVXError, pkgname, resource_path
@@ -194,14 +193,3 @@ def test_cli__process_args__no_config(logged):
 
 def test_cli__version():
     assert re.match(r"^version \d+\.\d+\.\d+ build \d+$", cli._version())
-
-
-def test_cli_ShowConfig(capsys, fs):
-    msg = "testing ShowConfig"
-    cf = Path(fs.create_file("config.yaml", contents=msg).path)
-    sc = cli.ShowConfig(option_strings=["-s", "--show"], dest="show")
-    with patch.object(wxvx.util, "resource_path", return_value=cf):
-        with raises(SystemExit) as e:
-            sc(None, None, None)
-        assert e.value.code == 0
-    assert capsys.readouterr().out.strip() == msg

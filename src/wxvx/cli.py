@@ -2,7 +2,7 @@ import json
 import logging
 import sys
 import traceback
-from argparse import Action, ArgumentParser, ArgumentTypeError, HelpFormatter, Namespace
+from argparse import ArgumentParser, ArgumentTypeError, HelpFormatter, Namespace
 from pathlib import Path
 
 from iotaa import tasknames
@@ -100,13 +100,6 @@ def _parse_args(argv: list[str]) -> Namespace:
         type=_arg_type_int_greater_than_zero,
     )
     optional.add_argument(
-        "-s",
-        "--show",
-        action=ShowConfig,
-        help="Show a pro-forma config and exit",
-        nargs=0,
-    )
-    optional.add_argument(
         "-v",
         "--version",
         action="version",
@@ -141,12 +134,3 @@ def _show_tasks() -> None:
 def _version() -> str:
     info = json.loads(resource("info.json"))
     return "version %s build %s" % (info["version"], info["buildnum"])
-
-
-class ShowConfig(Action):
-    def __init__(self, option_strings, dest, **kwargs):
-        super().__init__(option_strings, dest, **kwargs)
-
-    def __call__(self, parser, namespace, values, option_string=None):  # noqa: ARG002
-        print(resource("config-grid.yaml").strip())
-        sys.exit(0)

@@ -28,7 +28,7 @@ The activated virtual environment includes the [`met2go`](https://github.com/mad
 
 ## Configuration
 
-An overview of the content of the YAML configuration file specified via `-c` / `--config` is described in the table below. See the subsections below for more detailed information. Use the `-s` / `--show` CLI switch to show a pro-forma config with sample values for reference.
+An overview of the content of the YAML configuration file specified via `-c` / `--config` is described in the table below. See the subsections below for more detailed information.
 
 ```
 ┌────────────────────┬───────────────────────────────────────────┐
@@ -223,8 +223,6 @@ Optional arguments:
       List available tasks and exit
   -n, --threads N
       Number of threads
-  -s, --show
-      Show a pro-forma config and exit
   -v, --version
       Show version and exit
 ```
