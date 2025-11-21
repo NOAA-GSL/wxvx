@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 from warnings import catch_warnings, simplefilter
 
 import eccodes as ec  # type: ignore[import-untyped, import-not-found]
+from eccodes import CodesInternalError
 import matplotlib as mpl
 
 mpl.use("Agg")
@@ -288,7 +289,8 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         # yield asset(idx_path, lambda: _exists_with_message(idx_path, var, tc))
         # yield _index_grib(c, src, tc)
         ok = {"ready": False}
-        yield asset(ok, lambda: ok["ready"])
+        yield asset(src, lambda s=ok: s["ready"])
+        #yield asset(ok, lambda: ok["ready"])
         msg = _grib_message(c, tc, src, var)
         yield msg
         ok["ready"] = msg.ref["ready"]
@@ -319,7 +321,7 @@ def _grib_message(c: Config, tc: TimeCoords, path: Path, var: Var):
     yield asset(ok, lambda: ok["ready"])
     idx = _index_grib(c, path, tc)
     yield idx
-    idx_path = idx.ref
+    idx_path = idx.ref["idx"]
     ok["ready"] = _exists_with_message(idx_path, var, tc)
 
 
@@ -352,13 +354,30 @@ def _index_grib(c: Config, path: Path, tc: TimeCoords):
     idx_path = outdir / f"{path.name}.ecidx"
     taskname = "GRIB index file created for %s" % grib_path
     yield taskname
-    yield asset(idx_path, idx_path.is_file)
+    idx_info: dict[str, object] = {"idx": None, "idx_path": idx_path}
+    #yield asset(idx_path, idx_path.is_file)
+    yield asset(idx_info, lambda: idx_info["idx"] is not None)
     yield _existing(grib_path) 
     grib_index_keys = ["shortName", "typeOfLevel", "level", "dataDate", "dataTime", "stepRange"]
+    """
     idx = ec.codes_index_new_from_file(str(grib_path), ",".join(grib_index_keys))
     ec.codes_index_write(idx, str(idx_path))
-    ec.codes_index_release(idx)
-
+    #ec.codes_index_release(idx)
+    """
+    keystr = ",".join(grib_index_keys)
+    if idx_path.is_file():
+        try:
+            idx = ec.codes_index_read(str(idx_path))
+        except CodesInternalError as err:
+            logging.warning(
+                "Failed to read existing index %s (%s); rebuilding", idx_path, err
+            )
+            idx = ec.codes_index_new_from_file(str(grib_path), keystr)
+            ec.codes_index_write(idx, str(idx_path))
+    else:
+        idx = ec.codes_index_new_from_file(str(grib_path), keystr)
+        ec.codes_index_write(idx, str(idx_path))
+    idx_info["idx"] = idx
 
 @task
 def _local_file_from_http(outdir: Path, url: str, desc: str):
@@ -546,15 +565,17 @@ def _enforce_point_baseline_type(c: Config, taskname: str):
         raise WXVXError(msg % taskname)
 
 
-def _exists_with_message(idxpath: Path, var: Var, tc: TimeCoords):
+#def _exists_with_message(idxpath: Path, var: Var, tc: TimeCoords):
+def _exists_with_message(idx, var: Var, tc: TimeCoords):
     yyyymmdd, hh, _ = tcinfo(tc)
-    idx = ec.codes_index_read(str(idxpath))
+    
+    #idx = ec.codes_index_read(str(idxpath))
     ec.codes_index_reset(idx)
     ec.codes_index_select(idx, "shortName", var.name)
     if var.level_type:
-            ec.codes_index_select(idx, "typeOfLevel", var.level_type)
+        ec.codes_index_select(idx, "typeOfLevel", var.level_type)
     if getattr(var, "level", None) is not None:
-            ec.codes_index_select(idx, "level", int(var.level))
+        ec.codes_index_select(idx, "level", int(var.level))
     ec.codes_index_select(idx, "dataDate", int(yyyymmdd))
     ec.codes_index_select(idx, "dataTime", int(hh) * 100)
     gid = ec.codes_new_from_index(idx)
