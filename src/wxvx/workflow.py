@@ -280,17 +280,15 @@ def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
 @task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
+    # breakpoint()
     url = render(c.baseline.url, tc, context=c.raw)
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
         outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
         idx_path = outdir / f"{src.name}.ecidx"
         yield "GRIB file %s providing %s grid at %s %sZ %s" % (src, var, yyyymmdd, hh, leadtime)
-        # yield asset(idx_path, lambda: _exists_with_message(idx_path, var, tc))
-        # yield _index_grib(c, src, tc)
         ok = {"ready": False}
         yield asset(src, lambda: ok["ready"])
-        #yield asset(ok, lambda: ok["ready"])
         msg = _grib_message(c, tc, src, var)
         yield msg
         ok["ready"] = msg.ref["ready"]
@@ -321,8 +319,7 @@ def _grib_message(c: Config, tc: TimeCoords, path: Path, var: Var):
     yield asset(ok, lambda: ok["ready"])
     idx = _index_grib(c, path, tc)
     yield idx
-    idx_path = idx.ref["idx"]
-    ok["ready"] = _exists_with_message(idx_path, var, tc)
+    ok["ready"] = _exists_with_message(idx.ref, var, tc)
 
 
 @task
@@ -346,38 +343,19 @@ def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
 
 
 @task
-def _index_grib(c: Config, path: Path, tc: TimeCoords):
+def _index_grib(c: Config, grib_path: Path, tc: TimeCoords):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
     outdir.mkdir(parents=True, exist_ok=True)
-    grib_path = path.resolve()
-    idx_path = outdir / f"{path.name}.ecidx"
-    taskname = "GRIB index file created for %s" % grib_path
+    path = outdir / f"{grib_path.name}.ecidx"
+    taskname = "GRIB index %s created" % path
     yield taskname
-    idx_info: dict[str, object] = {"idx": None, "idx_path": idx_path}
-    #yield asset(idx_path, idx_path.is_file)
-    yield asset(idx_info, lambda: idx_info["idx"] is not None)
+    yield asset(path, path.is_file)
     yield _existing(grib_path) 
-    grib_index_keys = ["shortName", "typeOfLevel", "level", "dataDate", "dataTime", "stepRange"]
-    """
-    idx = ec.codes_index_new_from_file(str(grib_path), ",".join(grib_index_keys))
-    ec.codes_index_write(idx, str(idx_path))
-    #ec.codes_index_release(idx)
-    """
-    keystr = ",".join(grib_index_keys)
-    if idx_path.is_file():
-        try:
-            idx = ec.codes_index_read(str(idx_path))
-        except CodesInternalError as err:
-            logging.warning(
-                "Failed to read existing index %s (%s); rebuilding", idx_path, err
-            )
-            idx = ec.codes_index_new_from_file(str(grib_path), keystr)
-            ec.codes_index_write(idx, str(idx_path))
-    else:
-        idx = ec.codes_index_new_from_file(str(grib_path), keystr)
-        ec.codes_index_write(idx, str(idx_path))
-    idx_info["idx"] = idx
+    grib_index_keys = ["shortName", "typeOfLevel", "level"]
+    idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
+    ec.codes_index_write(idx, str(path))
+
 
 @task
 def _local_file_from_http(outdir: Path, url: str, desc: str):
@@ -565,24 +543,19 @@ def _enforce_point_baseline_type(c: Config, taskname: str):
         raise WXVXError(msg % taskname)
 
 
-#def _exists_with_message(idxpath: Path, var: Var, tc: TimeCoords):
-def _exists_with_message(idx, var: Var, tc: TimeCoords):
+def _exists_with_message(path, var: Var, tc: TimeCoords):
     yyyymmdd, hh, _ = tcinfo(tc)
-    
-    #idx = ec.codes_index_read(str(idxpath))
-    #ec.codes_index_reset(idx)
+    idx = ec.codes_index_read(str(path))
     ec.codes_index_select(idx, "shortName", var.name)
-    if var.level_type:
-        ec.codes_index_select(idx, "typeOfLevel", var.level_type)
-    if getattr(var, "level", None) is not None:
-        ec.codes_index_select(idx, "level", int(var.level))
-    ec.codes_index_select(idx, "dataDate", int(yyyymmdd))
-    ec.codes_index_select(idx, "dataTime", int(hh) * 100)
-    gid = ec.codes_new_from_index(idx)
-    if gid is None:
-        return False
-    ec.codes_release(gid)
-    return True
+    ec.codes_index_select(idx, "typeOfLevel", var.level_type)
+    ec.codes_index_select(idx, "level", int(var.level) if var.level else 0)
+    count = 0
+    while gid := ec.codes_new_from_index(idx):
+        count += 1
+        ec.codes_release(gid)
+    if count > 1:
+        log.warning("bad")
+    return count > 0
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
