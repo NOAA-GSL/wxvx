@@ -289,7 +289,7 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         # yield asset(idx_path, lambda: _exists_with_message(idx_path, var, tc))
         # yield _index_grib(c, src, tc)
         ok = {"ready": False}
-        yield asset(src, lambda s=ok: s["ready"])
+        yield asset(src, lambda: ok["ready"])
         #yield asset(ok, lambda: ok["ready"])
         msg = _grib_message(c, tc, src, var)
         yield msg
@@ -570,7 +570,7 @@ def _exists_with_message(idx, var: Var, tc: TimeCoords):
     yyyymmdd, hh, _ = tcinfo(tc)
     
     #idx = ec.codes_index_read(str(idxpath))
-    ec.codes_index_reset(idx)
+    #ec.codes_index_reset(idx)
     ec.codes_index_select(idx, "shortName", var.name)
     if var.level_type:
         ec.codes_index_select(idx, "typeOfLevel", var.level_type)
