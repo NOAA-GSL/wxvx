@@ -7,7 +7,7 @@ import xarray as xr
 from pytest import fixture, mark, raises
 
 from wxvx import variables
-from wxvx.util import WXVXError
+from wxvx.util import WXVXError, render
 
 # Fixtures
 
@@ -117,27 +117,63 @@ def test_variables_da_construct(
     assert new.forecast_reference_time == [np.datetime64(str(tc.cycle.isoformat()))]
 
 
-@mark.parametrize(("fail", "name", "varname"), [(False, "gh", "HGT"), (True, "foo", "FOO")])
-def test_variables_da_select(c, da_with_leadtime, fail, name, tc, varname):
-    var = variables.Var(name=name, level_type="isobaricInhPa", level=900)
-    kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname=varname, tc=tc, var=var)
-    if fail:
-        with raises(WXVXError) as e:
-            variables.da_select(**kwargs)
-        msg = f"Variable FOO valid at {tc.validtime.isoformat()} not found in {c.forecast.path}"
-        assert str(e.value) == msg
-    else:
-        new = variables.da_select(**kwargs)
-        # latitude and longitude are unchanged
-        assert all(new.latitude == da_with_leadtime.latitude)
-        assert all(new.longitude == da_with_leadtime.longitude)
-        # scalar level, time, and lead_time values are selected from arrays
-        assert new.level.values == da_with_leadtime.level.values[0]
-        assert new.time.values == da_with_leadtime.time.values[0]
-        assert new.lead_time.values == da_with_leadtime.lead_time.values[0]
+def test_variables_da_select(c, da_with_leadtime, tc):
+    var = variables.Var(name="gh", level_type="isobaricInhPa", level=900)
+    kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname="HGT", tc=tc, var=var)
+    new = variables.da_select(**kwargs)
+    # latitude and longitude are unchanged
+    assert all(new.latitude == da_with_leadtime.latitude)
+    assert all(new.longitude == da_with_leadtime.longitude)
+    # scalar level, time, and lead_time values are selected from arrays
+    assert new.level.values == da_with_leadtime.level.values[0]
+    assert new.time.values == da_with_leadtime.time.values[0]
+    assert new.lead_time.values == da_with_leadtime.lead_time.values[0]
 
 
-def test_variables_ds_construct(c, check_cf_metadata):
+def test_variables_da_select__attrs_not_coords(c, da_with_leadtime, tc):
+    # Time and level info can be provided via attributes instead of coordinates. Simulate the case
+    # where attributes are used by removing optional coordinates. The narrowing code will then not
+    # be executed for these values in the function-under-test.
+    da = da_with_leadtime.drop_vars(["lead_time", "level", "time"])
+    var = variables.Var(name="gh", level_type="isobaricInhPa", level=900)
+    kwargs = dict(c=c, ds=da.to_dataset(), varname="HGT", tc=tc, var=var)
+    new = variables.da_select(**kwargs)
+    # latitude and longitude are unchanged
+    assert all(new.latitude == da_with_leadtime.latitude)
+    assert all(new.longitude == da_with_leadtime.longitude)
+
+
+def test_variables_da_select__fail_bad_var(c, da_with_leadtime, tc):
+    var = variables.Var(name="foo", level_type="isobaricInhPa", level=900)
+    kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname="FOO", tc=tc, var=var)
+    with raises(WXVXError) as e:
+        variables.da_select(**kwargs)
+    ts = tc.validtime.isoformat()
+    forecast_path = render(c.forecast.path, tc, context=c.raw)
+    msg = f"Variable FOO valid at {ts} not found in {forecast_path}"
+    assert str(e.value) == msg
+
+
+def test_variables_ds_construct__latlon(c, check_cf_metadata):
+    c.forecast._projection = {"proj": "longlat"}
+    name = "HGT"
+    one = np.array([1], dtype="float32")
+    da = xr.DataArray(
+        data=one.reshape((1, 1, 1, 1)),
+        coords=dict(
+            forecast_reference_time=np.array([0], dtype="datetime64[ns]"),
+            time=np.array([1], dtype="timedelta64[ns]"),
+            latitude=[1],
+            longitude=[1],
+        ),
+        dims=("forecast_reference_time", "time", "latitude", "longitude"),
+        name=name,
+    )
+    ds = variables.ds_construct(c=c, da=da, level=None, taskname="test")
+    check_cf_metadata(ds=ds, name=name)
+
+
+def test_variables_ds_construct__lcc(c, check_cf_metadata):
     name = "HGT"
     one = np.array([1], dtype="float32")
     da = xr.DataArray(

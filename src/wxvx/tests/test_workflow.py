@@ -81,32 +81,35 @@ TESTDATA = {
 # Task Tests
 
 
+@mark.parametrize("compare", [True, False])
 @mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
-def test_workflow_grids(c, fmt, n_grids, noop):
+def test_workflow_grids(c, compare, fmt, ngrids, noop):
+    c.baseline = replace(c.baseline, compare=compare)
     with (
         patch.object(workflow, "_grid_grib", noop),
         patch.object(workflow, "_grid_nc", noop),
         patch.object(workflow, "classify_data_format", return_value=fmt),
     ):
-        assert len(workflow.grids(c=c).ref) == n_grids * 3  # forecast, baseline, and comp grids
-        assert len(workflow.grids(c=c, baseline=True, forecast=True).ref) == n_grids * 3
-        assert len(workflow.grids(c=c, baseline=True, forecast=False).ref) == n_grids * 2
-        assert len(workflow.grids(c=c, baseline=False, forecast=True).ref) == n_grids
+        ntypes = 3 if compare else 2  # forecast, baseline, and optionally comp grids
+        assert len(workflow.grids(c=c).ref) == ngrids * ntypes
+        assert len(workflow.grids(c=c, baseline=True, forecast=True).ref) == ngrids * ntypes
+        assert len(workflow.grids(c=c, baseline=True, forecast=False).ref) == ngrids * (ntypes - 1)
+        assert len(workflow.grids(c=c, baseline=False, forecast=True).ref) == ngrids
         assert len(workflow.grids(c=c, baseline=False, forecast=False).ref) == 0
 
 
-def test_workflow_grids_baseline(c, n_grids, noop):
+def test_workflow_grids_baseline(c, ngrids, noop):
     with patch.object(workflow, "_grid_grib", noop):
-        assert len(workflow.grids_baseline(c=c).ref) == n_grids * 2
+        assert len(workflow.grids_baseline(c=c).ref) == ngrids * 2
 
 
 @mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
-def test_workflow_grids_forecast(c, fmt, n_grids, noop):
+def test_workflow_grids_forecast(c, fmt, ngrids, noop):
     with (
         patch.object(workflow, "_grid_nc", noop),
         patch.object(workflow, "classify_data_format", return_value=fmt),
     ):
-        assert len(workflow.grids_forecast(c=c).ref) == n_grids
+        assert len(workflow.grids_forecast(c=c).ref) == ngrids
 
 
 def test_workflow_ncobs(c, obs_info):
@@ -598,8 +601,13 @@ def test_workflow__polyfile(fakefs, tidy):
     assert path.read_text().strip() == tidy(expected)
 
 
+@mark.parametrize("datafmt", [DataFormat.NETCDF, DataFormat.UNKNOWN])
+@mark.parametrize("mask", [True, False])
 @mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
-def test_workflow__stats_vs_grid(c, fakefs, source, tc, testvars):
+def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars):
+    if not mask:
+        c.forecast._mask = None
+
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
@@ -612,7 +620,7 @@ def test_workflow__stats_vs_grid(c, fakefs, source, tc, testvars):
         % str(source).split(".")[1].lower()
     )
     kwargs = dict(c=c, varname="T2M", tc=tc, var=testvars["2t"], prefix="foo", source=source)
-    with patch.object(workflow, "classify_data_format", return_value=DataFormat.NETCDF):
+    with patch.object(workflow, "classify_data_format", return_value=datafmt):
         stat = taskfunc(**kwargs, dry_run=True).ref
         cfgfile = stat.with_suffix(".config")
         runscript = stat.with_suffix(".sh")
@@ -626,14 +634,15 @@ def test_workflow__stats_vs_grid(c, fakefs, source, tc, testvars):
         ):
             stat.parent.mkdir(parents=True)
             taskfunc(**kwargs)
-        assert stat.is_file()
-        assert cfgfile.is_file()
-        assert runscript.is_file()
-        mpexec.assert_called_once_with(str(runscript), rundir, taskname)
+        if datafmt != DataFormat.UNKNOWN:
+            assert stat.is_file()
+            assert cfgfile.is_file()
+            assert runscript.is_file()
+            mpexec.assert_called_once_with(str(runscript), rundir, taskname)
 
 
-@mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
-def test_workflow__stats_vs_obs(c, fakefs, fmt, tc, testvars):
+@mark.parametrize("datafmt", [DataFormat.NETCDF, DataFormat.ZARR, DataFormat.UNKNOWN])
+def test_workflow__stats_vs_obs(c, datafmt, fakefs, tc, testvars):
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
@@ -647,7 +656,7 @@ def test_workflow__stats_vs_obs(c, fakefs, fmt, tc, testvars):
     kwargs = dict(
         c=c, varname="T2M", tc=tc, var=testvars["2t"], prefix="foo", source=Source.BASELINE
     )
-    with patch.object(workflow, "classify_data_format", return_value=fmt):
+    with patch.object(workflow, "classify_data_format", return_value=datafmt):
         stat = taskfunc(**kwargs, dry_run=True).ref
         cfgfile = stat.with_suffix(".config")
         runscript = stat.with_suffix(".sh")
@@ -661,10 +670,11 @@ def test_workflow__stats_vs_obs(c, fakefs, fmt, tc, testvars):
         ):
             stat.parent.mkdir(parents=True)
             taskfunc(**kwargs)
-        assert stat.is_file()
-        assert cfgfile.is_file()
-        assert runscript.is_file()
-        mpexec.assert_called_once_with(str(runscript), rundir, taskname)
+        if datafmt != DataFormat.UNKNOWN:
+            assert stat.is_file()
+            assert cfgfile.is_file()
+            assert runscript.is_file()
+            mpexec.assert_called_once_with(str(runscript), rundir, taskname)
 
 
 # Support Tests
@@ -777,27 +787,31 @@ def test_workflow__statargs(c, statkit, cycle):
     ]
 
 
+@mark.parametrize("compare", [True, False])
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
-def test_workflow__statreqs(c, statkit, cycle):
+def test_workflow__statreqs(c, compare, statkit, cycle):
+    c.baseline = replace(c.baseline, compare=compare)
     with (
         patch.object(workflow, "_stats_vs_grid") as _stats_vs_grid,
         patch.object(workflow, "_vxvars", return_value={statkit.var: statkit.varname}),
         patch.object(workflow, "gen_validtimes", return_value=[statkit.tc]),
     ):
         reqs = workflow._statreqs(c=c, varname=statkit.varname, level=statkit.level, cycle=cycle)
-    assert len(reqs) == 2
-    assert _stats_vs_grid.call_count == 2
+    n = 2 if compare else 1
+    assert len(reqs) == n
+    assert _stats_vs_grid.call_count == n
     args = (c, statkit.varname, statkit.tc, statkit.var)
     assert _stats_vs_grid.call_args_list[0].args == (
         *args,
         f"forecast_gh_{statkit.level_type}_{statkit.level:04d}",
         Source.FORECAST,
     )
-    assert _stats_vs_grid.call_args_list[1].args == (
-        *args,
-        f"gfs_gh_{statkit.level_type}_{statkit.level:04d}",
-        Source.BASELINE,
-    )
+    if compare:
+        assert _stats_vs_grid.call_args_list[1].args == (
+            *args,
+            f"gfs_gh_{statkit.level_type}_{statkit.level:04d}",
+            Source.BASELINE,
+        )
 
 
 def test_workflow__stats_and_widths(c):
@@ -853,7 +867,7 @@ def test_workflow__write_runscript(fakefs, tidy):
 
 
 @fixture
-def n_grids(c):
+def ngrids(c):
     n_validtimes = len(list(gen_validtimes(c.cycles, c.leadtimes)))
     n_var_level_pairs = len(list(workflow._varnames_and_levels(c)))
     return n_validtimes * n_var_level_pairs
@@ -918,37 +932,33 @@ def fcst_field(fmt: DataFormat, surface: bool) -> str:
     assert fmt in [DataFormat.GRIB, DataFormat.NETCDF, DataFormat.ZARR]
     if fmt in [DataFormat.NETCDF, DataFormat.ZARR]:
         if surface:
-            text = """
+            return """
             level = [
               "(0,0,*,*)"
             ];
             name = "T2M";
             set_attr_level = "Z002";
             """
-        else:
-            text = """
-            level = [
-              "(0,0,*,*)"
-            ];
-            name = "HGT";
-            set_attr_level = "P900";
-            """
-    elif fmt == DataFormat.GRIB:
-        if surface:
-            text = """
-            level = [
-              "Z002"
-            ];
-            name = "TMP";
-            """
-        else:
-            text = """
-            level = [
-              "P900"
-            ];
-            name = "HGT";
-            """
-    return text
+        return """
+        level = [
+          "(0,0,*,*)"
+        ];
+        name = "HGT";
+        set_attr_level = "P900";
+        """
+    if surface:
+        return """
+        level = [
+          "Z002"
+        ];
+        name = "TMP";
+        """
+    return """
+    level = [
+      "P900"
+    ];
+    name = "HGT";
+    """
 
 
 def respace(text: str) -> str:

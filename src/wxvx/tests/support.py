@@ -27,8 +27,7 @@ def with_set(d: dict, val: Any, *args: Any) -> dict:
     """
     new = deepcopy(d)
     p = new
-    if args:
-        for key in args[:-1]:
-            p = p[key]
-        p[args[-1]] = val
+    for key in args[:-1]:
+        p = p[key]
+    p[args[-1]] = val
     return new

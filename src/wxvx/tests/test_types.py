@@ -147,7 +147,7 @@ def test_types_Coords(config_data, coords):
     assert obj.time.inittime == "time"
     assert obj.time.leadtime == "lead_time"
     cfg = config_data["forecast"]["coords"]
-    other1 = types.Coords(**cfg)
+    other1 = types.Coords(**{**cfg, "time": types.Time(inittime="time", leadtime="lead_time")})
     assert obj == other1
     other2 = types.Coords(**{**cfg, "latitude": "lat"})
     assert obj != other2

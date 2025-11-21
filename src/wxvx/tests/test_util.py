@@ -152,12 +152,12 @@ def test_util_fail(caplog):
     assert e.value.code == 1
 
 
-def test_util_mpexec(tmp_path):
+@mark.parametrize("env", [{"PI": "3.14"}, None])
+def test_util_mpexec(env, tmp_path):
     path = tmp_path / "out"
-    cmd = "echo $PI >%s" % path
-    expected = "3.14"
-    util.mpexec(cmd=cmd, rundir=tmp_path, taskname="foo", env={"PI": expected})
-    assert path.read_text().strip() == expected
+    cmd = 'echo "$PI" >%s' % path
+    util.mpexec(cmd=cmd, rundir=tmp_path, taskname="foo", env=env)
+    assert path.read_text().strip() == ("3.14" if env else "")
 
 
 def test_util_render(utc):

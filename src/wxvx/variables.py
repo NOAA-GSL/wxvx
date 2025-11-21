@@ -12,7 +12,7 @@ import xarray as xr
 from pyproj import Proj
 
 from wxvx.types import Coords, VarMeta
-from wxvx.util import WXVXError
+from wxvx.util import WXVXError, render
 
 if TYPE_CHECKING:
     from wxvx.times import TimeCoords
@@ -250,10 +250,10 @@ def da_construct(c: Config, da: xr.DataArray) -> xr.DataArray:
     inittime = _da_val(da, c.forecast.coords.time.inittime, "initialization time", np.datetime64)
     leadtime = c.forecast.coords.time.leadtime
     validtime = c.forecast.coords.time.validtime
-    assert bool(leadtime) ^ bool(validtime)  # enforced by wxvx.types.Time initializer
-    if leadtime:
+    if leadtime is not None:
         time = inittime + _da_val(da, leadtime, "leadtime", np.timedelta64)
-    elif validtime:
+    else:
+        assert validtime is not None
         time = _da_val(da, validtime, "validtime", np.datetime64)
     return xr.DataArray(
         data=da.expand_dims(dim=["forecast_reference_time", "time"]),
@@ -290,7 +290,8 @@ def da_select(c: Config, ds: xr.Dataset, varname: str, tc: TimeCoords, var: Var)
         if key_level in coords and var.level is not None:
             da = _narrow(da, key_level, var.level)
     except KeyError as e:
-        msg = "Variable %s valid at %s not found in %s" % (varname, tc, c.forecast.path)
+        forecast_path = render(c.forecast.path, tc, context=c.raw)
+        msg = "Variable %s valid at %s not found in %s" % (varname, tc, forecast_path)
         raise WXVXError(msg) from e
     return da
 
@@ -475,8 +476,8 @@ def _narrow(da: xr.DataArray, key: str, value: Any) -> xr.DataArray:
     # it to a scalar by selecting the single element matching the 'value' argument. If it is already
     # a scalar, raise an exception if it does not match 'value'. For example, an array with a series
     # of forecast cycles might have a vector-valued 'key' = 'time' coordinate variable, while one
-    # with a single forecast cycle might have a scalar 'time'. In either case, this function should
-    # return an array with a scalar 'time' coordinate variable with the expected value.
+    # with a single forecast cycle might have a scalar 'time'. Either way, this function should
+    # return a DataArray with a scalar 'time' coordinate variable with the expected value.
     try:
         coords = da[key].values
     except KeyError:

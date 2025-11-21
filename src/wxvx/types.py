@@ -63,7 +63,8 @@ class Baseline:
 
     def __post_init__(self):
         keys = ["grid", "point"]
-        assert self.type in keys
+        if isinstance(self.type, str):
+            assert self.type in keys
         newval = dict(zip(keys, [VxType.GRID, VxType.POINT]))
         _force(self, "type", newval.get(str(self.type), self.type))
 
@@ -306,29 +307,23 @@ class VarMeta:
     nbrhd_width: list[int] | None = None
 
     def __post_init__(self):
+        assert self.cf_standard_name
+        assert self.description
+        assert self.level_type in ("atmosphere", "heightAboveGround", "isobaricInhPa", "surface")
+        assert self.met_stats
+        assert self.name
+        assert self.units
+        assert all(x in LINETYPE for x in self.met_stats)
         for k, v in vars(self).items():
             match k:
                 case "cat_thresh":
                     assert v is None or (v and all(isinstance(x, str) for x in v))
-                case "cf_standard_name":
-                    assert v
                 case "cnt_thresh":
                     assert v is None or (v and all(isinstance(x, str) for x in v))
-                case "description":
-                    assert v
-                case "level_type":
-                    assert v in ("atmosphere", "heightAboveGround", "isobaricInhPa", "surface")
-                case "met_stats":
-                    assert v
-                    assert all(x in LINETYPE for x in v)
-                case "name":
-                    assert v
                 case "nbrhd_shape":
                     assert v is None or v in ("CIRCLE", "SQUARE")
                 case "nbrhd_width":
                     assert v is None or (v and all(isinstance(x, int) for x in v))
-                case "units":
-                    assert v
 
 
 # Helpers
