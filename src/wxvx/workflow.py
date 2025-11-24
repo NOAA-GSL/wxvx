@@ -14,7 +14,6 @@ from urllib.parse import urlparse
 from warnings import catch_warnings, simplefilter
 
 import eccodes as ec  # type: ignore[import-untyped, import-not-found]
-from eccodes import CodesInternalError
 import matplotlib as mpl
 
 mpl.use("Agg")
@@ -280,12 +279,10 @@ def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
 @task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    # breakpoint()
     url = render(c.baseline.url, tc, context=c.raw)
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
         outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
-        idx_path = outdir / f"{src.name}.ecidx"
         yield "GRIB file %s providing %s grid at %s %sZ %s" % (src, var, yyyymmdd, hh, leadtime)
         ok = {"ready": False}
         yield asset(src, lambda: ok["ready"])
@@ -311,15 +308,11 @@ def _grib_message(c: Config, tc: TimeCoords, path: Path, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     taskname = "GRIB message for %s in %s at %s %sZ %s" % (var, path, yyyymmdd, hh, leadtime)
     yield taskname
-    # outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
-    # idx_path = outdir / f"{path.name}.ecidx"
-    # yield asset(idx_path, lambda: _exists_with_message(idx_path, var, tc))
-    # yield _index_grib(c, path, tc)
     ok = {"ready": False}
     yield asset(ok, lambda: ok["ready"])
     idx = _index_grib(c, path, tc)
     yield idx
-    ok["ready"] = _exists_with_message(idx.ref, var, tc)
+    ok["ready"] = _exists_with_message(idx.ref, var)
 
 
 @task
@@ -351,7 +344,7 @@ def _index_grib(c: Config, grib_path: Path, tc: TimeCoords):
     taskname = "GRIB index %s created" % path
     yield taskname
     yield asset(path, path.is_file)
-    yield _existing(grib_path) 
+    yield _existing(grib_path)
     grib_index_keys = ["shortName", "typeOfLevel", "level"]
     idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
     ec.codes_index_write(idx, str(path))
@@ -543,8 +536,7 @@ def _enforce_point_baseline_type(c: Config, taskname: str):
         raise WXVXError(msg % taskname)
 
 
-def _exists_with_message(path, var: Var, tc: TimeCoords):
-    yyyymmdd, hh, _ = tcinfo(tc)
+def _exists_with_message(path, var: Var):
     idx = ec.codes_index_read(str(path))
     ec.codes_index_select(idx, "shortName", var.name)
     ec.codes_index_select(idx, "typeOfLevel", var.level_type)
@@ -554,7 +546,7 @@ def _exists_with_message(path, var: Var, tc: TimeCoords):
         count += 1
         ec.codes_release(gid)
     if count > 1:
-        log.warning("bad")
+        logging.warning("More than one matching GRIB message was found.")
     return count > 0
 
 

@@ -384,12 +384,12 @@ def test_workflow__existing(fakefs):
 
 
 @mark.parametrize("found", [True, False])
-def test_workflow__exists_with_message(found, fakefs, tc, testvars):
+def test_workflow__exists_with_message(found, fakefs, testvars):
     idx_path = fakefs / "foo.ecidx"
     ec = Mock()
-    ec.codes_new_from_index.return_value = (object() if found else None)
+    ec.codes_new_from_index.return_value = object() if found else None
     with patch.object(workflow, "ec", ec):
-        msg = workflow._exists_with_message(path=idx_path, var=testvars["gh"], tc=tc)
+        msg = workflow._exists_with_message(path=idx_path, var=testvars["gh"])
     assert msg is found
 
 
@@ -504,7 +504,7 @@ def test_workflow__index_grib(c, fakefs, tc):
     ec.codes_index_write = Mock(side_effect=lambda _idx, out: Path(out).write_bytes(b"bar"))
     ec.codes_index_release = Mock()
     with patch.object(workflow, "ec", ec):
-        workflow._index_grib(c=c, path=grib, tc=tc)
+        workflow._index_grib(c=c, grib_path=grib, tc=tc)
     yyyymmdd, hh, leadtime = tcinfo(tc)
     idx_path = c.paths.grids_baseline / yyyymmdd / hh / leadtime / f"{grib.stem}.ecidx"
     assert idx_path.is_file()
