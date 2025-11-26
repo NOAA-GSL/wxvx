@@ -15,7 +15,7 @@ from unittest.mock import ANY, Mock, patch
 
 import pandas as pd
 import xarray as xr
-from iotaa import Asset, Node, external, ready
+from iotaa import Asset, Node, external
 from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
@@ -124,8 +124,8 @@ def test_workflow_obs(c, obs_info):
 
 def test_workflow_plots(c, noop):
     with patch.object(workflow, "_plot", noop):
-        val = workflow.plots(c=c)
-    assert len(val.ref) == len(c.cycles.values) * sum(
+        node = workflow.plots(c=c)
+    assert len(node.ref) == len(c.cycles.values) * sum(
         len(list(workflow._stats_and_widths(c, varname)))
         for varname, _ in workflow._varnames_and_levels(c)
     )
@@ -133,8 +133,8 @@ def test_workflow_plots(c, noop):
 
 def test_workflow_stats(c, noop):
     with patch.object(workflow, "_statreqs", return_value=[noop()]) as _statreqs:
-        val = workflow.stats(c=c)
-    assert len(val.ref) == len(c.variables) + 1  # for 2x SPFH levels
+        node = workflow.stats(c=c)
+    assert len(node.ref) == len(c.variables) + 1  # for 2x SPFH levels
 
 
 @mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
@@ -378,19 +378,19 @@ def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, testv
 
 def test_workflow__existing(fakefs):
     path = fakefs / "forecast"
-    assert not ready(workflow._existing(path=path))
+    assert not workflow._existing(path=path).ready
     path.touch()
-    assert ready(workflow._existing(path=path))
+    assert workflow._existing(path=path).ready
 
 
 def test_workflow__forecast_dataset(da_with_leadtime, fakefs):
     path = fakefs / "forecast"
-    assert not ready(workflow._forecast_dataset(path=path))
+    assert not workflow._forecast_dataset(path=path).ready
     path.touch()
     with patch.object(workflow.xr, "open_dataset", return_value=da_with_leadtime.to_dataset()):
-        val = workflow._forecast_dataset(path=path)
-    assert ready(val)
-    assert (da_with_leadtime == val.ref.HGT).all()
+        node = workflow._forecast_dataset(path=path)
+    assert node.ready
+    assert (da_with_leadtime == node.ref.HGT).all()
 
 
 def test_workflow__grib_index_data(c, tc, tidy):
@@ -408,10 +408,10 @@ def test_workflow__grib_index_data(c, tc, tidy):
         yield Asset(idxfile, idxfile.exists)
 
     with patch.object(workflow, "_local_file_from_http", mock):
-        val = workflow._grib_index_data(
+        node = workflow._grib_index_data(
             c=c, outdir=c.paths.grids_baseline, tc=tc, url=c.baseline.url
         )
-    assert val.ref == {
+    assert node.ref == {
         "gh-isobaricInhPa-0900": variables.HRRR(
             name="HGT", levstr="900 mb", firstbyte=0, lastbyte=0
         )
@@ -423,7 +423,7 @@ def test_workflow__grib_index_ec(c, fakefs, tc):
     grib.touch()
     with patch.object(workflow, "ec") as ec:
         ec.codes_index_write.side_effect = lambda _idx, p: Path(p).touch()
-        assert ready(workflow._grib_index_ec(c=c, grib_path=grib, tc=tc))
+        assert workflow._grib_index_ec(c=c, grib_path=grib, tc=tc).ready
     yyyymmdd, hh, leadtime = tcinfo(tc)
     idx_path = c.paths.grids_baseline / yyyymmdd / hh / leadtime / f"{grib.name}.ecidx"
     assert idx_path.is_file()
@@ -471,8 +471,8 @@ def test_workflow__grid_grib__remote(c, tc, testvars):
         yield Asset(idxdata, ready.is_set)
 
     with patch.object(workflow, "_grib_index_data", wraps=mock) as _grib_index_data:
-        val = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
-        path = val.ref
+        node = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
+        path = node.ref
         assert not path.exists()
         ready.set()
         with patch.object(workflow, "fetch") as fetch:
@@ -493,9 +493,9 @@ def test_workflow__grid_nc(c_real_fs, check_cf_metadata, da_with_leadtime, tc, t
     path = Path(c_real_fs.paths.grids_forecast, "a.nc")
     da_with_leadtime.to_netcdf(path)
     c_real_fs.forecast._path = str(path)
-    val = workflow._grid_nc(c=c_real_fs, varname="HGT", tc=tc, var=testvars["gh"])
-    assert ready(val)
-    check_cf_metadata(ds=xr.open_dataset(val.ref, decode_timedelta=True), name="HGT", level=level)
+    node = workflow._grid_nc(c=c_real_fs, varname="HGT", tc=tc, var=testvars["gh"])
+    assert node.ready
+    check_cf_metadata(ds=xr.open_dataset(node.ref, decode_timedelta=True), name="HGT", level=level)
 
 
 def test_workflow__grid_nc__no_paths_grids_forecast(config_data, tc, testvars):
@@ -507,8 +507,8 @@ def test_workflow__grid_nc__no_paths_grids_forecast(config_data, tc, testvars):
 
 def test_workflow__local_file_from_http(c):
     url = f"{c.baseline.url}.idx"
-    val = workflow._local_file_from_http(outdir=c.paths.grids_baseline, url=url, desc="Test")
-    path: Path = val.ref
+    node = workflow._local_file_from_http(outdir=c.paths.grids_baseline, url=url, desc="Test")
+    path: Path = node.ref
     assert not path.exists()
     path.parent.mkdir(parents=True, exist_ok=True)
     with patch.object(workflow, "fetch") as fetch:
@@ -572,9 +572,11 @@ def test_workflow__plot(c, dictkey, fakefs, fs):
         _prepare_plot_data.side_effect = dfs
         os.environ["MPLCONFIGDIR"] = str(fakefs)
         cycle = c.cycles.values[0]  # noqa: PD011
-        val = workflow._plot(c=c, varname=varname, level=level, cycle=cycle, stat=stat, width=width)
-    path = val.ref
-    assert ready(val)
+        node = workflow._plot(
+            c=c, varname=varname, level=level, cycle=cycle, stat=stat, width=width
+        )
+    path = node.ref
+    assert node.ready
     assert path.is_file()
     assert _prepare_plot_data.call_count == 1
     xticks.assert_called_once_with(ticks=[0, 6, 12], labels=["000", "006", "012"], rotation=90)
