@@ -470,7 +470,7 @@ def test_workflow__grid_grib__remote(c, tc, testvars):
         yield "mock"
         yield Asset(idxdata, ready.is_set)
 
-    with patch.object(workflow, "_grib_index_data_wgrib2", wraps=mock) as _grib_index_data:
+    with patch.object(workflow, "_grib_index_data_wgrib2", wraps=mock) as _grib_index_data_wgrib2:
         node = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
         path = node.ref
         assert not path.exists()
