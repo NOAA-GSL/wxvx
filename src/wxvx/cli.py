@@ -6,6 +6,7 @@ from argparse import ArgumentParser, ArgumentTypeError, HelpFormatter, Namespace
 from pathlib import Path
 
 from iotaa import tasknames
+from uwtools.api.config import get_yaml_config
 from uwtools.api.logging import use_uwtools_logger
 
 from wxvx import workflow
@@ -20,7 +21,13 @@ def main() -> None:
         args = _parse_args(sys.argv)
         use_uwtools_logger(verbose=args.debug)
         _process_args(args)
-        c = validated_config(args.config)
+        yc = get_yaml_config(args.config)
+        yc.dereference()
+        if args.show:
+            yc.dump()
+            if not args.check:
+                sys.exit(0)
+        c = validated_config(yc)
         if not args.check:
             logging.info("Preparing task graph for %s", args.task)
             task = getattr(workflow, args.task)

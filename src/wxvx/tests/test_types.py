@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import cast
 
-import yaml
 from pytest import fixture, raises
+from uwtools.api.config import get_yaml_config
 
 from wxvx import types
 from wxvx.tests.support import with_del, with_set
@@ -63,19 +63,17 @@ def time(config_data):
 # Tests
 
 
-def test_types_validated_config(config_data, fakefs, fs):
+def test_types_validated_config(config_data, fs):
     fs.add_real_file(resource_path("config.jsonschema"))
-    path = fakefs / "config.yaml"
-    path.write_text(yaml.dump(config_data))
-    assert types.validated_config(config_path=path)
+    yc = get_yaml_config(config_data)
+    assert types.validated_config(yc=yc)
 
 
-def test_types_validated_config__fail_json_schema(config_data, fakefs, fs, logged):
+def test_types_validated_config__fail_json_schema(config_data, fs, logged):
     fs.add_real_file(resource_path("config.jsonschema"))
-    path = fakefs / "config.yaml"
-    path.write_text(yaml.dump(with_set(config_data, "foo", "baseline", "type")))
+    yc = get_yaml_config(with_set(config_data, "foo", "baseline", "type"))
     with raises(WXVXError) as e:
-        types.validated_config(config_path=path)
+        types.validated_config(yc=yc)
     assert str(e.value) == "Config failed schema validation"
     assert logged(r"'foo' is not one of \['grid', 'point'\]")
 

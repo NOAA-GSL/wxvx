@@ -9,7 +9,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, cast
 
-from uwtools.api.config import get_yaml_config, validate
+from uwtools.api.config import YAMLConfig, validate
 
 from wxvx.util import LINETYPE, WXVXError, expand, resource_path, to_datetime, to_timedelta
 
@@ -41,9 +41,7 @@ VxType = Enum(
 )
 
 
-def validated_config(config_path: Path) -> Config:
-    yc = get_yaml_config(config_path)
-    yc.dereference()
+def validated_config(yc: YAMLConfig) -> Config:
     if not validate(schema_file=resource_path("config.jsonschema"), config_data=yc.data):
         msg = "Config failed schema validation"
         raise WXVXError(msg)
