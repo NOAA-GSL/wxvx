@@ -137,17 +137,6 @@ def test_workflow_stats(c, noop):
     assert len(val.ref) == len(c.variables) + 1  # for 2x SPFH levels
 
 
-def test_workflow__build_grib_index(c, fakefs, tc):
-    grib = fakefs / "foo"
-    grib.touch()
-    with patch.object(workflow, "ec") as ec:
-        ec.codes_index_write.side_effect = lambda _idx, p: Path(p).touch()
-        assert ready(workflow._build_grib_index(c=c, grib_path=grib, tc=tc))
-    yyyymmdd, hh, leadtime = tcinfo(tc)
-    idx_path = c.paths.grids_baseline / yyyymmdd / hh / leadtime / f"{grib.name}.ecidx"
-    assert idx_path.is_file()
-
-
 @mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
 def test_workflow__config_grid_stat(c, source, fakefs, testvars):
     path = fakefs / "refc.config"
@@ -429,16 +418,41 @@ def test_workflow__grib_index_data(c, tc, tidy):
     }
 
 
+def test_workflow__grib_index_ec(c, fakefs, tc):
+    grib = fakefs / "foo"
+    grib.touch()
+    with patch.object(workflow, "ec") as ec:
+        ec.codes_index_write.side_effect = lambda _idx, p: Path(p).touch()
+        assert ready(workflow._grib_index_ec(c=c, grib_path=grib, tc=tc))
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    idx_path = c.paths.grids_baseline / yyyymmdd / hh / leadtime / f"{grib.name}.ecidx"
+    assert idx_path.is_file()
+
+
+@mark.parametrize(("msgs", "expected"), [(0, False), (1, True), (2, True)])
+def test__workflow__grib_message_in_file(c, expected, fakefs, msgs, tc, testvars):
+    grib_path = fakefs / "foo"
+    idx_path = fakefs / "foo.ecidx"
+    idx_path.touch()
+    with (
+        patch.object(workflow, "_grib_index_ec") as _grib_index_ec,
+        patch.object(workflow, "ec") as ec,
+    ):
+        ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
+        node = workflow._grib_message_in_file(c=c, path=grib_path, tc=tc, var=testvars["gh"])
+        assert node.ready is expected
+
+
 @mark.parametrize("template", ["{root}/foo", "file://{root}/foo"])
 def test_workflow__grid_grib__local(config_data, fakefs, gen_config, tc, template, testvars):
+    grib_path = fakefs / "foo"
+    grib_path.touch()
     config_data["baseline"]["url"] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
-    with (
-        patch.object(workflow, "_build_grib_index"),
-        patch.object(workflow, "_message_exists", return_value=True),
-    ):
-        val = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
-        assert ready(val)
+    msg = workflow._existing(grib_path)
+    with patch.object(workflow, "_grib_message_in_file", return_value=msg):
+        node = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
+        assert ready(node)
 
 
 def test_workflow__grid_grib__remote(c, tc, testvars):
@@ -503,15 +517,6 @@ def test_workflow__local_file_from_http(c):
         workflow._local_file_from_http(outdir=c.paths.grids_baseline, url=url, desc="Test")
     fetch.assert_called_once_with(ANY, url, ANY)
     assert path.exists()
-
-
-@mark.parametrize(("msgs", "expected"), [(0, False), (1, True), (2, True)])
-def test_workflow__message_exists(msgs, expected, testvars):
-    idx_path = Path("foo.ecidx")
-    with patch.object(workflow, "ec") as ec:
-        ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
-        found = workflow._message_exists(path=idx_path, var=testvars["gh"])
-    assert found is expected
 
 
 def test_workflow__missing(fakefs):
@@ -666,19 +671,6 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, tc, testvars):
             assert cfgfile.is_file()
             assert runscript.is_file()
             mpexec.assert_called_once_with(str(runscript), rundir, taskname)
-
-
-@mark.parametrize("found", [True, False])
-def test__workflow__verify_grib_message(c, fakefs, found, tc, testvars):
-    grib_path = fakefs / "foo"
-    idx_path = fakefs / "foo.ecidx"
-    idx_path.touch()
-    with (
-        patch.object(workflow, "_message_exists", return_value=found) as _message_exists,
-        patch.object(workflow, "_build_grib_index") as _build_grib_index,
-    ):
-        node = workflow._verify_grib_message(c=c, path=grib_path, tc=tc, var=testvars["gh"])
-        assert node.ref["ready"] is found
 
 
 # Support Tests

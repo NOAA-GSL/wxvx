@@ -143,21 +143,6 @@ def stats(c: Config):
 
 
 @task
-def _build_grib_index(c: Config, grib_path: Path, tc: TimeCoords):
-    yyyymmdd, hh, leadtime = tcinfo(tc)
-    outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
-    outdir.mkdir(parents=True, exist_ok=True)
-    path = outdir / f"{grib_path.name}.ecidx"
-    taskname = "Create GRIB index %s" % path
-    yield taskname
-    yield asset(path, path.is_file)
-    yield _existing(grib_path)
-    grib_index_keys = ["shortName", "typeOfLevel", "level"]
-    idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
-    ec.codes_index_write(idx, str(path))
-
-
-@task
 def _config_grid_stat(
     c: Config,
     path: Path,
@@ -292,17 +277,57 @@ def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
 
 
 @task
+def _grib_index_ec(c: Config, grib_path: Path, tc: TimeCoords):
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
+    outdir.mkdir(parents=True, exist_ok=True)
+    path = outdir / f"{grib_path.name}.ecidx"
+    taskname = "Create GRIB index %s" % path
+    yield taskname
+    yield asset(path, path.is_file)
+    yield _existing(grib_path)
+    grib_index_keys = ["shortName", "typeOfLevel", "level"]
+    idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
+    ec.codes_index_write(idx, str(path))
+
+
+@task
+def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var):
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    taskname = "Verify GRIB message for %s in %s at %s %sZ %s" % (var, path, yyyymmdd, hh, leadtime)
+    yield taskname
+    exists = [False]
+    yield asset(exists, lambda: exists[0])
+    idx = _grib_index_ec(c, path, tc)
+    yield idx
+    idx = ec.codes_index_read(str(idx.ref))
+    for k, v in [
+        ("shortName", var.name),
+        ("typeOfLevel", var.level_type),
+        ("level", int(var.level) if var.level else 0),
+    ]:
+        ec.codes_index_select(idx, k, v)
+    count = 0
+    while gid := ec.codes_new_from_index(idx):
+        count += 1
+        ec.codes_release(gid)
+    if count > 1:
+        logging.warning("Found %d GRIB messages matching %s in index %s.", count, var, path)
+    exists[0] = count > 0
+
+
+@task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     url = render(c.baseline.url, tc, context=c.raw)
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
         yield "GRIB file %s providing %s grid at %s %sZ %s" % (src, var, yyyymmdd, hh, leadtime)
-        ok = {"ready": False}
-        yield asset(src, lambda: ok["ready"])
-        msg = _verify_grib_message(c, src, tc, var)
+        exists = [False]
+        yield asset(src, lambda: exists[0])
+        msg = _grib_message_in_file(c, src, tc, var)
         yield msg
-        ok["ready"] = msg.ref["ready"]
+        exists[0] = msg.ready
     else:
         outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
@@ -493,18 +518,6 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     mpexec(str(runscript), rundir, taskname)
 
 
-@task
-def _verify_grib_message(c: Config, path: Path, tc: TimeCoords, var: Var):
-    yyyymmdd, hh, leadtime = tcinfo(tc)
-    taskname = "Verify GRIB message for %s in %s at %s %sZ %s" % (var, path, yyyymmdd, hh, leadtime)
-    yield taskname
-    ok = {"ready": False}
-    yield asset(ok, lambda: ok["ready"])
-    idx = _build_grib_index(c, path, tc)
-    yield idx
-    ok["ready"] = _message_exists(idx.ref, var)
-
-
 # Support
 
 
@@ -533,20 +546,6 @@ def _enforce_point_baseline_type(c: Config, taskname: str):
     if c.baseline.type != VxType.POINT:
         msg = "%s: This task requires that config value baseline.type be set to 'point'"
         raise WXVXError(msg % taskname)
-
-
-def _message_exists(path: Path, var: Var) -> bool:
-    idx = ec.codes_index_read(str(path))
-    ec.codes_index_select(idx, "shortName", var.name)
-    ec.codes_index_select(idx, "typeOfLevel", var.level_type)
-    ec.codes_index_select(idx, "level", int(var.level) if var.level else 0)
-    count = 0
-    while gid := ec.codes_new_from_index(idx):
-        count += 1
-        ec.codes_release(gid)
-    if count > 1:
-        logging.warning("Found %d GRIB messages matching %s in index %s.", count, var, path)
-    return count > 0
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
