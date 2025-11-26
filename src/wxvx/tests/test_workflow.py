@@ -677,6 +677,10 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, tc, testvars):
 # Support Tests
 
 
+def test_workflow__at_validtime(tc):
+    assert workflow._at_validtime(tc=tc) == "at 19700101 00Z 000"
+
+
 def test_workflow__enforce_point_baseline_type(c):
     c.baseline = replace(c.baseline, type="grid")
     with raises(WXVXError) as e:
