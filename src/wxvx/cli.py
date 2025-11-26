@@ -100,6 +100,12 @@ def _parse_args(argv: list[str]) -> Namespace:
         type=_arg_type_int_greater_than_zero,
     )
     optional.add_argument(
+        "-s",
+        "--show",
+        action="store_true",
+        help="Show the realized config and exit",
+    )
+    optional.add_argument(
         "-v",
         "--version",
         action="version",

@@ -223,6 +223,8 @@ Optional arguments:
       List available tasks and exit
   -n, --threads N
       Number of threads
+  -s, --show
+      Show the realized config and exit
   -v, --version
       Show version and exit
 ```
