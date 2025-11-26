@@ -22,18 +22,23 @@ from wxvx.util import WXVXError, pkgname, resource_path
 @mark.parametrize("switch_c", ["-c", "--config"])
 @mark.parametrize("switch_n", ["-n", "--threads"])
 @mark.parametrize("switch_t", ["-t", "--task"])
-def test_cli_main(config_data, fs, switch_c, switch_n, switch_t):
+@mark.parametrize("threads", [1, 2])
+def test_cli_main(config_data, fs, logged, switch_c, switch_n, switch_t, threads):
     fs.add_real_file(resource_path("config.jsonschema"))
     fs.add_real_file(resource_path("info.json"))
     with patch.multiple(cli, workflow=D, sys=D, use_uwtools_logger=D) as mocks:
         cf = fs.create_file("/path/to/config.yaml", contents=yaml.safe_dump(config_data))
-        argv = [pkgname, switch_c, cf.path, switch_n, "2", switch_t, "plots"]
+        argv = [pkgname, switch_c, cf.path, switch_n, str(threads), switch_t, "plots"]
         mocks["sys"].argv = argv
         with patch.object(cli, "_parse_args", wraps=cli._parse_args) as _parse_args:
             cli.main()
         _parse_args.assert_called_once_with(argv)
     mocks["use_uwtools_logger"].assert_called_once_with(verbose=False)
-    mocks["workflow"].plots.assert_called_once_with(Config(config_data), threads=2)
+    mocks["workflow"].plots.assert_called_once_with(Config(config_data), threads=threads)
+    if threads > 1:
+        assert logged("Using %s threads" % threads)
+    else:
+        assert not logged(r"Using \d+ threads")
 
 
 def test_cli_main__bad_config(fakefs, fs):

@@ -32,6 +32,8 @@ def main() -> None:
             sys.exit(0)
         logging.info("Preparing task graph for %s", args.task)
         task = getattr(workflow, args.task)
+        if args.threads > 1:
+            logging.info("Using %s threads", args.threads)
         task(c, threads=args.threads)
     except WXVXError as e:
         for line in traceback.format_exc().strip().split("\n"):
