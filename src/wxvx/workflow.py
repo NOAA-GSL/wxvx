@@ -254,8 +254,7 @@ def _forecast_dataset(path: Path):
 
 @task
 def _grib_index_data_wgrib2(c: Config, outdir: Path, tc: TimeCoords, url: str):
-    yyyymmdd, hh, leadtime = tcinfo(tc)
-    taskname = "GRIB index data for %s %sZ %s" % (yyyymmdd, hh, leadtime)
+    taskname = "GRIB index data %s" % _at_validtime(tc)
     yield taskname
     idxdata: dict[str, Var] = {}
     yield Asset(idxdata, lambda: bool(idxdata))
@@ -282,7 +281,7 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords):
     outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
     outdir.mkdir(parents=True, exist_ok=True)
     path = outdir / f"{grib_path.name}.ecidx"
-    taskname = "GRIB index file %s for %s %sZ %s" % (path, yyyymmdd, hh, leadtime)
+    taskname = "GRIB index file %s %s" % (path, _at_validtime(tc))
     yield taskname
     yield Asset(path, path.is_file)
     yield _existing(grib_path)
@@ -293,8 +292,7 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords):
 
 @task
 def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var):
-    yyyymmdd, hh, leadtime = tcinfo(tc)
-    taskname = "Verify GRIB message for %s in %s at %s %sZ %s" % (var, path, yyyymmdd, hh, leadtime)
+    taskname = "GRIB message for %s in %s %s" % (var, path, _at_validtime(tc))
     yield taskname
     exists = [False]
     yield Asset(exists, lambda: exists[0])
@@ -318,17 +316,17 @@ def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var):
 
 @task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var):
-    yyyymmdd, hh, leadtime = tcinfo(tc)
     url = render(c.baseline.url, tc, context=c.raw)
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
-        yield "GRIB file %s providing %s grid at %s %sZ %s" % (src, var, yyyymmdd, hh, leadtime)
+        yield "GRIB file %s providing %s grid %s" % (src, var, _at_validtime(tc))
         exists = [False]
         yield Asset(src, lambda: exists[0])
         msg = _grib_message_in_file(c, src, tc, var)
         yield msg
         exists[0] = msg.ready
     else:
+        yyyymmdd, hh, leadtime = tcinfo(tc)
         outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
         taskname = "Baseline grid %s" % path
@@ -449,10 +447,10 @@ def _polyfile(path: Path, mask: tuple[tuple[float, float]]):
 
 @task
 def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source):
-    yyyymmdd, hh, leadtime = tcinfo(tc)
     source_name = {Source.BASELINE: "baseline", Source.FORECAST: "forecast"}[source]
-    taskname = "Stats vs grid for %s %s at %s %sZ %s" % (source_name, var, yyyymmdd, hh, leadtime)
+    taskname = "Stats vs grid for %s %s %s" % (source_name, var, _at_validtime(tc))
     yield taskname
+    yyyymmdd, hh, leadtime = tcinfo(tc)
     rundir = c.paths.run / "stats" / yyyymmdd / hh / leadtime
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
     template = "grid_stat_%s_%02d0000L_%s_%s0000V.stat"
@@ -486,10 +484,10 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
 
 @task
 def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source):
-    yyyymmdd, hh, leadtime = tcinfo(tc)
     source_name = {Source.BASELINE: "baseline", Source.FORECAST: "forecast"}[source]
-    taskname = "Stats vs obs for %s %s at %s %sZ %s" % (source_name, var, yyyymmdd, hh, leadtime)
+    taskname = "Stats vs obs for %s %s %s" % (source_name, var, _at_validtime(tc))
     yield taskname
+    yyyymmdd, hh, leadtime = tcinfo(tc)
     rundir = c.paths.run / "stats" / yyyymmdd / hh / leadtime
     template = "point_stat_%s_%02d0000L_%s_%s0000V.stat"
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
@@ -519,6 +517,11 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
 
 
 # Support
+
+
+def _at_validtime(tc: TimeCoords) -> str:
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    return "at %s %sZ %s" % (yyyymmdd, hh, leadtime)
 
 
 def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
