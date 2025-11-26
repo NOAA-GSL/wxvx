@@ -5,12 +5,12 @@
   "packages": {
     "dev": [
       "docformatter ==1.7.*",
-      "iotaa >=1.4.1",
+      "iotaa ==1.4.*",
       "jq ==1.8.*",
       "make ==4.4.*",
       "met2go ==11.0.*",
       "mypy ==1.18.*",
-      "netcdf4 >=1.7,<2",
+      "netcdf4 ==1.7.*",
       "pip",
       "pyfakefs ==5.10.*",
       "pyproj ==3.7.*",
@@ -21,28 +21,28 @@
       "python-eccodes ==2.42.*",
       "python-magic ==0.4.*",
       "pyyaml ==6.0.*",
-      "requests >=2.32,<3",
+      "requests ==2.32.*",
       "ruff ==0.14.*",
       "seaborn ==0.13.*",
       "setuptools",
-      "uwtools >=2.8,<=2.12",
-      "xarray >=2023.12,<2025.2",
-      "zarr >=3.0,<3.1"
+      "uwtools ==2.12.*",
+      "xarray ==2025.1.*",
+      "zarr ==3.1.*"
     ],
     "run": [
-      "iotaa >=1.4.1",
+      "iotaa ==1.4.*",
       "met2go ==11.0.*",
-      "netcdf4 >=1.7,<2",
+      "netcdf4 ==1.7.*",
       "pyproj ==3.7.*",
       "python ==3.13",
       "python-eccodes ==2.42.*",
       "python-magic ==0.4.*",
       "pyyaml ==6.0.*",
-      "requests >=2.32,<3",
+      "requests ==2.32.*",
       "seaborn ==0.13.*",
-      "uwtools >=2.8,<=2.12",
-      "xarray >=2023.12,<2025.2",
-      "zarr >=3.0,<3.1"
+      "uwtools ==2.12.*",
+      "xarray ==2025.1.*",
+      "zarr ==3.1.*"
     ]
   },
   "version": "0.2.1"
