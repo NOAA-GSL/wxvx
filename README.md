@@ -202,14 +202,14 @@ Some values may include Jinja2 expressions, processed at run-time with [`jinja2.
 
 ```
 $ wxvx --help
-usage: wxvx [-c FILE] [-t [TASK]] [-d] [-h] [-k] [-l] [-n N] [-s] [-v]
+usage: wxvx [-c FILE] [-t TASK] [-d] [-h] [-k] [-l] [-n N] [-s] [-v]
 
 wxvx
 
 Required arguments:
   -c, --config FILE
       Configuration file
-  -t, --task [TASK]
+  -t, --task TASK
       Task to execute
 
 Optional arguments:
