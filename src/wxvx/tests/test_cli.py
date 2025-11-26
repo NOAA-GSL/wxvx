@@ -54,13 +54,14 @@ def test_cli_main__bad_config(fakefs, fs):
 def test_cli_main__check_config(fs, switch, truthtype):
     fn = "config-%s.yaml" % truthtype
     fs.add_real_file(resource_path("config.jsonschema"))
-    fs.add_real_file(resource_path(fn))
     fs.add_real_file(resource_path("info.json"))
+    fs.add_real_file(resource_path(fn))
     argv = [pkgname, switch, "-c", str(resource_path(fn)), "-t", "grids"]
     with (
         patch.object(cli.sys, "argv", argv),
         patch.object(cli, "tasknames", return_value=["grids"]),
         patch.object(cli.workflow, "grids") as grids,
+        raises(SystemExit),
     ):
         cli.main()
     grids.assert_not_called()
@@ -97,6 +98,21 @@ def test_cli_main__task_list(caplog, switch, tidy):
           stats
         """
         assert re.sub(r"INFO     [^ ]+ ", "", caplog.text.strip()) == tidy(expected)
+
+
+@mark.parametrize("check", [True, False])
+@mark.parametrize("switch", ["-s", "--show"])
+def test_cli_main__show_config(capsys, check, fs, switch):
+    fn = "config-grid.yaml"
+    fs.add_real_file(resource_path("config.jsonschema"))
+    fs.add_real_file(resource_path("info.json"))
+    fs.add_real_file(resource_path(fn))
+    argv = [pkgname, switch, "-c", str(resource_path(fn))]
+    if check:
+        argv.append("--check")
+    with patch.object(cli.sys, "argv", argv), raises(SystemExit):
+        cli.main()
+    assert isinstance(yaml.safe_load(capsys.readouterr().out), dict)
 
 
 def test_cli_main__task_missing(caplog):

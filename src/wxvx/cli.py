@@ -28,10 +28,11 @@ def main() -> None:
             if not args.check:
                 sys.exit(0)
         c = validated_config(yc)
-        if not args.check:
-            logging.info("Preparing task graph for %s", args.task)
-            task = getattr(workflow, args.task)
-            task(c, threads=args.threads)
+        if args.check:
+            sys.exit(0)
+        logging.info("Preparing task graph for %s", args.task)
+        task = getattr(workflow, args.task)
+        task(c, threads=args.threads)
     except WXVXError as e:
         for line in traceback.format_exc().strip().split("\n"):
             logging.debug(line)
