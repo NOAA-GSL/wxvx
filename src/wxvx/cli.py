@@ -71,7 +71,6 @@ def _parse_args(argv: list[str]) -> Namespace:
         "--task",
         help="Task to execute",
         metavar="TASK",
-        default=None,
     )
     optional = parser.add_argument_group("Optional arguments")
     optional.add_argument(
