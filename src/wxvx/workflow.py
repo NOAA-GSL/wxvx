@@ -284,7 +284,7 @@ def _grib_index_ec(c: Config, grib_path: Path, tc: TimeCoords):
     path = outdir / f"{grib_path.name}.ecidx"
     taskname = "Create GRIB index %s" % path
     yield taskname
-    yield asset(path, path.is_file)
+    yield Asset(path, path.is_file)
     yield _existing(grib_path)
     grib_index_keys = ["shortName", "typeOfLevel", "level"]
     idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
@@ -297,7 +297,7 @@ def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var):
     taskname = "Verify GRIB message for %s in %s at %s %sZ %s" % (var, path, yyyymmdd, hh, leadtime)
     yield taskname
     exists = [False]
-    yield asset(exists, lambda: exists[0])
+    yield Asset(exists, lambda: exists[0])
     idx = _grib_index_ec(c, path, tc)
     yield idx
     idx = ec.codes_index_read(str(idx.ref))
