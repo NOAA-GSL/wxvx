@@ -430,7 +430,7 @@ def test_workflow__grib_index_ec(c, fakefs, tc):
 
 
 @mark.parametrize(("msgs", "expected"), [(0, False), (1, True), (2, True)])
-def test__workflow__grib_message_in_file(c, expected, fakefs, msgs, tc, testvars):
+def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, tc, testvars):
     grib_path = fakefs / "foo"
     idx_path = fakefs / "foo.ecidx"
     idx_path.touch()
@@ -441,6 +441,8 @@ def test__workflow__grib_message_in_file(c, expected, fakefs, msgs, tc, testvars
         ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
         node = workflow._grib_message_in_file(c=c, path=grib_path, tc=tc, var=testvars["gh"])
         assert node.ready is expected
+        if msgs == 2:
+            assert logged("Found 2 GRIB messages")
 
 
 @mark.parametrize("template", ["{root}/foo", "file://{root}/foo"])
