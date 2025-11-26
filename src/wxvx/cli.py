@@ -124,11 +124,11 @@ def _parse_args(argv: list[str]) -> Namespace:
 def _process_args(args: Namespace) -> None:
     if args.list:
         _show_tasks()
-        if not args.check:
+        if not args.check and not args.show:
             sys.exit(0)
     if not args.config:
         fail("No configuration file specified")
-    if args.check:
+    if args.check or args.show:
         return
     if args.task not in tasknames(workflow):
         logging.error("No such task: %s", args.task)

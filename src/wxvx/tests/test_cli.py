@@ -155,27 +155,12 @@ def test_cli__parse_args__threads_bad(capsys, n):
 
 
 def test_cli__process_args__bad_task(logged):
-    kwargs = dict(check=False, config=Path("/some/path"), list=False, task="foo")
+    kwargs = dict(check=False, config=Path("/some/path"), list=False, show=False, task="foo")
     with patch.object(cli, "_show_tasks") as _show_tasks, raises(SystemExit) as e:
         cli._process_args(args=Namespace(**kwargs))
     assert e.value.code == 1
     _show_tasks.assert_called_once_with()
     assert logged("No such task: foo")
-
-
-def test_cli__process_args__check_only():
-    args = Namespace(check=True, config=Path("/some/path"), list=False)
-    with patch.object(cli, "_show_tasks") as _show_tasks:
-        cli._process_args(args=args)
-    _show_tasks.assert_not_called()
-
-
-def test_cli__process_args__list_only():
-    args = Namespace(check=False, list=True)
-    with patch.object(cli, "_show_tasks") as _show_tasks, raises(SystemExit) as e:
-        cli._process_args(args=args)
-    assert e.value.code == 0
-    _show_tasks.assert_called_once_with()
 
 
 def test_cli__process_args__list_and_check():
@@ -191,6 +176,28 @@ def test_cli__process_args__no_config(logged):
         cli._process_args(args=args)
     assert e.value.code == 1
     assert logged("No configuration file specified")
+
+
+def test_cli__process_args__only_check():
+    args = Namespace(check=True, config=Path("/some/path"), list=False, show=False)
+    with patch.object(cli, "_show_tasks") as _show_tasks:
+        cli._process_args(args=args)
+    _show_tasks.assert_not_called()
+
+
+def test_cli__process_args__only_list():
+    args = Namespace(check=False, list=True, show=False)
+    with patch.object(cli, "_show_tasks") as _show_tasks, raises(SystemExit) as e:
+        cli._process_args(args=args)
+    assert e.value.code == 0
+    _show_tasks.assert_called_once_with()
+
+
+def test_cli__process_args__only_show():
+    args = Namespace(check=True, config=Path("/some/path"), list=False, show=True)
+    with patch.object(cli, "_show_tasks") as _show_tasks:
+        cli._process_args(args=args)
+    _show_tasks.assert_not_called()
 
 
 def test_cli__version():
