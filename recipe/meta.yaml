@@ -16,17 +16,18 @@ requirements:
     - setuptools
     - {{ python }}
   run:
-    - iotaa >=1.4.1
+    - iotaa 1.4.*
     - met2go 11.0.*
-    - netcdf4 >=1.7,<2
+    - netcdf4 1.7.*
     - pyproj 3.7.*
+    - python-eccodes 2.42.*
     - python-magic 0.4.*
     - pyyaml 6.0.*
-    - requests >=2.32,<3
+    - requests 2.32.*
     - seaborn 0.13.*
-    - uwtools >=2.8,<=2.12
-    - xarray >=2023.12,<2025.2
-    - zarr >=3.0,<3.1
+    - uwtools 2.12.*
+    - xarray 2025.1.*
+    - zarr 3.1.*
     - {{ python }}
 test:
   requires:

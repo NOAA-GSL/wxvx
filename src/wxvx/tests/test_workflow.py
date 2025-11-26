@@ -418,20 +418,40 @@ def test_workflow__grib_index_data(c, tc, tidy):
     }
 
 
-@mark.parametrize(
-    "template",
-    [
-        "{root}/gfs.t00z.pgrb2.0p25.f000",
-        "file://{root}/gfs.t00z.pgrb2.0p25.f000",
-    ],
-)
-def test_workflow__grid_grib__local(template, config_data, gen_config, fakefs, tc, testvars):
-    grib_path = fakefs / "gfs.t00z.pgrb2.0p25.f000"
-    grib_path.write_text("foo")
+def test_workflow__grib_index_ec(c, fakefs, tc):
+    grib = fakefs / "foo"
+    grib.touch()
+    with patch.object(workflow, "ec") as ec:
+        ec.codes_index_write.side_effect = lambda _idx, p: Path(p).touch()
+        assert ready(workflow._grib_index_ec(c=c, grib_path=grib, tc=tc))
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    idx_path = c.paths.grids_baseline / yyyymmdd / hh / leadtime / f"{grib.name}.ecidx"
+    assert idx_path.is_file()
+
+
+@mark.parametrize(("msgs", "expected"), [(0, False), (1, True), (2, True)])
+def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, tc, testvars):
+    grib_path = fakefs / "foo"
+    idx_path = fakefs / "foo.ecidx"
+    idx_path.touch()
+    with (
+        patch.object(workflow, "_grib_index_ec") as _grib_index_ec,
+        patch.object(workflow, "ec") as ec,
+    ):
+        ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
+        node = workflow._grib_message_in_file(c=c, path=grib_path, tc=tc, var=testvars["gh"])
+        assert node.ready is expected
+        if msgs == 2:
+            assert logged("Found 2 GRIB messages")
+
+
+@mark.parametrize("template", ["{root}/foo", "file://{root}/foo"])
+def test_workflow__grid_grib__local(config_data, fakefs, gen_config, tc, template, testvars):
     config_data["baseline"]["url"] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
-    val = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
-    assert ready(val)
+    with patch.object(workflow, "_grib_message_in_file", Mock(ready=True)) as _grib_message_in_file:
+        assert workflow._grid_grib(c=c, tc=tc, var=testvars["t"]).ready
+        _grib_message_in_file.assert_called_once()
 
 
 def test_workflow__grid_grib__remote(c, tc, testvars):

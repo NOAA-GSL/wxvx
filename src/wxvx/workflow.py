@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 from warnings import catch_warnings, simplefilter
 
+import eccodes as ec  # type: ignore[import-untyped]
 import matplotlib as mpl
 
 mpl.use("Agg")
@@ -276,15 +277,57 @@ def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
 
 
 @task
+def _grib_index_ec(c: Config, grib_path: Path, tc: TimeCoords):
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
+    outdir.mkdir(parents=True, exist_ok=True)
+    path = outdir / f"{grib_path.name}.ecidx"
+    taskname = "Create GRIB index %s" % path
+    yield taskname
+    yield Asset(path, path.is_file)
+    yield _existing(grib_path)
+    grib_index_keys = ["shortName", "typeOfLevel", "level"]
+    idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
+    ec.codes_index_write(idx, str(path))
+
+
+@task
+def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var):
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    taskname = "Verify GRIB message for %s in %s at %s %sZ %s" % (var, path, yyyymmdd, hh, leadtime)
+    yield taskname
+    exists = [False]
+    yield Asset(exists, lambda: exists[0])
+    idx = _grib_index_ec(c, path, tc)
+    yield idx
+    idx = ec.codes_index_read(str(idx.ref))
+    for k, v in [
+        ("shortName", var.name),
+        ("typeOfLevel", var.level_type),
+        ("level", int(var.level) if var.level else 0),
+    ]:
+        ec.codes_index_select(idx, k, v)
+    count = 0
+    while gid := ec.codes_new_from_index(idx):
+        count += 1
+        ec.codes_release(gid)
+    if count > 1:
+        logging.warning("Found %d GRIB messages matching %s in index %s.", count, var, path)
+    exists[0] = count > 0
+
+
+@task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     url = render(c.baseline.url, tc, context=c.raw)
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
-        assert isinstance(src, Path)
-        yield "GRIB file %s providing %s grid" % (src, var)
-        yield Asset(src, src.is_file)
-        yield None
+        yield "GRIB file %s providing %s grid at %s %sZ %s" % (src, var, yyyymmdd, hh, leadtime)
+        exists = [False]
+        yield Asset(src, lambda: exists[0])
+        msg = _grib_message_in_file(c, src, tc, var)
+        yield msg
+        exists[0] = msg.ready
     else:
         outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
