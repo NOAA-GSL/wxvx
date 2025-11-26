@@ -255,7 +255,7 @@ def _forecast_dataset(path: Path):
 @task
 def _grib_index_data_wgrib2(c: Config, outdir: Path, tc: TimeCoords, url: str):
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    taskname = "GRIB index data %s %sZ %s" % (yyyymmdd, hh, leadtime)
+    taskname = "GRIB index data for %s %sZ %s" % (yyyymmdd, hh, leadtime)
     yield taskname
     idxdata: dict[str, Var] = {}
     yield Asset(idxdata, lambda: bool(idxdata))
@@ -282,7 +282,7 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords):
     outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
     outdir.mkdir(parents=True, exist_ok=True)
     path = outdir / f"{grib_path.name}.ecidx"
-    taskname = "Create GRIB index %s" % path
+    taskname = "GRIB index file %s for %s %sZ %s" % (path, yyyymmdd, hh, leadtime)
     yield taskname
     yield Asset(path, path.is_file)
     yield _existing(grib_path)
