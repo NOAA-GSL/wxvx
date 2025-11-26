@@ -447,14 +447,11 @@ def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, tc, 
 
 @mark.parametrize("template", ["{root}/foo", "file://{root}/foo"])
 def test_workflow__grid_grib__local(config_data, fakefs, gen_config, tc, template, testvars):
-    grib_path = fakefs / "foo"
-    grib_path.touch()
     config_data["baseline"]["url"] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
-    msg = workflow._existing(grib_path)
-    with patch.object(workflow, "_grib_message_in_file", return_value=msg):
-        node = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
-        assert ready(node)
+    with patch.object(workflow, "_grib_message_in_file", Mock(ready=True)) as _grib_message_in_file:
+        assert workflow._grid_grib(c=c, tc=tc, var=testvars["t"]).ready
+        _grib_message_in_file.assert_called_once()
 
 
 def test_workflow__grid_grib__remote(c, tc, testvars):
