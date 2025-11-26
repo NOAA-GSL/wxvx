@@ -393,7 +393,7 @@ def test_workflow__forecast_dataset(da_with_leadtime, fakefs):
     assert (da_with_leadtime == val.ref.HGT).all()
 
 
-def test_workflow__grib_index_data(c, tc, tidy):
+def test_workflow__grib_index_data_wgrib2(c, tc, tidy):
     gribidx = """
     1:0:d=2024040103:HGT:900 mb:anl:
     2:1:d=2024040103:FOO:900 mb:anl:
@@ -408,7 +408,7 @@ def test_workflow__grib_index_data(c, tc, tidy):
         yield Asset(idxfile, idxfile.exists)
 
     with patch.object(workflow, "_local_file_from_http", mock):
-        val = workflow._grib_index_data(
+        val = workflow._grib_index_data_wgrib2(
             c=c, outdir=c.paths.grids_baseline, tc=tc, url=c.baseline.url
         )
     assert val.ref == {
@@ -418,12 +418,12 @@ def test_workflow__grib_index_data(c, tc, tidy):
     }
 
 
-def test_workflow__grib_index_ec(c, fakefs, tc):
+def test_workflow__grib_index_file_eccodes(c, fakefs, tc):
     grib = fakefs / "foo"
     grib.touch()
     with patch.object(workflow, "ec") as ec:
         ec.codes_index_write.side_effect = lambda _idx, p: Path(p).touch()
-        assert ready(workflow._grib_index_ec(c=c, grib_path=grib, tc=tc))
+        assert ready(workflow._grib_index_file_eccodes(c=c, grib_path=grib, tc=tc))
     yyyymmdd, hh, leadtime = tcinfo(tc)
     idx_path = c.paths.grids_baseline / yyyymmdd / hh / leadtime / f"{grib.name}.ecidx"
     assert idx_path.is_file()
@@ -435,7 +435,7 @@ def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, tc, 
     idx_path = fakefs / "foo.ecidx"
     idx_path.touch()
     with (
-        patch.object(workflow, "_grib_index_ec") as _grib_index_ec,
+        patch.object(workflow, "_grib_index_file_eccodes") as _grib_index_file_eccodes,
         patch.object(workflow, "ec") as ec,
     ):
         ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
@@ -470,7 +470,7 @@ def test_workflow__grid_grib__remote(c, tc, testvars):
         yield "mock"
         yield Asset(idxdata, ready.is_set)
 
-    with patch.object(workflow, "_grib_index_data", wraps=mock) as _grib_index_data:
+    with patch.object(workflow, "_grib_index_data_wgrib2", wraps=mock) as _grib_index_data_wgrib2:
         val = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
         path = val.ref
         assert not path.exists()
@@ -485,7 +485,7 @@ def test_workflow__grid_grib__remote(c, tc, testvars):
     fh = int(tc.leadtime.total_seconds() // 3600)
     outdir = c.paths.grids_baseline / tc.yyyymmdd / tc.hh / f"{fh:03d}"
     url = f"https://some.url/{yyyymmdd}/{hh}/{fh:02d}/a.grib2.idx"
-    _grib_index_data.assert_called_with(c, outdir, tc, url=url)
+    _grib_index_data_wgrib2.assert_called_with(c, outdir, tc, url=url)
 
 
 def test_workflow__grid_nc(c_real_fs, check_cf_metadata, da_with_leadtime, tc, testvars):

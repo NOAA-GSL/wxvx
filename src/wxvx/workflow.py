@@ -253,7 +253,7 @@ def _forecast_dataset(path: Path):
 
 
 @task
-def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
+def _grib_index_data_wgrib2(c: Config, outdir: Path, tc: TimeCoords, url: str):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     taskname = "GRIB index data %s %sZ %s" % (yyyymmdd, hh, leadtime)
     yield taskname
@@ -277,7 +277,7 @@ def _grib_index_data(c: Config, outdir: Path, tc: TimeCoords, url: str):
 
 
 @task
-def _grib_index_ec(c: Config, grib_path: Path, tc: TimeCoords):
+def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     outdir = c.paths.grids_baseline / yyyymmdd / hh / leadtime
     outdir.mkdir(parents=True, exist_ok=True)
@@ -298,7 +298,7 @@ def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var):
     yield taskname
     exists = [False]
     yield Asset(exists, lambda: exists[0])
-    idx = _grib_index_ec(c, path, tc)
+    idx = _grib_index_file_eccodes(c, path, tc)
     yield idx
     idx = ec.codes_index_read(str(idx.ref))
     for k, v in [
@@ -334,7 +334,7 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         taskname = "Baseline grid %s" % path
         yield taskname
         yield Asset(path, path.is_file)
-        idxdata = _grib_index_data(c, outdir, tc, url=f"{url}.idx")
+        idxdata = _grib_index_data_wgrib2(c, outdir, tc, url=f"{url}.idx")
         yield idxdata
         var_idx = idxdata.ref[str(var)]
         fb, lb = var_idx.firstbyte, var_idx.lastbyte
