@@ -25,7 +25,8 @@ warn_return_any = true
 
 [tool.pytest.ini_options]
 filterwarnings = [
-  "ignore:This process .* is multi-threaded:DeprecationWarning"
+  "ignore:This process .* is multi-threaded:DeprecationWarning",
+  "ignore:jsonschema.RefResolver is deprecated:DeprecationWarning"
 ]
 
 [tool.ruff]
