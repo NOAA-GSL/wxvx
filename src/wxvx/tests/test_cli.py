@@ -50,11 +50,13 @@ def test_cli_main__bad_config(fakefs, fs):
 
 
 @mark.parametrize("switch", ["-k", "--check"])
-def test_cli_main__check_config(fs, switch):
+@mark.parametrize("truthtype", ["grid", "point"])
+def test_cli_main__check_config(fs, switch, truthtype):
+    fn = "config-%s.yaml" % truthtype
     fs.add_real_file(resource_path("config.jsonschema"))
-    fs.add_real_file(resource_path("config-grid.yaml"))
+    fs.add_real_file(resource_path(fn))
     fs.add_real_file(resource_path("info.json"))
-    argv = [pkgname, switch, "-c", str(resource_path("config-grid.yaml")), "-t", "grids"]
+    argv = [pkgname, switch, "-c", str(resource_path(fn)), "-t", "grids"]
     with (
         patch.object(cli.sys, "argv", argv),
         patch.object(cli, "tasknames", return_value=["grids"]),
