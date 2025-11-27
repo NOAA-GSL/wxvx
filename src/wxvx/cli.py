@@ -10,6 +10,7 @@ from uwtools.api.config import get_yaml_config
 from uwtools.api.logging import use_uwtools_logger
 
 from wxvx import workflow
+from wxvx.net import configure_session
 from wxvx.types import validated_config
 from wxvx.util import WXVXError, fail, pkgname, resource
 
@@ -34,6 +35,7 @@ def main() -> None:
         task = getattr(workflow, args.task)
         if args.threads > 1:
             logging.info("Using %s threads", args.threads)
+        configure_session(args.threads)
         task(c, threads=args.threads)
     except WXVXError as e:
         for line in traceback.format_exc().strip().split("\n"):
