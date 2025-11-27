@@ -287,7 +287,9 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords):
     yield _existing(grib_path)
     grib_index_keys = ["shortName", "typeOfLevel", "level"]
     idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
-    ec.codes_index_write(idx, str(path))
+    with atomic(path) as tmp:
+        ec.codes_index_write(idx, str(tmp))
+    logging.info("%s: Wrote %s", taskname, path)
 
 
 @task

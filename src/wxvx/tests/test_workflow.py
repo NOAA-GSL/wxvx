@@ -418,7 +418,7 @@ def test_workflow__grib_index_data_wgrib2(c, tc, tidy):
     }
 
 
-def test_workflow__grib_index_file_eccodes(c, fakefs, tc):
+def test_workflow__grib_index_file_eccodes(c, fakefs, logged, tc):
     grib = fakefs / "foo"
     grib.touch()
     with patch.object(workflow, "ec") as ec:
@@ -427,6 +427,7 @@ def test_workflow__grib_index_file_eccodes(c, fakefs, tc):
     yyyymmdd, hh, leadtime = tcinfo(tc)
     idx_path = c.paths.grids_baseline / yyyymmdd / hh / leadtime / f"{grib.name}.ecidx"
     assert idx_path.is_file()
+    assert logged("Wrote %s" % idx_path)
 
 
 @mark.parametrize(("msgs", "expected"), [(0, False), (1, True), (2, True)])
