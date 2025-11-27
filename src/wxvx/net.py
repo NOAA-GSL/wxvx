@@ -4,7 +4,8 @@ import logging
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
-# from requests.adapters import HTTPAdapter
+from requests.adapters import HTTPAdapter
+
 from wxvx.util import atomic
 
 if TYPE_CHECKING:
@@ -46,10 +47,9 @@ def fetch(taskname: str, url: str, path: Path, headers: dict[str, str] | None = 
 
 def configure_session(connections: int) -> None:
     session = Session()
-    assert connections
-    # adapter = HTTPAdapter(pool_connections=connections, pool_maxsize=connections)
-    # for scheme in ["http://", "https://"]:
-    #     session.mount(scheme, adapter)
+    adapter = HTTPAdapter(pool_connections=connections, pool_maxsize=connections)
+    for scheme in ["http://", "https://"]:
+        session.mount(scheme, adapter)
     NET["session"] = session
 
 
