@@ -17,7 +17,7 @@ from requests import Session
 # called. The connections argument should be equal to the number of threads in use, so the configure
 # call is made from wxvx.cli.main() where this is known.
 
-NET: dict = {"session": None}
+_STATE: dict = {"session": None}
 
 # Use a lower connect timeout to avoid wasted time when running (possibly accidentally) on a system,
 # like an HPC compute node, without internet access. The client will wait this many seconds for the
@@ -32,7 +32,7 @@ def fetch(taskname: str, url: str, path: Path, headers: dict[str, str] | None = 
     suffix = " %s" % headers.get("Range", "") if headers else ""
     logging.info("%s: Fetching %s%s", taskname, url, suffix)
     kwargs = dict(allow_redirects=True, stream=True, timeout=TIMEOUT, headers=headers or {})
-    with NET["session"].get(url, **kwargs) as response:
+    with _STATE["session"].get(url, **kwargs) as response:
         expected = HTTPStatus.PARTIAL_CONTENT if headers and "Range" in headers else HTTPStatus.OK
         if response.status_code == expected:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -50,9 +50,9 @@ def configure_session(connections: int) -> None:
     adapter = HTTPAdapter(pool_connections=connections, pool_maxsize=connections)
     for scheme in ["http://", "https://"]:
         session.mount(scheme, adapter)
-    NET["session"] = session
+    _STATE["session"] = session
 
 
 def status(url: str) -> int:
-    session: Session = NET["session"]
+    session: Session = _STATE["session"]
     return session.head(url, timeout=TIMEOUT).status_code
