@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import logging
 import re
-import threading
 from datetime import datetime
 from functools import cache
 from itertools import chain, pairwise, product
 from pathlib import Path
 from stat import S_IEXEC
 from textwrap import dedent
+from threading import Lock
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 from warnings import catch_warnings, simplefilter
@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 
     from wxvx.types import Config, VarMeta
 
-plotlock = threading.Lock()
+_PLOT_LOCK = Lock()
 
 # Public tasks
 
@@ -420,7 +420,7 @@ def _plot(
     plot_data = _prepare_plot_data(reqs, stat, width)
     hue = "LABEL" if "LABEL" in plot_data.columns else "MODEL"
     w = f"(width={width}) " if width else ""
-    with plotlock:
+    with _PLOT_LOCK:
         sns.set(style="darkgrid")
         plt.figure(figsize=(10, 6), constrained_layout=True)
         sns.lineplot(data=plot_data, x="FCST_LEAD", y=stat, hue=hue, marker="o", linewidth=2)

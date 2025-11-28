@@ -17,7 +17,7 @@ from requests import Session
 # called. The connections argument should be equal to the number of threads in use, so the configure
 # call is made from wxvx.cli.main() where this is known.
 
-_STATE: dict = {"session": None}
+_STATE: dict = {}
 
 # Use a lower connect timeout to avoid wasted time when running (possibly accidentally) on a system,
 # like an HPC compute node, without internet access. The client will wait this many seconds for the

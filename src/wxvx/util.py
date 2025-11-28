@@ -6,12 +6,12 @@ import sys
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from functools import cache
 from importlib import resources
 from multiprocessing.pool import Pool
 from pathlib import Path
 from signal import SIG_IGN, SIGINT, signal
 from subprocess import run
+from threading import Lock
 from typing import TYPE_CHECKING, NoReturn, cast, overload
 from urllib.parse import urlparse
 
@@ -25,6 +25,9 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from wxvx.times import TimeCoords
+
+_POOL_LOCK = Lock()
+_STATE = {}
 
 pkgname = __name__.split(".", maxsplit=1)[0]
 
@@ -120,18 +123,16 @@ def fail(msg: str | None = None, *args) -> NoReturn:
     sys.exit(1)
 
 
-@cache
-def get_pool():
-    return Pool(initializer=signal, initargs=(SIGINT, SIG_IGN))
-
-
 def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> None:
     logging.info("%s: Running in %s: %s", taskname, rundir, cmd)
     rundir.mkdir(parents=True, exist_ok=True)
     kwargs = {"check": False, "cwd": rundir, "shell": True}
     if env:
         kwargs["env"] = env
-    get_pool().apply(run, [cmd], kwargs)
+    with _POOL_LOCK:
+        if "pool" not in _STATE:
+            _STATE["pool"] = Pool(initializer=signal, initargs=(SIGINT, SIG_IGN))
+    _STATE["pool"].apply(run, [cmd], kwargs)
 
 
 def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:
