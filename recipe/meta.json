@@ -25,7 +25,7 @@
       "ruff ==0.14.*",
       "seaborn ==0.13.*",
       "setuptools",
-      "uwtools ==2.13.*",
+      "uwtools ==2.12.*",
       "xarray ==2025.1.*",
       "zarr ==3.1.*"
     ],
@@ -40,7 +40,7 @@
       "pyyaml ==6.0.*",
       "requests ==2.32.*",
       "seaborn ==0.13.*",
-      "uwtools ==2.13.*",
+      "uwtools ==2.12.*",
       "xarray ==2025.1.*",
       "zarr ==3.1.*"
     ]
