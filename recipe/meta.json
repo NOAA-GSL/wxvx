@@ -5,7 +5,7 @@
   "packages": {
     "dev": [
       "docformatter ==1.7.*",
-      "iotaa ==1.4.*",
+      "iotaa ==1.5.*",
       "jq ==1.8.*",
       "make ==4.4.*",
       "met2go ==11.0.*",
@@ -25,12 +25,12 @@
       "ruff ==0.14.*",
       "seaborn ==0.13.*",
       "setuptools",
-      "uwtools ==2.12.*",
+      "uwtools ==2.13.*",
       "xarray ==2025.1.*",
       "zarr ==3.1.*"
     ],
     "run": [
-      "iotaa ==1.4.*",
+      "iotaa ==1.5.*",
       "met2go ==11.0.*",
       "netcdf4 ==1.7.*",
       "pyproj ==3.7.*",
@@ -40,7 +40,7 @@
       "pyyaml ==6.0.*",
       "requests ==2.32.*",
       "seaborn ==0.13.*",
-      "uwtools ==2.12.*",
+      "uwtools ==2.13.*",
       "xarray ==2025.1.*",
       "zarr ==3.1.*"
     ]

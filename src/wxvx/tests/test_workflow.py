@@ -431,12 +431,14 @@ def test_workflow__grib_index_file_eccodes(c, fakefs, logged, tc):
 
 
 @mark.parametrize(("msgs", "expected"), [(0, False), (1, True), (2, True)])
-def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, tc, testvars):
+def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, node, tc, testvars):
     grib_path = fakefs / "foo"
     idx_path = fakefs / "foo.ecidx"
     idx_path.touch()
     with (
-        patch.object(workflow, "_grib_index_file_eccodes") as _grib_index_file_eccodes,
+        patch.object(
+            workflow, "_grib_index_file_eccodes", return_value=node
+        ) as _grib_index_file_eccodes,
         patch.object(workflow, "ec") as ec,
     ):
         ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
@@ -447,10 +449,12 @@ def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, tc, 
 
 
 @mark.parametrize("template", ["{root}/foo", "file://{root}/foo"])
-def test_workflow__grid_grib__local(config_data, fakefs, gen_config, tc, template, testvars):
+def test_workflow__grid_grib__local(config_data, fakefs, gen_config, node, tc, template, testvars):
     config_data["baseline"]["url"] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
-    with patch.object(workflow, "_grib_message_in_file", Mock(ready=True)) as _grib_message_in_file:
+    with patch.object(
+        workflow, "_grib_message_in_file", return_value=node
+    ) as _grib_message_in_file:
         assert workflow._grid_grib(c=c, tc=tc, var=testvars["t"]).ready
         _grib_message_in_file.assert_called_once()
 
