@@ -210,9 +210,7 @@ def logged(caplog):
 
 @fixture
 def node():
-    it = Mock(spec=Node)
-    it.ready = True
-    return it
+    return Mock(ready=True, spec=Node)
 
 
 @fixture
