@@ -107,7 +107,7 @@ def test_workflow_grids_forecast(c, fmt, ngrids, noop):
 
 def test_workflow_grids_truth(c, ngrids, noop):
     with patch.object(workflow, "_grid_grib", noop):
-        assert len(workflow.grids_truth(c=c).ref) == ngrids * 2
+        assert len(workflow.grids_truth(c=c).ref) == ngrids
 
 
 def test_workflow_ncobs(c, obs_info):
