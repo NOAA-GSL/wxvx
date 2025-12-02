@@ -314,6 +314,9 @@
         "grids": {
           "additionalProperties": false,
           "properties": {
+            "baseline": {
+              "type": "string"
+            },
             "forecast": {
               "type": "string"
             },
@@ -321,6 +324,9 @@
               "type": "string"
             }
           },
+          "required": [
+            "forecast"
+          ],
           "type": "object"
         },
         "obs": {

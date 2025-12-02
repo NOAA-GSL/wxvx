@@ -43,6 +43,7 @@ def leadtimes(config_data):
 @fixture
 def paths(config_data):
     return types.Paths(
+        grids_baseline=Path(config_data["paths"]["grids"]["baseline"]),
         grids_forecast=Path(config_data["paths"]["grids"]["forecast"]),
         grids_truth=Path(config_data["paths"]["grids"]["truth"]),
         obs=Path(config_data["paths"]["obs"]),
@@ -227,10 +228,12 @@ def test_types_Leadtimes():
 
 def test_types_Paths(paths, config_data):
     obj = paths
+    assert obj.grids_baseline == Path(config_data["paths"]["grids"]["baseline"])
     assert obj.grids_forecast == Path(config_data["paths"]["grids"]["forecast"])
     assert obj.grids_truth == Path(config_data["paths"]["grids"]["truth"])
     assert obj.run == Path(config_data["paths"]["run"])
     cfg = {
+        "grids_baseline": Path(config_data["paths"]["grids"]["baseline"]),
         "grids_forecast": Path(config_data["paths"]["grids"]["forecast"]),
         "grids_truth": Path(config_data["paths"]["grids"]["truth"]),
         "obs": Path(config_data["paths"]["obs"]),

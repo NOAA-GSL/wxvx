@@ -74,6 +74,7 @@ class Config:
         self.forecast = Forecast(**raw["forecast"])
         self.leadtimes = Leadtimes(raw["leadtimes"])
         self.paths = Paths(
+            grids.get("baseline"),
             grids.get("forecast"),
             grids.get("truth"),
             paths.get("obs"),
@@ -240,13 +241,14 @@ class Leadtimes:
 
 @dataclass(frozen=True)
 class Paths:
+    grids_baseline: Path | None
     grids_forecast: Path
     grids_truth: Path
     obs: Path
     run: Path
 
     def __post_init__(self):
-        for key in ["grids_forecast", "grids_truth", "obs", "run"]:
+        for key in ["grids_baseline", "grids_forecast", "grids_truth", "obs", "run"]:
             if val := getattr(self, key):
                 _force(self, key, Path(val))
 

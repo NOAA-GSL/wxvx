@@ -99,6 +99,7 @@ def config_data():
         },
         "paths": {
             "grids": {
+                "baseline": "/path/to/grids/baseline",
                 "forecast": "/path/to/grids/forecast",
                 "truth": "/path/to/grids/truth",
             },

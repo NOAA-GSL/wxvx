@@ -260,6 +260,13 @@ def test_schema_paths_grids(config_data, fs, logged):
     for key in ["forecast", "truth"]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
+    # Some values are required:
+    for key in ["forecast"]:
+        assert not ok(with_del(config, key))
+        assert logged(f"'{key}' is a required property")
+    # Some values are optional:
+    for key in ["baseline"]:
+        assert ok(with_del(config, key))
 
 
 def test_schema_regrid(logged, config_data, fs):

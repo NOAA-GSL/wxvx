@@ -37,6 +37,7 @@ meta:
   workdir: /path/to/workdir
 paths:
   grids:
+    baseline: "{{ meta.grids }}/baseline"
     forecast: "{{ meta.grids }}/forecast"
     truth: "{{ meta.grids }}/truth"
   run: "{{ meta.workdir }}/run"
