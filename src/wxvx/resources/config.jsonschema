@@ -25,33 +25,6 @@
   },
   "additionalProperties": false,
   "properties": {
-    "baseline": {
-      "additionalProperties": false,
-      "properties": {
-        "compare": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "type": {
-          "enum": [
-            "grid",
-            "point"
-          ]
-        },
-        "url": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "compare",
-        "name",
-        "type",
-        "url"
-      ],
-      "type": "object"
-    },
     "cycles": {
       "anyOf": [
         {
@@ -283,7 +256,7 @@
           "properties": {
             "grids": {
               "required": [
-                "baseline"
+                "truth"
               ]
             }
           }
@@ -303,10 +276,10 @@
         "grids": {
           "additionalProperties": false,
           "properties": {
-            "baseline": {
+            "forecast": {
               "type": "string"
             },
-            "forecast": {
+            "truth": {
               "type": "string"
             }
           },
@@ -349,10 +322,37 @@
           ]
         },
         "to": {
-          "pattern": "^baseline|forecast|G[0-9]{3}$",
+          "pattern": "^forecast|truth|G[0-9]{3}$",
           "type": "string"
         }
       },
+      "type": "object"
+    },
+    "truth": {
+      "additionalProperties": false,
+      "properties": {
+        "compare": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "grid",
+            "point"
+          ]
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "compare",
+        "name",
+        "type",
+        "url"
+      ],
       "type": "object"
     },
     "variables": {
@@ -415,11 +415,11 @@
     }
   },
   "required": [
-    "baseline",
     "cycles",
     "forecast",
     "leadtimes",
     "paths",
+    "truth",
     "variables"
   ],
   "type": "object"

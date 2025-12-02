@@ -95,8 +95,8 @@ def test_cli_main__task_list(caplog, switch, tidy):
         expected = """
         Available tasks:
           grids
-          grids_baseline
           grids_forecast
+          grids_truth
           ncobs
           obs
           plots

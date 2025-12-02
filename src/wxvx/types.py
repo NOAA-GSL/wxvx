@@ -19,8 +19,8 @@ _TimedeltaT = str | int
 Source = Enum(
     "Source",
     [
-        ("BASELINE", auto()),
         ("FORECAST", auto()),
+        ("TRUTH", auto()),
     ],
 )
 
@@ -71,19 +71,19 @@ class Config:
     def __init__(self, raw: dict):
         paths = raw["paths"]
         grids = paths["grids"]
-        self.baseline = Baseline(**raw["baseline"])
         self.cycles = Cycles(raw["cycles"])
         self.forecast = Forecast(**raw["forecast"])
         self.leadtimes = Leadtimes(raw["leadtimes"])
         self.paths = Paths(
-            grids.get("baseline"), grids.get("forecast"), paths.get("obs"), paths["run"]
+            grids.get("forecast"), grids.get("truth"), paths.get("obs"), paths["run"]
         )
         self.raw = raw
         self.regrid = Regrid(**raw.get("regrid", {}))
+        self.truth = Baseline(**raw["truth"])
         self.variables = raw["variables"]
         self._validate()
 
-    KEYS = ("baseline", "cycles", "forecast", "leadtimes", "paths", "variables")
+    KEYS = ("cycles", "forecast", "leadtimes", "paths", "truth", "variables")
 
     def __eq__(self, other):
         return all(getattr(self, k) == getattr(other, k) for k in self.KEYS)
@@ -99,14 +99,14 @@ class Config:
         # Validation tests that span disparate config subtrees are awkward to express in
         # JSON Schema (or yield poor user-facing feedback) and are instead enforced here
         # with explicit checks.
-        if self.baseline.name == self.forecast.name:
-            msg = "baseline.name and forecast.name must differ"
+        if self.forecast.name == self.truth.name:
+            msg = "forecast.name and truth.name must differ"
             raise WXVXError(msg)
-        if self.baseline.type == VxType.GRID and not self.paths.grids_baseline:
-            msg = "Specify path.grids.baseline when baseline.type is 'grid'"
+        if self.truth.type == VxType.GRID and not self.paths.grids_truth:
+            msg = "Specify path.grids.truth when truth.type is 'grid'"
             raise WXVXError(msg)
-        if self.baseline.type == VxType.POINT and not self.paths.obs:
-            msg = "Specify path.obs when baseline.type is 'point'"
+        if self.truth.type == VxType.POINT and not self.paths.obs:
+            msg = "Specify path.obs when truth.type is 'point'"
             raise WXVXError(msg)
         if self.regrid.to == "OBS":
             msg = "Cannot regrid to observations per regrid.to config value"
@@ -238,13 +238,13 @@ class Leadtimes:
 
 @dataclass(frozen=True)
 class Paths:
-    grids_baseline: Path
     grids_forecast: Path
+    grids_truth: Path
     obs: Path
     run: Path
 
     def __post_init__(self):
-        for key in ["grids_baseline", "grids_forecast", "obs", "run"]:
+        for key in ["grids_forecast", "grids_truth", "obs", "run"]:
             if val := getattr(self, key):
                 _force(self, key, Path(val))
 
@@ -275,7 +275,7 @@ class Time:
 class ToGrid:
     def __init__(self, val: str):
         self.val: str | ToGridVal = val
-        mapping = {"baseline": ToGridVal.OBS, "forecast": ToGridVal.FCST}
+        mapping = {"forecast": ToGridVal.FCST, "truth": ToGridVal.OBS}
         self.val = mapping.get(val, val)
 
     def __eq__(self, other):

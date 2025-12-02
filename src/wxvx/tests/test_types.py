@@ -16,11 +16,6 @@ from wxvx.util import WXVXError, resource_path
 
 
 @fixture
-def baseline(config_data):
-    return types.Baseline(**config_data["baseline"])
-
-
-@fixture
 def coords(config_data):
     return types.Coords(**config_data["forecast"]["coords"])
 
@@ -43,8 +38,8 @@ def leadtimes(config_data):
 @fixture
 def paths(config_data):
     return types.Paths(
-        grids_baseline=Path(config_data["paths"]["grids"]["baseline"]),
         grids_forecast=Path(config_data["paths"]["grids"]["forecast"]),
+        grids_truth=Path(config_data["paths"]["grids"]["truth"]),
         obs=Path(config_data["paths"]["obs"]),
         run=Path(config_data["paths"]["run"]),
     )
@@ -60,6 +55,11 @@ def time(config_data):
     return types.Time(**config_data["forecast"]["coords"]["time"])
 
 
+@fixture
+def truth(config_data):
+    return types.Baseline(**config_data["truth"])
+
+
 # Tests
 
 
@@ -71,33 +71,33 @@ def test_types_validated_config(config_data, fs):
 
 def test_types_validated_config__fail_json_schema(config_data, fs, logged):
     fs.add_real_file(resource_path("config.jsonschema"))
-    yc = get_yaml_config(with_set(config_data, "foo", "baseline", "type"))
+    yc = get_yaml_config(with_set(config_data, "foo", "truth", "type"))
     with raises(WXVXError) as e:
         types.validated_config(yc=yc)
     assert str(e.value) == "Config failed schema validation"
     assert logged(r"'foo' is not one of \['grid', 'point'\]")
 
 
-def test_types_Baseline(baseline, config_data):
-    obj = baseline
+def test_types_Baseline(config_data, truth):
+    obj = truth
     assert obj.name == "GFS"
     assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
-    cfg = config_data["baseline"]
+    cfg = config_data["truth"]
     other1 = types.Baseline(**cfg)
     assert obj == other1
     other2 = types.Baseline(**{**cfg, "name": "foo"})
     assert obj != other2
 
 
-def test_types_Config(baseline, config_data, cycles, forecast, leadtimes, paths, regrid):
+def test_types_Config(config_data, cycles, forecast, leadtimes, paths, regrid, truth):
     obj = types.Config(raw=config_data)
     assert hash(obj)
-    assert obj.baseline == baseline
     assert obj.cycles == cycles
     assert obj.forecast == forecast
     assert obj.leadtimes == leadtimes
     assert obj.paths == paths
     assert obj.regrid == regrid
+    assert obj.truth == truth
     assert obj.variables == config_data["variables"]
     other = types.Config(raw=config_data)
     assert obj == other
@@ -110,31 +110,27 @@ def test_types_Config(baseline, config_data, cycles, forecast, leadtimes, paths,
 def test_types_Config__bad_paths_grids(config_data):
     with raises(WXVXError) as e:
         types.Config(
-            raw=with_del(
-                with_set(config_data, "grid", "baseline", "type"), "paths", "grids", "baseline"
-            )
+            raw=with_del(with_set(config_data, "grid", "truth", "type"), "paths", "grids", "truth")
         )
-    assert str(e.value) == "Specify path.grids.baseline when baseline.type is 'grid'"
+    assert str(e.value) == "Specify path.grids.truth when truth.type is 'grid'"
 
 
 def test_types_Config__bad_paths_obs(config_data):
     with raises(WXVXError) as e:
-        types.Config(
-            raw=with_del(with_set(config_data, "point", "baseline", "type"), "paths", "obs")
-        )
-    assert str(e.value) == "Specify path.obs when baseline.type is 'point'"
+        types.Config(raw=with_del(with_set(config_data, "point", "truth", "type"), "paths", "obs"))
+    assert str(e.value) == "Specify path.obs when truth.type is 'point'"
 
 
 def test_types_Config__bad_regrid_to(config_data):
     with raises(WXVXError) as e:
-        types.Config(raw=with_set(config_data, "baseline", "regrid", "to"))
+        types.Config(raw=with_set(config_data, "truth", "regrid", "to"))
     assert str(e.value) == "Cannot regrid to observations per regrid.to config value"
 
 
 def test_types_Config__bad_same_names(config_data):
     with raises(WXVXError) as e:
-        types.Config(raw=with_set(config_data, config_data["baseline"]["name"], "forecast", "name"))
-    assert str(e.value) == "baseline.name and forecast.name must differ"
+        types.Config(raw=with_set(config_data, config_data["truth"]["name"], "forecast", "name"))
+    assert str(e.value) == "forecast.name and truth.name must differ"
 
 
 def test_types_Coords(config_data, coords):
@@ -222,12 +218,12 @@ def test_types_Leadtimes():
 
 def test_types_Paths(paths, config_data):
     obj = paths
-    assert obj.grids_baseline == Path(config_data["paths"]["grids"]["baseline"])
     assert obj.grids_forecast == Path(config_data["paths"]["grids"]["forecast"])
+    assert obj.grids_truth == Path(config_data["paths"]["grids"]["truth"])
     assert obj.run == Path(config_data["paths"]["run"])
     cfg = {
-        "grids_baseline": Path(config_data["paths"]["grids"]["baseline"]),
         "grids_forecast": Path(config_data["paths"]["grids"]["forecast"]),
+        "grids_truth": Path(config_data["paths"]["grids"]["truth"]),
         "obs": Path(config_data["paths"]["obs"]),
         "run": Path(config_data["paths"]["run"]),
     }
@@ -245,7 +241,7 @@ def test_types_Regrid(regrid, config_data):
     cfg = config_data["regrid"]
     other1 = types.Regrid(**cfg)
     assert obj == other1
-    other2 = types.Regrid(**{**cfg, "to": "baseline"})
+    other2 = types.Regrid(**{**cfg, "to": "truth"})
     assert obj != other2
     assert str(other2.to) == types.ToGridVal.OBS.name
 
@@ -265,12 +261,12 @@ def test_types_Time(config_data, time):
 def test_types_ToGrid():
     for f in [repr, str]:
         f = cast(Callable, f)
-        assert f(types.ToGrid(val="baseline")) == types.ToGridVal.OBS.name
         assert f(types.ToGrid(val="forecast")) == types.ToGridVal.FCST.name
+        assert f(types.ToGrid(val="truth")) == types.ToGridVal.OBS.name
         assert f(types.ToGrid(val="G104")) == "G104"
     assert hash(types.ToGrid(val="G104")) == hash(types.ToGrid(val="G104"))
     assert types.ToGrid(val="G104") == types.ToGrid(val="G104")
-    assert types.ToGrid(val="baseline") != types.ToGrid(val="forecast")
+    assert types.ToGrid(val="forecast") != types.ToGrid(val="truth")
 
 
 def test_types_VarMeta():

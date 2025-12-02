@@ -55,12 +55,6 @@ def c_real_fs(config_data, gen_config, tmp_path):
 @fixture
 def config_data():
     return {
-        "baseline": {
-            "compare": True,
-            "name": "GFS",
-            "type": "grid",
-            "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
-        },
         "cycles": {
             "start": "2024-12-19T18:00:00",
             "step": "12:00:00",
@@ -101,8 +95,8 @@ def config_data():
         },
         "paths": {
             "grids": {
-                "baseline": "/path/to/grids/baseline",
                 "forecast": "/path/to/grids/forecast",
+                "truth": "/path/to/grids/truth",
             },
             "obs": "/path/to/obs",
             "run": "/path/to/run",
@@ -110,6 +104,12 @@ def config_data():
         "regrid": {
             "method": "NEAREST",
             "to": "forecast",
+        },
+        "truth": {
+            "compare": True,
+            "name": "GFS",
+            "type": "grid",
+            "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
         "variables": {
             "HGT": {
@@ -177,17 +177,17 @@ def fakefs(fs):
 @fixture
 def gen_config():
     def gen_config(config_data, rootpath) -> Config:
-        dirs = ("grids/baseline", "grids/forecast", "obs", "run")
-        grids_baseline, grids_forecast, obs, run = [str(rootpath / x) for x in dirs]
-        for x in grids_baseline, grids_forecast, obs, run:
+        dirs = ("grids/truth", "grids/forecast", "obs", "run")
+        grids_truth, grids_forecast, obs, run = [str(rootpath / x) for x in dirs]
+        for x in grids_truth, grids_forecast, obs, run:
             Path(x).mkdir(parents=True)
         return Config(
             {
                 **config_data,
                 "paths": {
                     "grids": {
-                        "baseline": grids_baseline,
                         "forecast": grids_forecast,
+                        "truth": grids_truth,
                     },
                     "obs": obs,
                     "run": run,
