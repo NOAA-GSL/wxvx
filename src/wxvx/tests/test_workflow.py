@@ -82,7 +82,7 @@ TESTDATA = {
 
 
 @mark.parametrize("truth_type", [VxType.GRID, VxType.POINT])
-def test_workflow_grids__x(c, noop, truth_type):
+def test_workflow_grids(c, noop, truth_type):
     c.truth = replace(c.truth, type=truth_type)
     expected = 1
     if truth_type is VxType.GRID:

@@ -74,10 +74,14 @@ def grids_forecast(c: Config):
 @collection
 def grids_truth(c: Config):
     yield "Truth grids for %s" % c.truth.name
-    yield [
-        _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
-        for var, _, tc in _vars_varnames_times(c)
-    ]
+    if c.truth.type is VxType.GRID:
+        reqs = [
+            _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
+            for var, _, tc in _vars_varnames_times(c)
+        ]
+    else:
+        reqs = None
+    yield reqs
 
 
 @collection
