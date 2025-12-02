@@ -87,14 +87,14 @@ def grids_forecast(c: Config):
 
 @collection
 def grids_truth(c: Config):
-    taskname = "Baseline grids for %s" % c.truth.name
+    taskname = "Truth grids for %s" % c.truth.name
     yield taskname
     yield grids(c, forecast=False, truth=True)
 
 
 @collection
 def ncobs(c: Config):
-    taskname = "Baseline netCDF from obs for %s" % c.truth.name
+    taskname = "Truth netCDF from obs for %s" % c.truth.name
     _enforce_point_truth_type(c, taskname)
     yield taskname
     yield [
@@ -105,7 +105,7 @@ def ncobs(c: Config):
 
 @collection
 def obs(c: Config):
-    taskname = "Baseline obs for %s" % c.truth.name
+    taskname = "Truth obs for %s" % c.truth.name
     _enforce_point_truth_type(c, taskname)
     yield taskname
     reqs = []
@@ -331,7 +331,7 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         yyyymmdd, hh, leadtime = tcinfo(tc)
         outdir = c.paths.grids_truth / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
-        taskname = "Baseline grid %s" % path
+        taskname = "Truth grid %s" % path
         yield taskname
         yield Asset(path, path.is_file)
         idxdata = _grib_index_data_wgrib2(c, outdir, tc, url=f"{url}.idx")

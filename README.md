@@ -34,11 +34,6 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 ┌────────────────────┬───────────────────────────────────────────┐
 │ Key                │ Description                               │
 ├────────────────────┼───────────────────────────────────────────┤
-│ baseline:          │ Description of the baseline dataset       │
-│   compare:         │   Verify and/or plot forecast?            │
-│   name:            │   Dataset descriptive name                │
-│   type:            │   Either 'grid' or 'point'                │
-│   url:             │   Template for baseline GRIB location     │
 │ cycles:            │ Cycles to verify                          │
 │   start:           │   First cycle                             │
 │   step:            │   Interval between cycles                 │
@@ -63,12 +58,17 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │ meta:              │ Optional free-form data section           │
 │ paths:             │ Paths                                     │
 │   grids:           │   Where to store grids                    │
-│     baseline:      │     Baseline grids                        │
 │     forecast:      │     Forecast grids                        │
+│     truth:         │     Truth grids                           │
 │   run:             │   Where to store run data                 │
 │ regrid:            │ MET regrid options                        │
 │   method:          │   Regridding method                       │
 │   to:              │   Destination grid                        │
+│ truth:             │ Description of the truth dataset          │
+│   compare:         │   Verify and/or plot forecast?            │
+│   name:            │   Dataset descriptive name                │
+│   type:            │   Either 'grid' or 'point'                │
+│   url:             │   Template for truth GRIB location        │
 │ variables:         │ Mapping describing variables to verify    │
 │   VAR:             │   Forecast-dataset variable name          │
 │     level_type:    │     Generic level type                    │
@@ -76,22 +76,6 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │     name:          │     Canonical variable name               │
 └────────────────────┴───────────────────────────────────────────┘
 ```
-
-### baseline.name
-
-Name of the baseline to verify against. Currently supported values are: `GFS`, `HRRR`, `PREPBUFR`. This value guides `wxvx` in identification of baseline data (grids or obs) corresponding to the forecast variable being verified. This name will also appear in MET stat output. This name must differ from `forecast.name`.
-
-### baseline.type
-
-One of `grid` or `point`.
-
-For `grid`, `url` should point to GRIB data, and `compare` and `name` are required.
-
-For `point`, `url` should point to prepbufr data, `compare` and `name` should not be specified, and `regrid.to` must not be `baseline`.
-
-### baseline.url
-
-Specifies the location of baseline data. Values may be local-filesystem paths (optionally prefixed with `file://`) or HTTP URLs prefixed with `http://` or `https://` and may contain Jinja2 [expressions](#expressions).
 
 ### cycles
 
@@ -130,7 +114,7 @@ The `forecast.mask` value may be omitted, or set to the YAML value `null`, in wh
 
 ### forecast.name
 
-An arbitrary value identifying the forecast model being verified. This name will appear in MET stat output. This name must differ from `baseline.name`.
+An arbitrary value identifying the forecast model being verified. This name will appear in MET stat output. This name must differ from `truth.name`.
 
 ### forecast.path
 
@@ -174,7 +158,23 @@ Options are listed [here](https://metplus.readthedocs.io/projects/met/en/main_v1
 
 ### regrid.to
 
-Regrid grids and observations to the specified grid. Options are `baseline`, `forecast`, or a [GNNN grid ID](https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/appendixB.html#grids) (default: `forecast`). Option `baseline` must not be used when `baseline.type` is `point`.
+Regrid grids and observations to the specified grid. Options are `truth`, `forecast`, or a [GNNN grid ID](https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/appendixB.html#grids) (default: `forecast`). Option `truth` must not be used when `truth.type` is `point`.
+
+### truth.name
+
+Name of the truth to verify against. Currently supported values are: `GFS`, `HRRR`, `PREPBUFR`. This value guides `wxvx` in identification of truth data (grids or obs) corresponding to the forecast variable being verified. This name will also appear in MET stat output. This name must differ from `forecast.name`.
+
+### truth.type
+
+One of `grid` or `point`.
+
+For `grid`, `url` should point to GRIB data, and `compare` and `name` are required.
+
+For `point`, `url` should point to prepbufr data, `compare` and `name` should not be specified, and `regrid.to` must not be `truth`.
+
+### truth.url
+
+Specifies the location of truth data. Values may be local-filesystem paths (optionally prefixed with `file://`) or HTTP URLs prefixed with `http://` or `https://` and may contain Jinja2 [expressions](#expressions).
 
 ### variables
 
@@ -234,10 +234,6 @@ Optional arguments:
 Consider a `config.yaml`
 
 ``` yaml
-baseline:
-  compare: true
-  name: HRRR
-  url: https://noaa-hrrr-bdp-pds.s3.amazonaws.com/hrrr.{{ yyyymmdd }}/conus/hrrr.t{{ hh }}z.wrfprsf{{ "%02d" % fh }}.grib2
 cycles:
   start: 2025-03-01T00:00:00
   step: 1
@@ -272,9 +268,13 @@ meta:
   workdir: /path/to/workdir
 paths:
   grids:
-    baseline: "{{ meta.grids }}/baseline"
     forecast: "{{ meta.grids }}/forecast"
+    truth: "{{ meta.grids }}/truth"
   run: "{{ meta.workdir }}/run"
+truth:
+  compare: true
+  name: HRRR
+  url: https://noaa-hrrr-bdp-pds.s3.amazonaws.com/hrrr.{{ yyyymmdd }}/conus/hrrr.t{{ hh }}z.wrfprsf{{ "%02d" % fh }}.grib2
 variables:
   HGT:
     level_type: isobaricInhPa
@@ -297,15 +297,15 @@ Verification will be limited to points within the bounding box given by `mask`.
 
 The forecast will be called `ML` in MET `.stat` files and in plots.
 
-It will be verified against `HRRR` analysis, which can be found in GRIB files located either remotely (e.g. in an AWS bucket) or locally (via `file://` URLs or plain filesystem paths), given as the `baseline.url` value, where `yyyymmdd`, `hh`, and `fh` will be filled in by `wxvx`. (The `yyyymmdd` and `hh` values are strings like `20250523` and `06`, while `fh` is an `int` value to be formatted as needed.)
+It will be verified against `HRRR` analysis, which can be found in GRIB files located either remotely (e.g. in an AWS bucket) or locally (via `file://` URLs or plain filesystem paths), given as the `truth.url` value, where `yyyymmdd`, `hh`, and `fh` will be filled in by `wxvx`. (The `yyyymmdd` and `hh` values are strings like `20250523` and `06`, while `fh` is an `int` value to be formatted as needed.)
 
 24 1-hourly cycles starting at 2025-03-01 00Z, each with forecast leadtimes 3, 6, and 9, will be verified.
 
-Variable grids extracted from baseline datasets will be written to `/path/to/workdir/baseline`, forecast dataset to `/path/to/workdir/forecast`, and run output to `/path/to/workdir/run`. The [Jinja2](https://jinja.palletsprojects.com/en/stable/) expressions inside `{{ }}` markers will be processed by [`uwtools`](https://uwtools.readthedocs.io/en/stable/) and may use any features it supports.
+Variable grids extracted from truth datasets will be written to `/path/to/workdir/truth`, forecast dataset to `/path/to/workdir/forecast`, and run output to `/path/to/workdir/run`. The [Jinja2](https://jinja.palletsprojects.com/en/stable/) expressions inside `{{ }}` markers will be processed by [`uwtools`](https://uwtools.readthedocs.io/en/stable/) and may use any features it supports.
 
 Three variables -- geopotential height, composite reflectivity, and 2-meter temperature, will be verified. The keys under `variables` map the names of the variables as they appear in the forecast dataset to a canonical description of the variable using ECMWF variable names and level-type descriptions (see the notes in the _Configuration_ section for links). (Note that some variables do not support a "level" concept.) The full verification task-graph will comprise: cycles x leadtimes x variables x levels.
 
-Invoking `wxvx -c config.yaml -t grids_baseline` would stage the baseline grids to disk, only; `-t grids_forecast` would stage the forecast grids; `-t grids` would stage both. Specifying `-t stats` would produce statistics via MET tools, but also stage grids if they are not already available, since the grids are required by the MET processes. Specifying `-t plots` would plot statistics, but also _produce_ statistics (and stage grids) if they are not already available.
+Invoking `wxvx -c config.yaml -t grids_truth` would stage the truth grids to disk, only; `-t grids_forecast` would stage the forecast grids; `-t grids` would stage both. Specifying `-t stats` would produce statistics via MET tools, but also stage grids if they are not already available, since the grids are required by the MET processes. Specifying `-t plots` would plot statistics, but also _produce_ statistics (and stage grids) if they are not already available.
 
 ## Miscellaneous
 

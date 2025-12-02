@@ -57,7 +57,7 @@ def time(config_data):
 
 @fixture
 def truth(config_data):
-    return types.Baseline(**config_data["truth"])
+    return types.Truth(**config_data["truth"])
 
 
 # Tests
@@ -76,17 +76,6 @@ def test_types_validated_config__fail_json_schema(config_data, fs, logged):
         types.validated_config(yc=yc)
     assert str(e.value) == "Config failed schema validation"
     assert logged(r"'foo' is not one of \['grid', 'point'\]")
-
-
-def test_types_Baseline(config_data, truth):
-    obj = truth
-    assert obj.name == "GFS"
-    assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
-    cfg = config_data["truth"]
-    other1 = types.Baseline(**cfg)
-    assert obj == other1
-    other2 = types.Baseline(**{**cfg, "name": "foo"})
-    assert obj != other2
 
 
 def test_types_Config(config_data, cycles, forecast, leadtimes, paths, regrid, truth):
@@ -267,6 +256,17 @@ def test_types_ToGrid():
     assert hash(types.ToGrid(val="G104")) == hash(types.ToGrid(val="G104"))
     assert types.ToGrid(val="G104") == types.ToGrid(val="G104")
     assert types.ToGrid(val="forecast") != types.ToGrid(val="truth")
+
+
+def test_types_Truth(config_data, truth):
+    obj = truth
+    assert obj.name == "GFS"
+    assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
+    cfg = config_data["truth"]
+    other1 = types.Truth(**cfg)
+    assert obj == other1
+    other2 = types.Truth(**{**cfg, "name": "foo"})
+    assert obj != other2
 
 
 def test_types_VarMeta():

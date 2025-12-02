@@ -52,21 +52,6 @@ def validated_config(yc: YAMLConfig) -> Config:
 # schema check. If an assertion is triggered, it's a wxvx bug, not a user issue.
 
 
-@dataclass(frozen=True)
-class Baseline:
-    compare: bool
-    name: str
-    url: str
-    type: VxType
-
-    def __post_init__(self):
-        keys = ["grid", "point"]
-        if isinstance(self.type, str):
-            assert self.type in keys
-        newval = dict(zip(keys, [VxType.GRID, VxType.POINT], strict=True))
-        _force(self, "type", newval.get(str(self.type), self.type))
-
-
 class Config:
     def __init__(self, raw: dict):
         paths = raw["paths"]
@@ -75,11 +60,14 @@ class Config:
         self.forecast = Forecast(**raw["forecast"])
         self.leadtimes = Leadtimes(raw["leadtimes"])
         self.paths = Paths(
-            grids.get("forecast"), grids.get("truth"), paths.get("obs"), paths["run"]
+            grids.get("forecast"),
+            grids.get("truth"),
+            paths.get("obs"),
+            paths["run"],
         )
         self.raw = raw
         self.regrid = Regrid(**raw.get("regrid", {}))
-        self.truth = Baseline(**raw["truth"])
+        self.truth = Truth(**raw["truth"])
         self.variables = raw["variables"]
         self._validate()
 
@@ -288,6 +276,21 @@ class ToGrid:
         if isinstance(self.val, ToGridVal):
             return self.val.name
         return self.val
+
+
+@dataclass(frozen=True)
+class Truth:
+    compare: bool
+    name: str
+    url: str
+    type: VxType
+
+    def __post_init__(self):
+        keys = ["grid", "point"]
+        if isinstance(self.type, str):
+            assert self.type in keys
+        newval = dict(zip(keys, [VxType.GRID, VxType.POINT], strict=True))
+        _force(self, "type", newval.get(str(self.type), self.type))
 
 
 @dataclass(frozen=True)

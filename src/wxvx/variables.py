@@ -348,7 +348,7 @@ def metlevel(level_type: str, level: float | None) -> str:
 def model_class(name: str) -> Any:
     if name in model_names():
         return getattr(sys.modules[__name__], name)
-    msg = f"Baseline model {name}"
+    msg = f"Truth model {name}"
     raise NotImplementedError(msg)
 
 
