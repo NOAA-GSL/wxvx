@@ -19,6 +19,7 @@ _TimedeltaT = str | int
 Source = Enum(
     "Source",
     [
+        ("BASELINE", auto()),
         ("FORECAST", auto()),
         ("TRUTH", auto()),
     ],
@@ -68,6 +69,7 @@ class Config:
     def __init__(self, raw: dict):
         paths = raw["paths"]
         grids = paths["grids"]
+        self.baseline = Baseline(**raw["baseline"]) if "baseline" in raw else None
         self.cycles = Cycles(raw["cycles"])
         self.forecast = Forecast(**raw["forecast"])
         self.leadtimes = Leadtimes(raw["leadtimes"])
@@ -83,7 +85,7 @@ class Config:
         self.variables = raw["variables"]
         self._validate()
 
-    KEYS = ("cycles", "forecast", "leadtimes", "paths", "truth", "variables")
+    KEYS = ("baseline", "cycles", "forecast", "leadtimes", "paths", "truth", "variables")
 
     def __eq__(self, other):
         return all(getattr(self, k) == getattr(other, k) for k in self.KEYS)
