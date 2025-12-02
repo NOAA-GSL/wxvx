@@ -25,6 +25,44 @@
   },
   "additionalProperties": false,
   "properties": {
+    "baseline": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "else": {
+            "required": [
+              "url"
+            ]
+          },
+          "if": {
+            "properties": {
+              "name": {
+                "const": "truth"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "url"
+              ]
+            }
+          }
+        }
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
     "cycles": {
       "anyOf": [
         {

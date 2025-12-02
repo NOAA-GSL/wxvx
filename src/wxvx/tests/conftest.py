@@ -55,6 +55,10 @@ def c_real_fs(config_data, gen_config, tmp_path):
 @fixture
 def config_data():
     return {
+        "baseline": {
+            "name": "ERA5",
+            "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
+        },
         "cycles": {
             "start": "2024-12-19T18:00:00",
             "step": "12:00:00",
