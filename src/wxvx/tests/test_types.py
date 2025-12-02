@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import cast
 
-from pytest import fixture, raises
+from pytest import fixture, mark, raises
 from uwtools.api.config import get_yaml_config
 
 from wxvx import types
@@ -258,11 +258,13 @@ def test_types_ToGrid():
     assert types.ToGrid(val="forecast") != types.ToGrid(val="truth")
 
 
-def test_types_Truth(config_data, truth):
+@mark.parametrize("truth_type", ["grid", types.VxType.GRID])
+def test_types_Truth(config_data, truth, truth_type):
     obj = truth
     assert obj.name == "GFS"
     assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
     cfg = config_data["truth"]
+    cfg["type"] = truth_type
     other1 = types.Truth(**cfg)
     assert obj == other1
     other2 = types.Truth(**{**cfg, "name": "foo"})
