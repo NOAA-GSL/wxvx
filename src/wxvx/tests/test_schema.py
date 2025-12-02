@@ -275,16 +275,12 @@ def test_schema_truth(logged, config_data, fs):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in ["compare", "name", "type", "url"]:
+    for key in ["name", "type", "url"]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Additional keys are not allowed:
     assert not ok(with_set(config, 42, "n"))
     assert logged("'n' was unexpected")
-    # Some keys have bool values:
-    for key in ["compare"]:
-        assert not ok(with_set(config, None, key))
-        assert logged("None is not of type 'boolean'")
     # Some keys have string values:
     for key in ["name", "url"]:
         assert not ok(with_set(config, None, key))

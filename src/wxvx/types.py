@@ -280,7 +280,6 @@ class ToGrid:
 
 @dataclass(frozen=True)
 class Truth:
-    compare: bool
     name: str
     url: str
     type: VxType

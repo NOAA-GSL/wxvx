@@ -81,16 +81,14 @@ TESTDATA = {
 # Task Tests
 
 
-@mark.parametrize("compare", [True, False])
 @mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
-def test_workflow_grids(c, compare, fmt, ngrids, noop):
-    c.truth = replace(c.truth, compare=compare)
+def test_workflow_grids(c, fmt, ngrids, noop):
     with (
         patch.object(workflow, "_grid_grib", noop),
         patch.object(workflow, "_grid_nc", noop),
         patch.object(workflow, "classify_data_format", return_value=fmt),
     ):
-        ntypes = 3 if compare else 2  # forecast, truth, and optionally comp grids
+        ntypes = 2  # forecast and truth grids
         assert len(workflow.grids(c=c).ref) == ngrids * ntypes  # type: ignore[operator]
         assert len(workflow.grids(c=c, forecast=True, truth=True).ref) == ngrids * ntypes
         assert len(workflow.grids(c=c, forecast=False, truth=True).ref) == ngrids * (ntypes - 1)
@@ -791,17 +789,15 @@ def test_workflow__statargs(c, statkit, cycle):
     ]
 
 
-@mark.parametrize("compare", [True, False])
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
-def test_workflow__statreqs(c, compare, statkit, cycle):
-    c.truth = replace(c.truth, compare=compare)
+def test_workflow__statreqs(c, statkit, cycle):
     with (
         patch.object(workflow, "_stats_vs_grid") as _stats_vs_grid,
         patch.object(workflow, "_vxvars", return_value={statkit.var: statkit.varname}),
         patch.object(workflow, "gen_validtimes", return_value=[statkit.tc]),
     ):
         reqs = workflow._statreqs(c=c, varname=statkit.varname, level=statkit.level, cycle=cycle)
-    n = 2 if compare else 1
+    n = 1
     assert len(reqs) == n
     assert _stats_vs_grid.call_count == n
     args = (c, statkit.varname, statkit.tc, statkit.var)

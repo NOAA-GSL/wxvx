@@ -106,7 +106,6 @@ def config_data():
             "to": "forecast",
         },
         "truth": {
-            "compare": True,
             "name": "GFS",
             "type": "grid",
             "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",

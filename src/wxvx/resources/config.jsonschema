@@ -331,9 +331,6 @@
     "truth": {
       "additionalProperties": false,
       "properties": {
-        "compare": {
-          "type": "boolean"
-        },
         "name": {
           "type": "string"
         },
@@ -348,7 +345,6 @@
         }
       },
       "required": [
-        "compare",
         "name",
         "type",
         "url"

@@ -65,7 +65,6 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │   method:          │   Regridding method                       │
 │   to:              │   Destination grid                        │
 │ truth:             │ Description of the truth dataset          │
-│   compare:         │   Verify and/or plot forecast?            │
 │   name:            │   Dataset descriptive name                │
 │   type:            │   Either 'grid' or 'point'                │
 │   url:             │   Template for truth GRIB location        │
@@ -168,9 +167,9 @@ Name of the truth to verify against. Currently supported values are: `GFS`, `HRR
 
 One of `grid` or `point`.
 
-For `grid`, `url` should point to GRIB data, and `compare` and `name` are required.
+For `grid`, `url` should point to GRIB data, and `name` is required.
 
-For `point`, `url` should point to prepbufr data, `compare` and `name` should not be specified, and `regrid.to` must not be `truth`.
+For `point`, `url` should point to prepbufr data, `name` should not be specified, and `regrid.to` must not be `truth`.
 
 ### truth.url
 
@@ -272,7 +271,6 @@ paths:
     truth: "{{ meta.grids }}/truth"
   run: "{{ meta.workdir }}/run"
 truth:
-  compare: true
   name: HRRR
   url: https://noaa-hrrr-bdp-pds.s3.amazonaws.com/hrrr.{{ yyyymmdd }}/conus/hrrr.t{{ hh }}z.wrfprsf{{ "%02d" % fh }}.grib2
 variables:

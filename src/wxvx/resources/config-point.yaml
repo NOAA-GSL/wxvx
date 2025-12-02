@@ -25,7 +25,6 @@ regrid:
   method: BILIN
   to: G104
 truth:
-  compare: false
   name: PREPBUFR
   type: point
   url: https://noaa-reanalyses-pds.s3.amazonaws.com/observations/reanalysis/conv/prepbufr/{{ yyyymmdd[:4] }}/{{ yyyymmdd[4:6] }}/prepbufr/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr
