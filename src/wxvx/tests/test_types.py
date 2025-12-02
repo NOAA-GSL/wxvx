@@ -16,6 +16,11 @@ from wxvx.util import WXVXError, resource_path
 
 
 @fixture
+def baseline(config_data):
+    return types.Baseline(**config_data["baseline"])
+
+
+@fixture
 def coords(config_data):
     return types.Coords(**config_data["forecast"]["coords"])
 
@@ -76,6 +81,21 @@ def test_types_validated_config__fail_json_schema(config_data, fs, logged):
         types.validated_config(yc=yc)
     assert str(e.value) == "Config failed schema validation"
     assert logged(r"'foo' is not one of \['grid', 'point'\]")
+
+
+def test_types_Baseline(baseline, config_data):
+    obj = baseline
+    assert obj.name == "ERA5"
+    assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
+    cfg = config_data["baseline"]
+    assert obj == types.Baseline(**cfg)
+    assert obj != types.Baseline(**{**cfg, "name": "foo"})
+    assert obj != types.Baseline(**{**cfg, "url": "bar"})
+    assert types.Baseline(name="truth")
+    with raises(AssertionError):
+        types.Baseline(name="truth", url="should-not-be-defined")
+    with raises(AssertionError):
+        types.Baseline(name="anything-else")  # url must be defined
 
 
 def test_types_Config(config_data, cycles, forecast, leadtimes, paths, regrid, truth):

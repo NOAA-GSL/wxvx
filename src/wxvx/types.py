@@ -52,6 +52,18 @@ def validated_config(yc: YAMLConfig) -> Config:
 # schema check. If an assertion is triggered, it's a wxvx bug, not a user issue.
 
 
+@dataclass(frozen=True)
+class Baseline:
+    name: str
+    url: str | None = None
+
+    def __post_init__(self):
+        if self.name == "truth":
+            assert self.url is None
+        else:
+            assert self.url is not None
+
+
 class Config:
     def __init__(self, raw: dict):
         paths = raw["paths"]
