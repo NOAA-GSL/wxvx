@@ -99,9 +99,12 @@ def test_workflow_grids_forecast(c, ngrids, noop):
         assert len(workflow.grids_forecast(c=c).ref) == ngrids
 
 
-def test_workflow_grids_truth(c, ngrids, noop):
+@mark.parametrize("truth_type", [VxType.GRID, VxType.POINT])
+def test_workflow_grids_truth(c, ngrids, noop, truth_type):
+    c.truth = replace(c.truth, type=truth_type)
+    expected = ngrids if truth_type is VxType.GRID else 0
     with patch.object(workflow, "_grid_grib", noop):
-        assert len(workflow.grids_truth(c=c).ref) == ngrids
+        assert len(workflow.grids_truth(c=c).ref) == expected
 
 
 def test_workflow_ncobs(c, obs_info):
