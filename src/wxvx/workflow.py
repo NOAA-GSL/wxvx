@@ -52,44 +52,32 @@ _PLOT_LOCK = Lock()
 
 
 @collection
-def grids(c: Config, forecast: bool = True, truth: bool = True):
-    truth = truth and c.truth.type == VxType.GRID
-    if forecast and not truth:
-        suffix = "{f}"
-    elif truth and not forecast:
-        suffix = "{t}"
-    else:
-        suffix = "{f} vs {t}"
-    taskname = "Grids for %s" % suffix.format(f=c.forecast.name, t=c.truth.name)
-    yield taskname
-    reqs: list[Node] = []
-    for var, varname in _vxvars(c).items():
-        for tc in gen_validtimes(c.cycles, c.leadtimes):
-            if forecast:
-                forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
-                forecast_grid, _ = _req_grid(forecast_path, c, varname, tc, var)
-                reqs.append(forecast_grid)
-            if truth:
-                truth_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
-                reqs.append(truth_grid)
-                if c.truth.compare:
-                    comp_grid = _grid_grib(c, tc, var)
-                    reqs.append(comp_grid)
+def grids(c: Config):
+    yield "Grids"
+    reqs = [grids_forecast()]
+    # if c.baseline and c.baseline.name != "truth":
+    #     reqs.append(grids_baseline())
+    if c.truth.type == VxType.GRID:
+        reqs.append(grids_truth())
     yield reqs
 
 
 @collection
 def grids_forecast(c: Config):
-    taskname = "Forecast grids for %s" % c.forecast.name
-    yield taskname
-    yield grids(c, forecast=True, truth=False)
+    yield "Forecast grids for %s" % c.forecast.name
+    yield [
+        _req_grid(Path(render(c.forecast.path, tc, context=c.raw)), c, varname, tc, var)
+        for var, varname, tc in _vars_varnames_times(c)
+    ]
 
 
 @collection
 def grids_truth(c: Config):
-    taskname = "Truth grids for %s" % c.truth.name
-    yield taskname
-    yield grids(c, forecast=False, truth=True)
+    yield "Truth grids for %s" % c.truth.name
+    yield [
+        _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
+        for var, _, tc in _vars_varnames_times(c)
+    ]
 
 
 @collection
@@ -665,6 +653,12 @@ def _varnames_and_levels(c: Config) -> Iterator[tuple[str, float | None]]:
         for varname, attrs in c.variables.items()
         for level in attrs.get("levels", [None])
     )
+
+
+def _vars_varnames_times(c: Config) -> Iterator[tuple[Var, str, TimeCoords]]:
+    for var, varname in _vxvars(c).items():
+        for tc in gen_validtimes(c.cycles, c.leadtimes):
+            yield var, varname, tc
 
 
 @cache

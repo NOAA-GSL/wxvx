@@ -21,7 +21,7 @@ from pytest import fixture, mark, raises
 from wxvx import variables, workflow
 from wxvx.tests.support import with_del
 from wxvx.times import gen_validtimes, tcinfo
-from wxvx.types import Config, Source
+from wxvx.types import Config, Source, VxType
 from wxvx.util import DataFormat, WXVXError
 from wxvx.variables import Var
 
@@ -81,27 +81,21 @@ TESTDATA = {
 # Task Tests
 
 
-@mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
-def test_workflow_grids(c, fmt, ngrids, noop):
+@mark.parametrize("truth_type", [VxType.GRID, VxType.POINT])
+def test_workflow_grids__x(c, noop, truth_type):
+    c.truth = replace(c.truth, type=truth_type)
+    expected = 1
+    if truth_type is VxType.GRID:
+        expected += 1
     with (
-        patch.object(workflow, "_grid_grib", noop),
-        patch.object(workflow, "_grid_nc", noop),
-        patch.object(workflow, "classify_data_format", return_value=fmt),
+        patch.object(workflow, "grids_forecast", noop),
+        patch.object(workflow, "grids_truth", noop),
     ):
-        ntypes = 2  # forecast and truth grids
-        assert len(workflow.grids(c=c).ref) == ngrids * ntypes  # type: ignore[operator]
-        assert len(workflow.grids(c=c, forecast=True, truth=True).ref) == ngrids * ntypes
-        assert len(workflow.grids(c=c, forecast=False, truth=True).ref) == ngrids * (ntypes - 1)
-        assert len(workflow.grids(c=c, forecast=True, truth=False).ref) == ngrids
-        assert len(workflow.grids(c=c, forecast=False, truth=False).ref) == 0
+        assert len(workflow.grids(c=c).ref) == expected
 
 
-@mark.parametrize("fmt", [DataFormat.NETCDF, DataFormat.ZARR])
-def test_workflow_grids_forecast(c, fmt, ngrids, noop):
-    with (
-        patch.object(workflow, "_grid_nc", noop),
-        patch.object(workflow, "classify_data_format", return_value=fmt),
-    ):
+def test_workflow_grids_forecast(c, ngrids, noop):
+    with patch.object(workflow, "_req_grid", noop):
         assert len(workflow.grids_forecast(c=c).ref) == ngrids
 
 
