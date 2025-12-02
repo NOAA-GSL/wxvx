@@ -27,7 +27,7 @@ from wxvx import variables
 from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.times import TimeCoords, gen_validtimes, hh, tcinfo, yyyymmdd
-from wxvx.types import Cycles, Source, VxType
+from wxvx.types import Cycles, Source, TruthType
 from wxvx.util import (
     LINETYPE,
     DataFormat,
@@ -57,7 +57,7 @@ def grids(c: Config):
     reqs = [grids_forecast()]
     # if c.baseline and c.baseline.name != "truth":
     #     reqs.append(grids_baseline())
-    if c.truth.type == VxType.GRID:
+    if c.truth.type == TruthType.GRID:
         reqs.append(grids_truth())
     yield reqs
 
@@ -74,7 +74,7 @@ def grids_forecast(c: Config):
 @collection
 def grids_truth(c: Config):
     yield "Truth grids for %s" % c.truth.name
-    if c.truth.type is VxType.GRID:
+    if c.truth.type is TruthType.GRID:
         reqs = [
             _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
             for var, _, tc in _vars_varnames_times(c)
@@ -550,7 +550,7 @@ def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
 
 
 def _enforce_point_truth_type(c: Config, taskname: str):
-    if c.truth.type != VxType.POINT:
+    if c.truth.type != TruthType.POINT:
         msg = "%s: This task requires that config value truth.type be set to 'point'"
         raise WXVXError(msg % taskname)
 
@@ -628,7 +628,7 @@ def _statargs(
 def _statreqs(
     c: Config, varname: str, level: float | None, cycle: datetime | None = None
 ) -> Sequence[Node]:
-    f = _stats_vs_obs if c.truth.type == VxType.POINT else _stats_vs_grid
+    f = _stats_vs_obs if c.truth.type == TruthType.POINT else _stats_vs_grid
     genreqs = lambda source: [f(*args) for args in _statargs(c, varname, level, source, cycle)]
     reqs: Sequence[Node] = genreqs(Source.FORECAST)
     if c.truth.compare:

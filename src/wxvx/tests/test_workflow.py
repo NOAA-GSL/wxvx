@@ -21,7 +21,7 @@ from pytest import fixture, mark, raises
 from wxvx import variables, workflow
 from wxvx.tests.support import with_del
 from wxvx.times import gen_validtimes, tcinfo
-from wxvx.types import Config, Source, VxType
+from wxvx.types import Config, Source, TruthType
 from wxvx.util import DataFormat, WXVXError
 from wxvx.variables import Var
 
@@ -81,11 +81,11 @@ TESTDATA = {
 # Task Tests
 
 
-@mark.parametrize("truth_type", [VxType.GRID, VxType.POINT])
+@mark.parametrize("truth_type", [TruthType.GRID, TruthType.POINT])
 def test_workflow_grids(c, noop, truth_type):
     c.truth = replace(c.truth, type=truth_type)
     expected = 1
-    if truth_type is VxType.GRID:
+    if truth_type is TruthType.GRID:
         expected += 1
     with (
         patch.object(workflow, "grids_forecast", noop),
@@ -99,10 +99,10 @@ def test_workflow_grids_forecast(c, ngrids, noop):
         assert len(workflow.grids_forecast(c=c).ref) == ngrids
 
 
-@mark.parametrize("truth_type", [VxType.GRID, VxType.POINT])
+@mark.parametrize("truth_type", [TruthType.GRID, TruthType.POINT])
 def test_workflow_grids_truth(c, ngrids, noop, truth_type):
     c.truth = replace(c.truth, type=truth_type)
-    expected = ngrids if truth_type is VxType.GRID else 0
+    expected = ngrids if truth_type is TruthType.GRID else 0
     with patch.object(workflow, "_grid_grib", noop):
         assert len(workflow.grids_truth(c=c).ref) == expected
 

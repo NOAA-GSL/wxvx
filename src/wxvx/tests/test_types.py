@@ -278,7 +278,7 @@ def test_types_ToGrid():
     assert types.ToGrid(val="forecast") != types.ToGrid(val="truth")
 
 
-@mark.parametrize("truth_type", ["grid", types.VxType.GRID])
+@mark.parametrize("truth_type", ["grid", types.TruthType.GRID])
 def test_types_Truth(config_data, truth, truth_type):
     obj = truth
     assert obj.name == "GFS"

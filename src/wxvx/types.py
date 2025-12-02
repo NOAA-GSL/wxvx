@@ -33,8 +33,8 @@ ToGridVal = Enum(
     ],
 )
 
-VxType = Enum(
-    "VxType",
+TruthType = Enum(
+    "TruthType",
     [
         ("GRID", auto()),
         ("POINT", auto()),
@@ -104,10 +104,10 @@ class Config:
         if self.forecast.name == self.truth.name:
             msg = "forecast.name and truth.name must differ"
             raise WXVXError(msg)
-        if self.truth.type == VxType.GRID and not self.paths.grids_truth:
+        if self.truth.type == TruthType.GRID and not self.paths.grids_truth:
             msg = "Specify path.grids.truth when truth.type is 'grid'"
             raise WXVXError(msg)
-        if self.truth.type == VxType.POINT and not self.paths.obs:
+        if self.truth.type == TruthType.POINT and not self.paths.obs:
             msg = "Specify path.obs when truth.type is 'point'"
             raise WXVXError(msg)
         if self.regrid.to == "OBS":
@@ -296,13 +296,13 @@ class ToGrid:
 class Truth:
     name: str
     url: str
-    type: VxType
+    type: TruthType
 
     def __post_init__(self):
         keys = ["grid", "point"]
         if isinstance(self.type, str):
             assert self.type in keys
-        newval = dict(zip(keys, [VxType.GRID, VxType.POINT], strict=True))
+        newval = dict(zip(keys, [TruthType.GRID, TruthType.POINT], strict=True))
         _force(self, "type", newval.get(str(self.type), self.type))
 
 
