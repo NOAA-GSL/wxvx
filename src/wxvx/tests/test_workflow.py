@@ -785,15 +785,21 @@ def test_workflow__stat_args(c, statkit, cycle):
     ]
 
 
+@mark.parametrize("baseline_name", ["HRRR", "truth", None])
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
-def test_workflow__stat_reqs(c, statkit, cycle):
+def test_workflow__stat_reqs(baseline_name, c, statkit, cycle):
+    c.baseline = replace(
+        c.baseline,
+        name=baseline_name,
+        url=None if baseline_name == "truth" else c.baseline.name,
+    )
     with (
         patch.object(workflow, "_stats_vs_grid") as _stats_vs_grid,
         patch.object(workflow, "_vxvars", return_value={statkit.var: statkit.varname}),
         patch.object(workflow, "gen_validtimes", return_value=[statkit.tc]),
     ):
         reqs = workflow._stat_reqs(c=c, varname=statkit.varname, level=statkit.level, cycle=cycle)
-    n = 1
+    n = 1 if baseline_name is None else 2
     assert len(reqs) == n
     assert _stats_vs_grid.call_count == n
     args = (c, statkit.varname, statkit.tc, statkit.var)
@@ -802,12 +808,6 @@ def test_workflow__stat_reqs(c, statkit, cycle):
         f"forecast_gh_{statkit.level_type}_{statkit.level:04d}",
         Source.FORECAST,
     )
-    if compare:
-        assert _stats_vs_grid.call_args_list[1].args == (
-            *args,
-            f"gfs_gh_{statkit.level_type}_{statkit.level:04d}",
-            Source.TRUTH,
-        )
 
 
 def test_workflow__stats_widths(c):

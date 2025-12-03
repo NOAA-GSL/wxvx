@@ -630,10 +630,11 @@ def _stat_reqs(
     c: Config, varname: str, level: float | None, cycle: datetime | None = None
 ) -> Sequence[Node]:
     f = _stats_vs_obs if c.truth.type == TruthType.POINT else _stats_vs_grid
-    collect_reqs = lambda source: [
-        f(*args) for args in _stat_args(c, varname, level, source, cycle)
-    ]
-    reqs: Sequence[Node] = collect_reqs(Source.FORECAST)
+    reqs_for = lambda source: [f(*args) for args in _stat_args(c, varname, level, source, cycle)]
+    reqs: Sequence[Node] = reqs_for(Source.FORECAST)
+    if c.baseline.name is not None:
+        source = Source.TRUTH if c.baseline.name == "truth" else Source.BASELINE
+        reqs = [*reqs, *reqs_for(source)]
     return reqs
 
 
