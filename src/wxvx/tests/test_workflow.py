@@ -121,8 +121,7 @@ def test_workflow_plots(c, noop):
     with patch.object(workflow, "_plot", noop):
         node = workflow.plots(c=c)
     assert len(node.ref) == len(c.cycles.values) * sum(
-        len(list(workflow._stats_and_widths(c, varname)))
-        for varname, _ in workflow._varnames_levels(c)
+        len(list(workflow._stats_widths(c, varname))) for varname, _ in workflow._varnames_levels(c)
     )
 
 
@@ -811,14 +810,14 @@ def test_workflow__stat_reqs(c, statkit, cycle):
         )
 
 
-def test_workflow__stats_and_widths(c):
-    assert list(workflow._stats_and_widths(c=c, varname="REFC")) == [
+def test_workflow__stats_widths(c):
+    assert list(workflow._stats_widths(c=c, varname="REFC")) == [
         ("FSS", 3),
         ("FSS", 5),
         ("FSS", 11),
         ("PODY", None),
     ]
-    assert list(workflow._stats_and_widths(c=c, varname="SPFH")) == [
+    assert list(workflow._stats_widths(c=c, varname="SPFH")) == [
         ("ME", None),
         ("RMSE", None),
     ]

@@ -117,7 +117,7 @@ def plots(c: Config):
         _plot(c, cycle, varname, level, stat, width)
         for cycle in c.cycles.values  # noqa: PD011
         for varname, level in _varnames_levels(c)
-        for stat, width in _stats_and_widths(c, varname)
+        for stat, width in _stats_widths(c, varname)
     ]
 
 
@@ -637,7 +637,7 @@ def _stat_reqs(
     return reqs
 
 
-def _stats_and_widths(c: Config, varname) -> Iterator[tuple[str, int | None]]:
+def _stats_widths(c: Config, varname) -> Iterator[tuple[str, int | None]]:
     meta = _meta(c, varname)
     return chain.from_iterable(
         ((stat, width) for width in (meta.nbrhd_width or []))
