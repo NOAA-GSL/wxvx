@@ -55,21 +55,22 @@ def validated_config(yc: YAMLConfig) -> Config:
 
 @dataclass(frozen=True)
 class Baseline:
-    name: str
+    name: str | None
     url: str | None = None
 
     def __post_init__(self):
         if self.name == "truth":
             assert self.url is None
-        else:
+        elif self.name is not None:
             assert self.url is not None
 
 
 class Config:
     def __init__(self, raw: dict):
+        baseline = raw.get("baseline", {"name": None})
         paths = raw["paths"]
         grids = paths["grids"]
-        self.baseline = Baseline(**raw["baseline"]) if "baseline" in raw else None
+        self.baseline = Baseline(**baseline)
         self.cycles = Cycles(raw["cycles"])
         self.forecast = Forecast(**raw["forecast"])
         self.leadtimes = Leadtimes(raw["leadtimes"])
@@ -103,21 +104,20 @@ class Config:
         # JSON Schema (or yield poor user-facing feedback) and are instead enforced here
         # with explicit checks.
 
-        names = (self.baseline.name if self.baseline else None, self.forecast.name, self.truth.name)
+        names = (self.baseline.name, self.forecast.name, self.truth.name)
         if len(set(names)) != len(names):
             msg = "Distinct baseline.name (if set), forecast.name, and truth.name required"
             raise WXVXError(msg)
-        if self.baseline:
-            if self.baseline.name == "truth":
-                if self.truth.type is TruthType.POINT:
-                    msg = "Settings baseline.name '%s' and truth.type '%s' are incompatible" % (
-                        self.baseline.name,
-                        self.truth.type.name.lower(),
-                    )
-                    raise WXVXError(msg)
-            elif not self.paths.grids_baseline:
-                msg = "Specify paths.grids.baseline when baseline.type is not 'truth'"
+        if self.baseline.name == "truth":
+            if self.truth.type is TruthType.POINT:
+                msg = "Settings baseline.name '%s' and truth.type '%s' are incompatible" % (
+                    self.baseline.name,
+                    self.truth.type.name.lower(),
+                )
                 raise WXVXError(msg)
+        elif self.baseline.name is not None and not self.paths.grids_baseline:
+            msg = "Specify paths.grids.baseline when baseline.type is not 'truth'"
+            raise WXVXError(msg)
         if self.regrid.to == "OBS":
             msg = "Cannot regrid to observations per regrid.to config value"
             raise WXVXError(msg)
