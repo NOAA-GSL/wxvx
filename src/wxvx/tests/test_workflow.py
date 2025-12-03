@@ -127,7 +127,7 @@ def test_workflow_plots(c, noop):
 
 
 def test_workflow_stats(c, noop):
-    with patch.object(workflow, "_statreqs", return_value=[noop()]) as _statreqs:
+    with patch.object(workflow, "_stat_reqs", return_value=[noop()]) as _stat_reqs:
         node = workflow.stats(c=c)
     assert len(node.ref) == len(c.variables) + 1  # for 2x SPFH levels
 
@@ -564,11 +564,11 @@ def test_workflow__plot(c, dictkey, fakefs, fs):
     fs.add_real_directory(os.environ["CONDA_PREFIX"])
     varname, level, dfs, stat, width = TESTDATA[dictkey]
     with (
-        patch.object(workflow, "_statreqs") as _statreqs,
+        patch.object(workflow, "_stat_reqs") as _stat_reqs,
         patch.object(workflow, "_prepare_plot_data") as _prepare_plot_data,
         patch("matplotlib.pyplot.xticks") as xticks,
     ):
-        _statreqs.return_value = [_stat("model1"), _stat("model2")]
+        _stat_reqs.return_value = [_stat("model1"), _stat("model2")]
         _prepare_plot_data.side_effect = dfs
         os.environ["MPLCONFIGDIR"] = str(fakefs)
         cycle = c.cycles.values[0]  # noqa: PD011
@@ -769,31 +769,31 @@ def test_workflow__req_prepbufr(fakefs):
 
 
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
-def test_workflow__statargs(c, statkit, cycle):
+def test_workflow__stat_args(c, statkit, cycle):
     with (
         patch.object(workflow, "_vxvars", return_value={statkit.var: statkit.varname}),
         patch.object(workflow, "gen_validtimes", return_value=[statkit.tc]),
     ):
-        statargs = workflow._statargs(
+        stat_args = workflow._stat_args(
             c=c,
             varname=statkit.varname,
             level=statkit.level,
             source=statkit.source,
             cycle=cycle,
         )
-    assert list(statargs) == [
+    assert list(stat_args) == [
         (c, statkit.varname, statkit.tc, statkit.var, statkit.prefix, statkit.source)
     ]
 
 
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
-def test_workflow__statreqs(c, statkit, cycle):
+def test_workflow__stat_reqs(c, statkit, cycle):
     with (
         patch.object(workflow, "_stats_vs_grid") as _stats_vs_grid,
         patch.object(workflow, "_vxvars", return_value={statkit.var: statkit.varname}),
         patch.object(workflow, "gen_validtimes", return_value=[statkit.tc]),
     ):
-        reqs = workflow._statreqs(c=c, varname=statkit.varname, level=statkit.level, cycle=cycle)
+        reqs = workflow._stat_reqs(c=c, varname=statkit.varname, level=statkit.level, cycle=cycle)
     n = 1
     assert len(reqs) == n
     assert _stats_vs_grid.call_count == n

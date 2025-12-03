@@ -127,7 +127,7 @@ def stats(c: Config):
     yield taskname
     reqs: list[Node] = []
     for varname, level in _varnames_and_levels(c):
-        reqs.extend(_statreqs(c, varname, level))
+        reqs.extend(_stat_reqs(c, varname, level))
     yield reqs
 
 
@@ -411,7 +411,7 @@ def _plot(
     rundir = c.paths.run / "plots" / yyyymmdd(cycle) / hh(cycle)
     path = rundir / f"{var}-{stat}{'-width-' + str(width) if width else ''}-plot.png"
     yield Asset(path, path.is_file)
-    reqs = _statreqs(c, varname, level, cycle)
+    reqs = _stat_reqs(c, varname, level, cycle)
     yield reqs
     leadtimes = ["%03d" % (td.total_seconds() // 3600) for td in c.leadtimes.values]  # noqa: PD011
     plot_data = _prepare_plot_data(reqs, stat, width)
@@ -455,13 +455,13 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     template = "grid_stat_%s_%02d0000L_%s_%s0000V.stat"
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield Asset(path, path.is_file)
-    truth_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
     forecast_grid: Node
     if source == Source.TRUTH:
         forecast_grid, datafmt = _grid_grib(c, tc, var), DataFormat.GRIB
     else:
         forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
         forecast_grid, datafmt = _req_grid(forecast_path, c, varname, tc, var)
+    truth_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
     reqs = [forecast_grid, truth_grid]
     polyfile = None
     if mask := c.forecast.mask:
@@ -605,7 +605,7 @@ def _req_prepbufr(url: str, outdir: Path) -> Node:
     return _local_file_from_http(outdir, url, "prepbufr file")
 
 
-def _statargs(
+def _stat_args(
     c: Config, varname: str, level: float | None, source: Source, cycle: datetime | None = None
 ) -> Iterator:
     if isinstance(cycle, datetime):
@@ -625,14 +625,14 @@ def _statargs(
     return iter(sorted(args))
 
 
-def _statreqs(
+def _stat_reqs(
     c: Config, varname: str, level: float | None, cycle: datetime | None = None
 ) -> Sequence[Node]:
     f = _stats_vs_obs if c.truth.type == TruthType.POINT else _stats_vs_grid
-    genreqs = lambda source: [f(*args) for args in _statargs(c, varname, level, source, cycle)]
-    reqs: Sequence[Node] = genreqs(Source.FORECAST)
-    if c.truth.compare:
-        reqs = [*reqs, *genreqs(Source.TRUTH)]
+    collect_reqs = lambda source: [
+        f(*args) for args in _stat_args(c, varname, level, source, cycle)
+    ]
+    reqs: Sequence[Node] = collect_reqs(Source.FORECAST)
     return reqs
 
 
