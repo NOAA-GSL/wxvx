@@ -102,6 +102,9 @@ class Config:
         # Validation tests that span disparate config subtrees are awkward to express in
         # JSON Schema (or yield poor user-facing feedback) and are instead enforced here
         # with explicit checks.
+        if self.baseline and self.baseline.name != "truth" and not self.paths.grids_baseline:
+            msg = "Specify paths.grids.baseline when baseline.type is not 'truth'"
+            raise WXVXError(msg)
         if self.forecast.name == self.truth.name:
             msg = "forecast.name and truth.name must differ"
             raise WXVXError(msg)
@@ -241,7 +244,7 @@ class Leadtimes:
 
 @dataclass(frozen=True)
 class Paths:
-    grids_baseline: Path | None
+    grids_baseline: Path
     grids_forecast: Path
     grids_truth: Path
     obs: Path

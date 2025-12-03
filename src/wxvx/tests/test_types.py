@@ -117,11 +117,17 @@ def test_types_Config(config_data, cycles, forecast, leadtimes, paths, regrid, t
         assert re.match(r"^Config(.*)$", f(obj))
 
 
-def test_types_Config__bad_paths_grids(config_data):
+def test_types_Config__bad_paths_grids_baseline(config_data):
+    raw = with_del(with_set(config_data, "HRRR", "baseline", "name"), "paths", "grids", "baseline")
     with raises(WXVXError) as e:
-        types.Config(
-            raw=with_del(with_set(config_data, "grid", "truth", "type"), "paths", "grids", "truth")
-        )
+        types.Config(raw=raw)
+    assert str(e.value) == "Specify paths.grids.baseline when baseline.type is not 'truth'"
+
+
+def test_types_Config__bad_paths_grids_truth(config_data):
+    raw = with_del(with_set(config_data, "grid", "truth", "type"), "paths", "grids", "truth")
+    with raises(WXVXError) as e:
+        types.Config(raw=raw)
     assert str(e.value) == "Specify path.grids.truth when truth.type is 'grid'"
 
 
