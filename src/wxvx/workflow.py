@@ -8,7 +8,7 @@ from pathlib import Path
 from stat import S_IEXEC
 from textwrap import dedent
 from threading import Lock
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from urllib.parse import urlparse
 from warnings import catch_warnings, simplefilter
 
@@ -76,7 +76,7 @@ def grids_truth(c: Config):
     yield "Truth grids for %s" % c.truth.name
     if c.truth.type is TruthType.GRID:
         reqs = [
-            _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
+            _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var, Source.TRUTH)
             for var, _, tc in _vars_varnames_times(c)
         ]
     else:
@@ -309,8 +309,12 @@ def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var):
 
 
 @task
-def _grid_grib(c: Config, tc: TimeCoords, var: Var):
-    url = render(c.truth.url, tc, context=c.raw)
+def _grid_grib(c: Config, tc: TimeCoords, var: Var, source: Source):
+    assert source in (Source.BASELINE, Source.TRUTH)
+    template = c.truth.url
+    if source is Source.BASELINE and c.baseline.name != "truth":
+        template = cast(str, c.baseline.url)
+    url = render(template, tc, context=c.raw)
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
         yield "GRIB file %s providing %s grid %s" % (src, var, _at_validtime(tc))
@@ -321,7 +325,8 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var):
         exists[0] = msg.ready
     else:
         yyyymmdd, hh, leadtime = tcinfo(tc)
-        outdir = c.paths.grids_truth / yyyymmdd / hh / leadtime
+        gridsdir = c.paths.grids_truth if source is Source.TRUTH else c.paths.grids_baseline
+        outdir = gridsdir / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
         taskname = "Truth grid %s" % path
         yield taskname
@@ -457,11 +462,11 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     yield Asset(path, path.is_file)
     forecast_grid: Node
     if source == Source.TRUTH:
-        forecast_grid, datafmt = _grid_grib(c, tc, var), DataFormat.GRIB
+        forecast_grid, datafmt = _grid_grib(c, tc, var, source), DataFormat.GRIB
     else:
         forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
         forecast_grid, datafmt = _req_grid(forecast_path, c, varname, tc, var)
-    truth_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var)
+    truth_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var, Source.TRUTH)
     reqs = [forecast_grid, truth_grid]
     polyfile = None
     if mask := c.forecast.mask:
@@ -499,9 +504,13 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yield Asset(path, path.is_file)
     obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
     reqs: list[Node] = [obs]
-    forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
-    forecast_grid, datafmt = _req_grid(forecast_path, c, varname, tc, var)
-    reqs.append(forecast_grid)
+    if source is Source.FORECAST:
+        location = Path(render(c.forecast.path, tc, context=c.raw))
+        fcst, datafmt = _req_grid(location, c, varname, tc, var)
+    else:
+        fcst = _grid_grib(c, tc, var, Source.BASELINE)
+        datafmt = DataFormat.GRIB
+    reqs.append(fcst)
     config = _config_point_stat(
         c, path.with_suffix(".config"), source, varname, var, prefix, datafmt
     )
@@ -510,7 +519,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yield reqs
     runscript = path.with_suffix(".sh")
     content = "exec time point_stat -v 4 {fcst} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
-        fcst=forecast_grid.ref,
+        fcst=fcst.ref,
         obs=obs.ref,
         config=config.ref,
         rundir=rundir,

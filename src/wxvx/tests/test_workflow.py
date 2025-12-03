@@ -449,7 +449,7 @@ def test_workflow__grid_grib__local(config_data, fakefs, gen_config, node, tc, t
     with patch.object(
         workflow, "_grib_message_in_file", return_value=node
     ) as _grib_message_in_file:
-        assert workflow._grid_grib(c=c, tc=tc, var=testvars["t"]).ready
+        assert workflow._grid_grib(c=c, tc=tc, var=testvars["t"], source=Source.TRUTH).ready
         _grib_message_in_file.assert_called_once()
 
 
@@ -470,14 +470,14 @@ def test_workflow__grid_grib__remote(c, tc, testvars):
         yield Asset(idxdata, ready.is_set)
 
     with patch.object(workflow, "_grib_index_data_wgrib2", wraps=mock) as _grib_index_data_wgrib2:
-        node = workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
+        node = workflow._grid_grib(c=c, tc=tc, var=testvars["t"], source=Source.TRUTH)
         path = node.ref
         assert not path.exists()
         ready.set()
         with patch.object(workflow, "fetch") as fetch:
             fetch.side_effect = lambda taskname, url, path, headers: path.touch()  # noqa: ARG005
             path.parent.mkdir(parents=True, exist_ok=True)
-            workflow._grid_grib(c=c, tc=tc, var=testvars["t"])
+            workflow._grid_grib(c=c, tc=tc, var=testvars["t"], source=Source.TRUTH)
         assert path.exists()
     yyyymmdd = tc.yyyymmdd
     hh = tc.hh
@@ -659,6 +659,7 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, source, tc, testvars):
         assert not cfgfile.is_file()
         assert not runscript.is_file()
         with (
+            patch.object(workflow, "_grid_grib", mock),
             patch.object(workflow, "_grid_nc", mock),
             patch.object(workflow, "_netcdf_from_obs", mock),
             patch.object(workflow, "mpexec", side_effect=lambda *_: stat.touch()) as mpexec,
