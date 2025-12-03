@@ -105,7 +105,7 @@ def obs(c: Config):
         tc_valid = TimeCoords(tc.validtime)
         url = render(c.truth.url, tc_valid, context=c.raw)
         yyyymmdd, hh, _ = tcinfo(tc_valid)
-        reqs.append(_req_prepbufr(url, c.paths.obs / yyyymmdd / hh))
+        reqs.append(_prepbufr(url, c.paths.obs / yyyymmdd / hh))
     yield reqs
 
 
@@ -389,7 +389,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     yield Asset(path, path.is_file)
     rundir = c.paths.run / "pb2nc" / yyyymmdd / hh
     cfgfile = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
-    prepbufr = _req_prepbufr(url, path.parent)
+    prepbufr = _prepbufr(url, path.parent)
     yield {"cfgfile": cfgfile, "prepbufr": prepbufr}
     runscript = cfgfile.ref.with_suffix(".sh")
     content = "exec time pb2nc -v 4 {prepbufr} {netcdf} {config} >{log} 2>&1".format(
@@ -588,6 +588,13 @@ def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd
     return plot_data
 
 
+def _prepbufr(url: str, outdir: Path) -> Node:
+    proximity, src = classify_url(url)
+    if proximity == Proximity.LOCAL:
+        return _existing(src)
+    return _local_file_from_http(outdir, url, "prepbufr file")
+
+
 def _regrid_width(c: Config) -> int:
     try:
         return {"BILIN": 2, "NEAREST": 1}[c.regrid.method]
@@ -605,13 +612,6 @@ def _req_grid(
     if data_format == DataFormat.GRIB:
         return _existing(path), data_format
     return _grid_nc(c, varname, tc, var), data_format
-
-
-def _req_prepbufr(url: str, outdir: Path) -> Node:
-    proximity, src = classify_url(url)
-    if proximity == Proximity.LOCAL:
-        return _existing(src)
-    return _local_file_from_http(outdir, url, "prepbufr file")
 
 
 def _stat_args(

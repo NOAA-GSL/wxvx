@@ -714,6 +714,14 @@ def test_workflow__prepare_plot_data(dictkey):
         assert tdf["INTERP_PNTS"].eq(width**2).all()
 
 
+def test_workflow__prepbufr(fakefs):
+    assert not workflow._prepbufr(url="https://example.com/prepbufr.nr", outdir=fakefs).ready
+    path = fakefs / "prepbufr.nr"
+    path.touch()
+    assert workflow._prepbufr(url=str(path), outdir=fakefs).ready
+    assert workflow._prepbufr(url=f"file://{path}", outdir=fakefs).ready
+
+
 def test_workflow__regrid_width(c):
     c.regrid = replace(c.regrid, method="BILIN")
     assert workflow._regrid_width(c=c) == 2
@@ -759,14 +767,6 @@ def test_workflow__req_grid__missing(c, tc, testvars):
     # further execution.
     assert req.taskname.startswith("Missing path")
     assert datafmt == DataFormat.UNKNOWN
-
-
-def test_workflow__req_prepbufr(fakefs):
-    assert not workflow._req_prepbufr(url="https://example.com/prepbufr.nr", outdir=fakefs).ready
-    path = fakefs / "prepbufr.nr"
-    path.touch()
-    assert workflow._req_prepbufr(url=str(path), outdir=fakefs).ready
-    assert workflow._req_prepbufr(url=f"file://{path}", outdir=fakefs).ready
 
 
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
