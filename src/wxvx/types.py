@@ -102,6 +102,7 @@ class Config:
         # Validation tests that span disparate config subtrees are awkward to express in
         # JSON Schema (or yield poor user-facing feedback) and are instead enforced here
         # with explicit checks.
+
         names = (self.baseline.name if self.baseline else None, self.forecast.name, self.truth.name)
         if len(set(names)) != len(names):
             msg = "Distinct baseline.name (if set), forecast.name, and truth.name required"
@@ -117,18 +118,19 @@ class Config:
             elif not self.paths.grids_baseline:
                 msg = "Specify paths.grids.baseline when baseline.type is not 'truth'"
                 raise WXVXError(msg)
-        if self.truth.type == TruthType.GRID and not self.paths.grids_truth:
-            msg = "Specify path.grids.truth when truth.type is '%s'" % TruthType.GRID.name.lower()
-            raise WXVXError(msg)
-        if self.truth.type == TruthType.POINT and not self.paths.obs:
-            msg = "Specify path.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
-            raise WXVXError(msg)
-        if self.truth.type == TruthType.POINT and not self.paths.obs:
-            msg = "Specify path.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
-            raise WXVXError(msg)
         if self.regrid.to == "OBS":
             msg = "Cannot regrid to observations per regrid.to config value"
             raise WXVXError(msg)
+        if self.truth.type == TruthType.GRID and not self.paths.grids_truth:
+            msg = "Specify path.grids.truth when truth.type is '%s'" % TruthType.GRID.name.lower()
+            raise WXVXError(msg)
+        if self.truth.type == TruthType.POINT:
+            if not self.paths.obs:
+                msg = "Specify path.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
+                raise WXVXError(msg)
+            if not self.paths.obs:
+                msg = "Specify path.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
+                raise WXVXError(msg)
 
 
 @dataclass(frozen=True)
