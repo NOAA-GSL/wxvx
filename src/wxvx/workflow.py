@@ -66,7 +66,7 @@ def grids(c: Config):
 def grids_forecast(c: Config):
     yield "Forecast grids for %s" % c.forecast.name
     yield [
-        _req_grid(Path(render(c.forecast.path, tc, context=c.raw)), c, varname, tc, var)
+        _forecast_grid(Path(render(c.forecast.path, tc, context=c.raw)), c, varname, tc, var)
         for var, varname, tc in _vars_varnames_times(c)
     ]
 
@@ -465,7 +465,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
         forecast_grid, datafmt = _grid_grib(c, tc, var, source), DataFormat.GRIB
     else:
         forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
-        forecast_grid, datafmt = _req_grid(forecast_path, c, varname, tc, var)
+        forecast_grid, datafmt = _forecast_grid(forecast_path, c, varname, tc, var)
     truth_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var, Source.TRUTH)
     reqs = [forecast_grid, truth_grid]
     polyfile = None
@@ -506,7 +506,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     reqs: list[Node] = [obs]
     if source is Source.FORECAST:
         location = Path(render(c.forecast.path, tc, context=c.raw))
-        fcst, datafmt = _req_grid(location, c, varname, tc, var)
+        fcst, datafmt = _forecast_grid(location, c, varname, tc, var)
     else:
         fcst = _grid_grib(c, tc, var, Source.BASELINE)
         datafmt = DataFormat.GRIB
@@ -564,6 +564,17 @@ def _enforce_point_truth_type(c: Config, taskname: str):
         raise WXVXError(msg % taskname)
 
 
+def _forecast_grid(
+    path: Path, c: Config, varname: str, tc: TimeCoords, var: Var
+) -> tuple[Node, DataFormat]:
+    data_format = classify_data_format(path)
+    if data_format is DataFormat.UNKNOWN:
+        return _missing(path), data_format
+    if data_format == DataFormat.GRIB:
+        return _existing(path), data_format
+    return _grid_nc(c, varname, tc, var), data_format
+
+
 def _meta(c: Config, varname: str) -> VarMeta:
     return VARMETA[c.variables[varname]["name"]]
 
@@ -601,17 +612,6 @@ def _regrid_width(c: Config) -> int:
     except KeyError as e:
         msg = "Could not determine 'width' value for regrid method '%s'" % c.regrid.method
         raise WXVXError(msg) from e
-
-
-def _req_grid(
-    path: Path, c: Config, varname: str, tc: TimeCoords, var: Var
-) -> tuple[Node, DataFormat]:
-    data_format = classify_data_format(path)
-    if data_format is DataFormat.UNKNOWN:
-        return _missing(path), data_format
-    if data_format == DataFormat.GRIB:
-        return _existing(path), data_format
-    return _grid_nc(c, varname, tc, var), data_format
 
 
 def _stat_args(

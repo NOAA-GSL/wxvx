@@ -95,7 +95,7 @@ def test_workflow_grids(c, noop, truth_type):
 
 
 def test_workflow_grids_forecast(c, ngrids, noop):
-    with patch.object(workflow, "_req_grid", noop):
+    with patch.object(workflow, "_forecast_grid", noop):
         assert len(workflow.grids_forecast(c=c).ref) == ngrids
 
 
@@ -688,6 +688,48 @@ def test_workflow__enforce_point_truth_type(c):
     assert str(e.value) == expected
 
 
+@mark.parametrize(
+    ("fmt", "path"),
+    [
+        (DataFormat.NETCDF, "/path/to/a.nc"),
+        (DataFormat.ZARR, "/path/to/a.zarr"),
+    ],
+)
+def test_workflow__forecast_grid(c, fmt, path, tc, testvars):
+    with patch.object(workflow, "classify_data_format", return_value=fmt):
+        req, datafmt = workflow._forecast_grid(
+            path=path, c=c, varname="foo", tc=tc, var=testvars["2t"]
+        )
+    # For netCDF and Zarr forecast datasets, the grid will be extracted from the dataset and CF-
+    # decorated, so the requirement is a _grid_nc task, whose taskname is "Forecast grid ..."
+    assert req.taskname.startswith("Forecast grid")
+    assert datafmt == fmt
+
+
+def test_workflow__forecast_grid__grib(c, tc, testvars):
+    path = Path("/path/to/a.grib2")
+    with patch.object(workflow, "classify_data_format", return_value=DataFormat.GRIB):
+        req, datafmt = workflow._forecast_grid(
+            path=path, c=c, varname="foo", tc=tc, var=testvars["2t"]
+        )
+    # For GRIB forecast datasets, the entire GRIB file will be accessed by MET, so the requirement
+    # is an existing local path.
+    assert req.taskname.startswith("Existing path")
+    assert datafmt == DataFormat.GRIB
+
+
+def test_workflow__forecast_grid__missing(c, tc, testvars):
+    path = Path("/path/to/a.grib2")
+    with patch.object(workflow, "classify_data_format", return_value=DataFormat.UNKNOWN):
+        req, datafmt = workflow._forecast_grid(
+            path=path, c=c, varname="foo", tc=tc, var=testvars["2t"]
+        )
+    # For missing forecast datasets, the requirement is a missing-file external task that blocks
+    # further execution.
+    assert req.taskname.startswith("Missing path")
+    assert datafmt == DataFormat.UNKNOWN
+
+
 def test_workflow__meta(c):
     meta = workflow._meta(c=c, varname="HGT")
     assert meta.cf_standard_name == "geopotential_height"
@@ -731,42 +773,6 @@ def test_workflow__regrid_width(c):
     with raises(WXVXError) as e:
         workflow._regrid_width(c=c)
     assert str(e.value) == "Could not determine 'width' value for regrid method 'FOO'"
-
-
-@mark.parametrize(
-    ("fmt", "path"),
-    [
-        (DataFormat.NETCDF, "/path/to/a.nc"),
-        (DataFormat.ZARR, "/path/to/a.zarr"),
-    ],
-)
-def test_workflow__req_grid(c, fmt, path, tc, testvars):
-    with patch.object(workflow, "classify_data_format", return_value=fmt):
-        req, datafmt = workflow._req_grid(path=path, c=c, varname="foo", tc=tc, var=testvars["2t"])
-    # For netCDF and Zarr forecast datasets, the grid will be extracted from the dataset and CF-
-    # decorated, so the requirement is a _grid_nc task, whose taskname is "Forecast grid ..."
-    assert req.taskname.startswith("Forecast grid")
-    assert datafmt == fmt
-
-
-def test_workflow__req_grid__grib(c, tc, testvars):
-    path = Path("/path/to/a.grib2")
-    with patch.object(workflow, "classify_data_format", return_value=DataFormat.GRIB):
-        req, datafmt = workflow._req_grid(path=path, c=c, varname="foo", tc=tc, var=testvars["2t"])
-    # For GRIB forecast datasets, the entire GRIB file will be accessed by MET, so the requirement
-    # is an existing local path.
-    assert req.taskname.startswith("Existing path")
-    assert datafmt == DataFormat.GRIB
-
-
-def test_workflow__req_grid__missing(c, tc, testvars):
-    path = Path("/path/to/a.grib2")
-    with patch.object(workflow, "classify_data_format", return_value=DataFormat.UNKNOWN):
-        req, datafmt = workflow._req_grid(path=path, c=c, varname="foo", tc=tc, var=testvars["2t"])
-    # For missing forecast datasets, the requirement is a missing-file external task that blocks
-    # further execution.
-    assert req.taskname.startswith("Missing path")
-    assert datafmt == DataFormat.UNKNOWN
 
 
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
