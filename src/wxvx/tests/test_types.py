@@ -143,10 +143,25 @@ def test_types_Config__bad_regrid_to(config_data):
     assert str(e.value) == "Cannot regrid to observations per regrid.to config value"
 
 
-def test_types_Config__bad_same_names(config_data):
+@mark.parametrize(
+    ("baseline", "forecast", "truth"), [("a", "a", "b"), ("a", "b", "a"), ("b", "a", "a")]
+)
+def test_types_Config__bad_duplicate_names(baseline, config_data, forecast, truth):
     with raises(WXVXError) as e:
-        types.Config(raw=with_set(config_data, config_data["truth"]["name"], "forecast", "name"))
-    assert str(e.value) == "forecast.name and truth.name must differ"
+        types.Config(
+            raw=with_set(
+                with_set(
+                    with_set(config_data, baseline, "baseline", "name"),
+                    forecast,
+                    "forecast",
+                    "name",
+                ),
+                truth,
+                "truth",
+                "name",
+            )
+        )
+    assert str(e.value) == "Distinct baseline.name (if set), forecast.name, and truth.name required"
 
 
 def test_types_Coords(config_data, coords):

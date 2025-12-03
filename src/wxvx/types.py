@@ -102,17 +102,29 @@ class Config:
         # Validation tests that span disparate config subtrees are awkward to express in
         # JSON Schema (or yield poor user-facing feedback) and are instead enforced here
         # with explicit checks.
-        if self.baseline and self.baseline.name != "truth" and not self.paths.grids_baseline:
-            msg = "Specify paths.grids.baseline when baseline.type is not 'truth'"
+        names = (self.baseline.name if self.baseline else None, self.forecast.name, self.truth.name)
+        if len(set(names)) != len(names):
+            msg = "Distinct baseline.name (if set), forecast.name, and truth.name required"
             raise WXVXError(msg)
-        if self.forecast.name == self.truth.name:
-            msg = "forecast.name and truth.name must differ"
-            raise WXVXError(msg)
+        if self.baseline:
+            if self.baseline.name == "truth":
+                if self.truth.type is TruthType.POINT:
+                    msg = "Settings baseline.name '%s' and truth.type '%s' are incompatible" % (
+                        self.baseline.name,
+                        self.truth.type.name.lower(),
+                    )
+                    raise WXVXError(msg)
+            elif not self.paths.grids_baseline:
+                msg = "Specify paths.grids.baseline when baseline.type is not 'truth'"
+                raise WXVXError(msg)
         if self.truth.type == TruthType.GRID and not self.paths.grids_truth:
-            msg = "Specify path.grids.truth when truth.type is 'grid'"
+            msg = "Specify path.grids.truth when truth.type is '%s'" % TruthType.GRID.name.lower()
             raise WXVXError(msg)
         if self.truth.type == TruthType.POINT and not self.paths.obs:
-            msg = "Specify path.obs when truth.type is 'point'"
+            msg = "Specify path.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
+            raise WXVXError(msg)
+        if self.truth.type == TruthType.POINT and not self.paths.obs:
+            msg = "Specify path.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
             raise WXVXError(msg)
         if self.regrid.to == "OBS":
             msg = "Cannot regrid to observations per regrid.to config value"
