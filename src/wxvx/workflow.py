@@ -661,9 +661,11 @@ def _varnames_and_levels(c: Config) -> Iterator[tuple[str, float | None]]:
 
 
 def _vars_varnames_times(c: Config) -> Iterator[tuple[Var, str, TimeCoords]]:
-    for var, varname in _vxvars(c).items():
-        for tc in gen_validtimes(c.cycles, c.leadtimes):
-            yield var, varname, tc
+    return iter(
+        (var, varname, tc)
+        for var, varname in _vxvars(c).items()
+        for tc in gen_validtimes(c.cycles, c.leadtimes)
+    )
 
 
 @cache
