@@ -1,6 +1,7 @@
 import re
 from collections.abc import Callable
 from copy import deepcopy
+from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import cast
@@ -99,7 +100,12 @@ def test_types_Baseline(baseline, config_data):
         types.Baseline(name="anything-else")  # url must be defined
 
 
-def test_types_Config(config_data, cycles, forecast, leadtimes, paths, regrid, truth):
+@mark.parametrize("baseline", [True, False])
+def test_types_Config(baseline, config_data, cycles, forecast, leadtimes, paths, regrid, truth):
+    if not baseline:
+        del config_data["baseline"]
+        del config_data["paths"]["grids"]["baseline"]
+        paths = replace(paths, grids_baseline=None)
     obj = types.Config(raw=config_data)
     assert hash(obj)
     assert obj.cycles == cycles
@@ -115,6 +121,15 @@ def test_types_Config(config_data, cycles, forecast, leadtimes, paths, regrid, t
     assert obj != other
     for f in (repr, str):
         assert re.match(r"^Config(.*)$", f(obj))
+
+
+def test_types_Config__bad_baseline_name_vs_truth_type(config_data):
+    del config_data["baseline"]["url"]
+    config_data["baseline"]["name"] = "truth"
+    config_data["truth"]["type"] = types.TruthType.POINT
+    with raises(WXVXError) as e:
+        types.Config(raw=config_data)
+    assert str(e.value) == "Settings baseline.name 'truth' and truth.type 'point' are incompatible"
 
 
 def test_types_Config__bad_paths_grids_baseline(config_data):
