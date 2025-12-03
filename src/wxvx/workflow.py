@@ -615,11 +615,8 @@ def _stat_args(
         cycles = Cycles(dict(start=start, step=step, stop=stop))
     else:
         cycles = c.cycles
-    name = {
-        Source.BASELINE: c.baseline.name.lower(),  # type: ignore[union-attr]
-        Source.FORECAST: c.forecast.name.lower(),
-        Source.TRUTH: c.truth.name.lower(),
-    }[source]
+    sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast, Source.TRUTH: c.truth}
+    name = sections[source].name.lower()  # type: ignore[attr-defined]
     prefix = lambda var: "%s_%s" % (name, str(var).replace("-", "_"))
     args = [
         (c, vn, tc, var, prefix(var), source)
