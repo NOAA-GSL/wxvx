@@ -116,7 +116,7 @@ def plots(c: Config):
     yield [
         _plot(c, cycle, varname, level, stat, width)
         for cycle in c.cycles.values  # noqa: PD011
-        for varname, level in _varnames_and_levels(c)
+        for varname, level in _varnames_levels(c)
         for stat, width in _stats_and_widths(c, varname)
     ]
 
@@ -126,7 +126,7 @@ def stats(c: Config):
     taskname = "Stats for %s vs %s" % (c.forecast.name, c.truth.name)
     yield taskname
     reqs: list[Node] = []
-    for varname, level in _varnames_and_levels(c):
+    for varname, level in _varnames_levels(c):
         reqs.extend(_stat_reqs(c, varname, level))
     yield reqs
 
@@ -652,7 +652,7 @@ def _var(c: Config, varname: str, level: float | None) -> Var:
     return Var(m.name, m.level_type, level)
 
 
-def _varnames_and_levels(c: Config) -> Iterator[tuple[str, float | None]]:
+def _varnames_levels(c: Config) -> Iterator[tuple[str, float | None]]:
     return iter(
         (varname, level)
         for varname, attrs in c.variables.items()

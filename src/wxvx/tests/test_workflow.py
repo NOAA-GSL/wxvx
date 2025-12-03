@@ -122,7 +122,7 @@ def test_workflow_plots(c, noop):
         node = workflow.plots(c=c)
     assert len(node.ref) == len(c.cycles.values) * sum(
         len(list(workflow._stats_and_widths(c, varname)))
-        for varname, _ in workflow._varnames_and_levels(c)
+        for varname, _ in workflow._varnames_levels(c)
     )
 
 
@@ -828,8 +828,8 @@ def test_workflow__var(c, testvars):
     assert workflow._var(c=c, varname="HGT", level=900) == testvars["gh"]
 
 
-def test_workflow__varnames_and_levels(c):
-    assert list(workflow._varnames_and_levels(c=c)) == [
+def test_workflow__varnames_levels(c):
+    assert list(workflow._varnames_levels(c=c)) == [
         ("HGT", 900),
         ("REFC", None),
         ("SPFH", 900),
@@ -866,7 +866,7 @@ def test_workflow__write_runscript(fakefs, tidy):
 @fixture
 def ngrids(c):
     n_validtimes = len(list(gen_validtimes(c.cycles, c.leadtimes)))
-    n_var_level_pairs = len(list(workflow._varnames_and_levels(c)))
+    n_var_level_pairs = len(list(workflow._varnames_levels(c)))
     return n_validtimes * n_var_level_pairs
 
 
