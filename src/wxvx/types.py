@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from enum import Enum, auto
 from functools import cached_property
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 from uwtools.api.config import YAMLConfig, validate
 
@@ -15,6 +15,11 @@ from wxvx.util import LINETYPE, WXVXError, expand, resource_path, to_datetime, t
 
 _DatetimeT = str | datetime
 _TimedeltaT = str | int
+
+
+class Named(Protocol):
+    name: str
+
 
 Source = Enum(
     "Source",

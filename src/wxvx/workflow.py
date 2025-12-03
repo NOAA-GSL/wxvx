@@ -26,7 +26,7 @@ from wxvx import variables
 from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.times import TimeCoords, gen_validtimes, hh, tcinfo, yyyymmdd
-from wxvx.types import Cycles, Source, TruthType
+from wxvx.types import Cycles, Named, Source, TruthType
 from wxvx.util import (
     LINETYPE,
     DataFormat,
@@ -624,8 +624,7 @@ def _stat_args(
         cycles = Cycles(dict(start=start, step=step, stop=stop))
     else:
         cycles = c.cycles
-    sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast, Source.TRUTH: c.truth}
-    name = sections[source].name.lower()  # type: ignore[attr-defined]
+    name = cast(Named, sections[source]).name.lower()
     prefix = lambda var: "%s_%s" % (name, str(var).replace("-", "_"))
     args = [
         (c, vn, tc, var, prefix(var), source)
