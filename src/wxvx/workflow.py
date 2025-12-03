@@ -460,14 +460,14 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     template = "grid_stat_%s_%02d0000L_%s_%s0000V.stat"
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield Asset(path, path.is_file)
-    forecast_grid: Node
-    if source == Source.TRUTH:
-        forecast_grid, datafmt = _grid_grib(c, tc, var, source), DataFormat.GRIB
+    if source == Source.FORECAST:
+        location = Path(render(c.forecast.path, tc, context=c.raw))
+        fcst, datafmt = _forecast_grid(location, c, varname, tc, var)
     else:
-        forecast_path = Path(render(c.forecast.path, tc, context=c.raw))
-        forecast_grid, datafmt = _forecast_grid(forecast_path, c, varname, tc, var)
-    truth_grid = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var, Source.TRUTH)
-    reqs = [forecast_grid, truth_grid]
+        fcst = _grid_grib(c, tc, var, source)
+        datafmt = DataFormat.GRIB
+    obs = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var, Source.TRUTH)
+    reqs = [fcst, obs]
     polyfile = None
     if mask := c.forecast.mask:
         polyfile = _polyfile(c.paths.run / "stats" / "mask.poly", mask)
@@ -482,8 +482,8 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     export OMP_NUM_THREADS=1
     exec time grid_stat -v 4 {fcst} {obs} {config} >{log} 2>&1
     """.format(
-        fcst=forecast_grid.ref,
-        obs=truth_grid.ref,
+        fcst=fcst.ref,
+        obs=obs.ref,
         config=config.ref,
         log=f"{path.stem}.log",
     )
