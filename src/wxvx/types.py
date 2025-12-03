@@ -124,13 +124,9 @@ class Config:
         if self.truth.type == TruthType.GRID and not self.paths.grids_truth:
             msg = "Specify path.grids.truth when truth.type is '%s'" % TruthType.GRID.name.lower()
             raise WXVXError(msg)
-        if self.truth.type == TruthType.POINT:
-            if not self.paths.obs:
-                msg = "Specify path.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
-                raise WXVXError(msg)
-            if not self.paths.obs:
-                msg = "Specify path.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
-                raise WXVXError(msg)
+        if self.truth.type == TruthType.POINT and not self.paths.obs:
+            msg = "Specify path.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
+            raise WXVXError(msg)
 
 
 @dataclass(frozen=True)
