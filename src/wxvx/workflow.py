@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime
 from functools import cache
 from itertools import chain, pairwise, product
 from pathlib import Path
@@ -43,6 +42,7 @@ from wxvx.variables import VARMETA, Var, da_construct, da_select, ds_construct, 
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
+    from datetime import datetime
 
     from wxvx.types import Config, VarMeta
 
@@ -606,9 +606,9 @@ def _req_prepbufr(url: str, outdir: Path) -> Node:
 
 
 def _stat_args(
-    c: Config, varname: str, level: float | None, source: Source, cycle: datetime | None = None
+    c: Config, varname: str, level: float | None, source: Source, cycle: datetime | None
 ) -> Iterator:
-    if isinstance(cycle, datetime):
+    if cycle:
         start = cycle.strftime("%Y-%m-%dT%H:%M:%S")
         step = "00:00:00"
         stop = start
