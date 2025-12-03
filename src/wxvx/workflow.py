@@ -488,8 +488,8 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
 
 @task
 def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source):
-    source_name = {Source.FORECAST: "forecast", Source.TRUTH: "truth"}[source]
-    taskname = "Stats vs obs for %s %s %s" % (source_name, var, _at_validtime(tc))
+    assert source in (Source.BASELINE, Source.FORECAST)
+    taskname = "Stats vs obs for %s %s %s" % (source.name.lower(), var, _at_validtime(tc))
     yield taskname
     yyyymmdd, hh, leadtime = tcinfo(tc)
     rundir = c.paths.run / "stats" / yyyymmdd / hh / leadtime

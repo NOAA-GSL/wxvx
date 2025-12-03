@@ -644,14 +644,15 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, tc, testvars):
         yield "mock"
         yield Asset(Path("/some/file"), lambda: True)
 
-    taskfunc = workflow._stats_vs_obs
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
     c.truth = replace(c.truth, type="point", url=url)
     rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
-    taskname = "Stats vs obs for truth 2t-heightAboveGround-0002 at 19700101 00Z 000"
-    kwargs = dict(c=c, varname="T2M", tc=tc, var=testvars["2t"], prefix="foo", source=Source.TRUTH)
+    taskname = "Stats vs obs for forecast 2t-heightAboveGround-0002 at 19700101 00Z 000"
+    kwargs = dict(
+        c=c, varname="T2M", tc=tc, var=testvars["2t"], prefix="foo", source=Source.FORECAST
+    )
     with patch.object(workflow, "classify_data_format", return_value=datafmt):
-        stat = taskfunc(**kwargs, dry_run=True).ref
+        stat = workflow._stats_vs_obs(**kwargs, dry_run=True).ref
         cfgfile = stat.with_suffix(".config")
         runscript = stat.with_suffix(".sh")
         assert not stat.is_file()
@@ -663,7 +664,7 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, tc, testvars):
             patch.object(workflow, "mpexec", side_effect=lambda *_: stat.touch()) as mpexec,
         ):
             stat.parent.mkdir(parents=True)
-            taskfunc(**kwargs)
+            workflow._stats_vs_obs(**kwargs)
         if datafmt != DataFormat.UNKNOWN:
             assert stat.is_file()
             assert cfgfile.is_file()
