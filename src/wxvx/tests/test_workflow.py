@@ -599,7 +599,7 @@ def test_workflow__polyfile(fakefs, tidy):
 
 @mark.parametrize("datafmt", [DataFormat.NETCDF, DataFormat.UNKNOWN])
 @mark.parametrize("mask", [True, False])
-@mark.parametrize("source", [Source.FORECAST, Source.TRUTH])
+@mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
 def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars):
     if not mask:
         c.forecast._mask = None
