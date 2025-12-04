@@ -207,9 +207,9 @@ Name of the truth to verify against. Currently supported values are: `GFS`, `HRR
 
 One of `grid` or `point`.
 
-For `grid`, `url` should point to GRIB data, and `name` is required.
+* For `grid`, `url` should point to GRIB data, and `name` should be one of: `GFS`, `HRRR`.
 
-For `point`, `url` should point to prepbufr data, `name` should not be specified, and `regrid.to` must not be `truth`.
+* For `point`, `url` should point to prepbufr data, `name` should be `PREPBUFR`, and `regrid.to` must not be `truth`.
 
 ### truth.url
 
