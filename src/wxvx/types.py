@@ -315,8 +315,8 @@ class ToGrid:
 @dataclass(frozen=True)
 class Truth:
     name: str
-    url: str
     type: TruthType
+    url: str
 
     def __post_init__(self):
         keys = ["grid", "point"]
