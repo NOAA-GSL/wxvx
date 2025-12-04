@@ -103,6 +103,21 @@ def test_workflow_grids(baseline_name, c, noop, truth_type):
         assert len(workflow.grids(c=c).ref) == expected
 
 
+@mark.parametrize("baseline_name", ["ERA5", "truth", None])
+def test_workflow_grids_baseline(baseline_name, c, ngrids, noop):
+    c.baseline = replace(
+        c.baseline,
+        name=baseline_name,
+        url=None if baseline_name == "truth" else c.baseline.url,
+    )
+    with patch.object(workflow, "_grid_grib", noop):
+        node = workflow.grids_baseline(c=c)
+    if baseline_name is not None:
+        assert len(cast(list[Node], node.req)) == ngrids
+    else:
+        assert node.req is None
+
+
 def test_workflow_grids_forecast(c, ngrids, noop):
     with patch.object(workflow, "_forecast_grid", noop):
         assert len(workflow.grids_forecast(c=c).ref) == ngrids

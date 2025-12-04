@@ -70,7 +70,8 @@ def grids_baseline(c: Config):
     else:
         name = c.truth.name if c.baseline.name == "truth" else c.baseline.name
         yield "Baseline grids for %s" % name
-        yield [_grid_grib(c, tc, var, Source.BASELINE) for var, _, tc in _vars_varnames_times(c)]
+        reqs = [_grid_grib(c, tc, var, Source.BASELINE) for var, _, tc in _vars_varnames_times(c)]
+        yield reqs
 
 
 @collection
