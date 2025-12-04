@@ -20,7 +20,7 @@ from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
 from wxvx.tests.support import with_del
-from wxvx.times import gen_validtimes, tcinfo
+from wxvx.times import TimeCoords, gen_validtimes, tcinfo
 from wxvx.types import Config, Source, TruthType
 from wxvx.util import DataFormat, WXVXError, resource_path
 from wxvx.variables import Var
@@ -866,6 +866,13 @@ def test_workflow__varnames_levels(c):
         ("SPFH", 1000),
         ("T2M", 2),
     ]
+
+
+def test_workflow__vars_varnames_times(c, ngrids):
+    result = list(workflow._vars_varnames_times(c=c))
+    assert len(result) == ngrids
+    for item in result:
+        assert tuple(map(type, item)) == (Var, str, TimeCoords)
 
 
 def test_workflow__vxvars(c, testvars):
