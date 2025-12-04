@@ -246,7 +246,7 @@ def _forecast_dataset(path: Path):
     taskname = "Forecast dataset %s" % path
     yield taskname
     ds = xr.Dataset()
-    yield Asset(ds, lambda: bool(ds))  # type: ignore[misc]
+    yield Asset(ds, lambda: bool(ds))
     yield _existing(path)
     logging.info("%s: Opening forecast %s", taskname, path)
     with catch_warnings():
