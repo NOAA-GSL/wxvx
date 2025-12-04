@@ -63,6 +63,17 @@ def grids(c: Config):
 
 
 @collection
+def grids_baseline(c: Config):
+    if c.baseline.name is None:
+        yield "No baseline defined"
+        yield None
+    else:
+        name = c.truth.name if c.baseline.name == "truth" else c.baseline.name
+        yield "Baseline grids for %s" % name
+        yield [_grid_grib(c, tc, var, Source.BASELINE) for var, _, tc in _vars_varnames_times(c)]
+
+
+@collection
 def grids_forecast(c: Config):
     yield "Forecast grids for %s" % c.forecast.name
     yield [
