@@ -164,7 +164,8 @@ def test_types_Config__bad_regrid_to(config_data):
 
 
 @mark.parametrize(
-    ("baseline", "forecast", "truth"), [("a", "a", "b"), ("a", "b", "a"), ("b", "a", "a")]
+    ("baseline", "forecast", "truth"),
+    [("GFS", "GFS", "HRRR"), ("GFS", "HRRR", "GFS"), ("HRRR", "GFS", "GFS")],
 )
 def test_types_Config__bad_duplicate_names(baseline, config_data, forecast, truth):
     config_data["baseline"]["name"] = baseline
@@ -335,7 +336,7 @@ def test_types_Truth(config_data, truth, truth_type):
     cfg["type"] = truth_type
     other1 = types.Truth(**cfg)
     assert obj == other1
-    other2 = types.Truth(**{**cfg, "name": "foo"})
+    other2 = types.Truth(**{**cfg, "name": "HRRR"})
     assert obj != other2
 
 

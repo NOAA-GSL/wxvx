@@ -321,6 +321,9 @@ class Truth:
     url: str
 
     def __post_init__(self):
+        # Handle name:
+        assert self.name in ("GFS", "HRRR", "PREPBUFR")
+        # Handle type:
         typenames = ["grid", "point"]
         if isinstance(self.type, str):
             assert self.type in typenames
