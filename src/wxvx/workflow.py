@@ -68,19 +68,27 @@ def grids_baseline(c: Config):
         yield "No baseline defined"
         yield None
     else:
-        name = c.truth.name if c.baseline.name == "truth" else c.baseline.name
+        name, source = (
+            (c.truth.name, Source.TRUTH)
+            if c.baseline.name == "truth"
+            else (c.baseline.name, Source.BASELINE)
+        )
         yield "Baseline grids for %s" % name
-        reqs = [_grid_grib(c, tc, var, Source.BASELINE) for var, _, tc in _vars_varnames_times(c)]
+        reqs = []
+        for var, _, tc in _vars_varnames_times(c):
+            reqs.append(_grid_grib(c, tc, var, source))
         yield reqs
 
 
 @collection
 def grids_forecast(c: Config):
     yield "Forecast grids for %s" % c.forecast.name
-    yield [
-        _forecast_grid(Path(render(c.forecast.path, tc, context=c.raw)), c, varname, tc, var)
-        for var, varname, tc in _vars_varnames_times(c)
-    ]
+    reqs = []
+    for var, varname, tc in _vars_varnames_times(c):
+        path = Path(render(c.forecast.path, tc, context=c.raw))
+        node, _ = _forecast_grid(path, c, varname, tc, var)
+        reqs.append(node)
+    yield reqs
 
 
 @collection

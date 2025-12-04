@@ -117,7 +117,7 @@ def test_workflow_grids_baseline(baseline_name, c, ngrids, noop):
 
 
 def test_workflow_grids_forecast(c, ngrids, noop):
-    with patch.object(workflow, "_forecast_grid", noop):
+    with patch.object(workflow, "_forecast_grid", return_value=(noop(), None)):
         assert len(workflow.grids_forecast(c=c).ref) == ngrids
 
 
@@ -903,7 +903,7 @@ def ngrids(c):
 def noop():
     @external
     def noop(*_args, **_kwargs):
-        yield "mock"
+        yield "noop"
         yield Asset(None, lambda: False)
 
     return noop
