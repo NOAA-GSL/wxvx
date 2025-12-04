@@ -154,7 +154,14 @@ def test_util_fail(caplog):
 
 
 @mark.parametrize("env", [{"PI": "3.14"}, None])
-def test_util_mpexec(env, tmp_path):
+@mark.parametrize("delpool", [True, False])
+def test_util_mpexec(delpool, env, tmp_path):
+    # This is safe because pytest-xdist parallelizes across *processes*, and each process has its
+    # own memory space, and tests run serially within each process, so if this test is running then
+    # no other test is modifying the state / pool.
+    util._initpool()
+    if delpool:
+        del util._STATE["pool"]
     path = tmp_path / "out"
     cmd = 'echo "$PI" >%s' % path
     util.mpexec(cmd=cmd, rundir=tmp_path, taskname="foo", env=env)
