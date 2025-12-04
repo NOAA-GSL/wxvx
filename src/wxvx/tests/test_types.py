@@ -356,7 +356,7 @@ def test_types_Truth__bad_name(truth_name, truth_type):
         msg = "When truth.type is 'point' set truth.name to:"
     elif truth_name == "PREPBUFR":
         msg = "When truth.type is 'grid' set truth.name to:"
-    elif truth_name == "foo":
+    else:  # truth_name == "foo"
         msg = "Set truth.name to one of:"
     assert str(e.value).startswith(msg)
 
