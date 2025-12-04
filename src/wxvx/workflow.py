@@ -54,11 +54,11 @@ _PLOT_LOCK = Lock()
 @collection
 def grids(c: Config):
     yield "Grids"
-    reqs = [grids_forecast()]
-    # if c.baseline and c.baseline.name != "truth":
-    #     reqs.append(grids_baseline())
+    reqs = [grids_forecast(c)]
+    if c.baseline.name:
+        reqs.append(grids_baseline(c))
     if c.truth.type == TruthType.GRID:
-        reqs.append(grids_truth())
+        reqs.append(grids_truth(c))
     yield reqs
 
 

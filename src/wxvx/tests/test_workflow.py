@@ -81,13 +81,22 @@ TESTDATA = {
 # Task Tests
 
 
+@mark.parametrize("baseline_name", ["ERA5", "truth", None])
 @mark.parametrize("truth_type", [TruthType.GRID, TruthType.POINT])
-def test_workflow_grids(c, noop, truth_type):
+def test_workflow_grids(baseline_name, c, noop, truth_type):
+    c.baseline = replace(
+        c.baseline,
+        name=baseline_name,
+        url=None if baseline_name == "truth" else c.baseline.url,
+    )
     c.truth = replace(c.truth, type=truth_type)
     expected = 1
+    if baseline_name is not None:
+        expected += 1
     if truth_type is TruthType.GRID:
         expected += 1
     with (
+        patch.object(workflow, "grids_baseline", noop),
         patch.object(workflow, "grids_forecast", noop),
         patch.object(workflow, "grids_truth", noop),
     ):
