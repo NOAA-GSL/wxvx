@@ -321,10 +321,10 @@ class Truth:
     url: str
 
     def __post_init__(self):
-        keys = ["grid", "point"]
+        types = ["grid", "point"]
         if isinstance(self.type, str):
-            assert self.type in keys
-        newval = dict(zip(keys, [TruthType.GRID, TruthType.POINT], strict=True))
+            assert self.type in types
+        newval = dict(zip(types, [TruthType.GRID, TruthType.POINT], strict=True))
         _force(self, "type", newval.get(str(self.type), self.type))
 
 
