@@ -34,7 +34,7 @@ test:
     - docformatter 1.7.*
     - jq 1.8.*
     - make 4.4.*
-    - mypy 1.18.*
+    - mypy 1.19.*
     - pyfakefs 5.10.*
     - pytest 9.0.*
     - pytest-cov 7.0.*
