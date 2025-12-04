@@ -106,10 +106,10 @@ def test_workflow_grids_baseline(baseline_name, c, ngrids, noop):
     c.baseline = replace(c.baseline, name=baseline_name, url=url)
     with patch.object(workflow, "_grid_grib", noop):
         node = workflow.grids_baseline(c=c)
-    if baseline_name is not None:
-        assert len(cast(list[Node], node.req)) == ngrids
-    else:
+    if baseline_name is None:
         assert node.req is None
+    else:
+        assert len(cast(list[Node], node.req)) == ngrids
 
 
 def test_workflow_grids_forecast(c, ngrids, noop):
