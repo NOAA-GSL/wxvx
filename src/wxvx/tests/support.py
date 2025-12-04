@@ -28,6 +28,6 @@ def with_set(d: dict, val: Any, *args: Any) -> dict:
     new = deepcopy(d)
     p = new
     for key in args[:-1]:
-        p = p[key]
+        p = p[key]  # pragma: no cover
     p[args[-1]] = val
     return new

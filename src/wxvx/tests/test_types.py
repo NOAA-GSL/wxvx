@@ -10,7 +10,6 @@ from pytest import fixture, mark, raises
 from uwtools.api.config import get_yaml_config
 
 from wxvx import types
-from wxvx.tests.support import with_del, with_set
 from wxvx.util import WXVXError, resource_path
 
 # Fixtures
@@ -78,7 +77,8 @@ def test_types_validated_config(config_data, fs):
 
 def test_types_validated_config__fail_json_schema(config_data, fs, logged):
     fs.add_real_file(resource_path("config.jsonschema"))
-    yc = get_yaml_config(with_set(config_data, "foo", "truth", "type"))
+    config_data["truth"]["type"] = "foo"
+    yc = get_yaml_config(config_data)
     with raises(WXVXError) as e:
         types.validated_config(yc=yc)
     assert str(e.value) == "Config failed schema validation"
@@ -133,28 +133,33 @@ def test_types_Config__bad_baseline_name_vs_truth_type(config_data):
 
 
 def test_types_Config__bad_paths_grids_baseline(config_data):
-    raw = with_del(with_set(config_data, "HRRR", "baseline", "name"), "paths", "grids", "baseline")
+    config_data["baseline"]["name"] = "HRRR"
+    del config_data["paths"]["grids"]["baseline"]
     with raises(WXVXError) as e:
-        types.Config(raw=raw)
+        types.Config(raw=config_data)
     assert str(e.value) == "Specify paths.grids.baseline when baseline.type is not 'truth'"
 
 
 def test_types_Config__bad_paths_grids_truth(config_data):
-    raw = with_del(with_set(config_data, "grid", "truth", "type"), "paths", "grids", "truth")
+    config_data["truth"]["type"] = "grid"
+    del config_data["paths"]["grids"]["truth"]
     with raises(WXVXError) as e:
-        types.Config(raw=raw)
+        types.Config(raw=config_data)
     assert str(e.value) == "Specify path.grids.truth when truth.type is 'grid'"
 
 
 def test_types_Config__bad_paths_obs(config_data):
+    config_data["truth"]["type"] = "point"
+    del config_data["paths"]["obs"]
     with raises(WXVXError) as e:
-        types.Config(raw=with_del(with_set(config_data, "point", "truth", "type"), "paths", "obs"))
+        types.Config(raw=config_data)
     assert str(e.value) == "Specify path.obs when truth.type is 'point'"
 
 
 def test_types_Config__bad_regrid_to(config_data):
+    config_data["regrid"]["to"] = "truth"
     with raises(WXVXError) as e:
-        types.Config(raw=with_set(config_data, "truth", "regrid", "to"))
+        types.Config(raw=config_data)
     assert str(e.value) == "Cannot regrid to observations per regrid.to config value"
 
 
@@ -162,20 +167,11 @@ def test_types_Config__bad_regrid_to(config_data):
     ("baseline", "forecast", "truth"), [("a", "a", "b"), ("a", "b", "a"), ("b", "a", "a")]
 )
 def test_types_Config__bad_duplicate_names(baseline, config_data, forecast, truth):
+    config_data["baseline"]["name"] = baseline
+    config_data["forecast"]["name"] = forecast
+    config_data["truth"]["name"] = truth
     with raises(WXVXError) as e:
-        types.Config(
-            raw=with_set(
-                with_set(
-                    with_set(config_data, baseline, "baseline", "name"),
-                    forecast,
-                    "forecast",
-                    "name",
-                ),
-                truth,
-                "truth",
-                "name",
-            )
-        )
+        types.Config(raw=config_data)
     assert str(e.value) == "Distinct baseline.name (if set), forecast.name, and truth.name required"
 
 
