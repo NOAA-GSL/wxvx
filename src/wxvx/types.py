@@ -120,6 +120,8 @@ class Config:
                     self.truth.type.name.lower(),
                 )
                 raise WXVXError(msg)
+            if self.paths.grids_baseline is not None:
+                logging.warning("Ignoring paths.grids.baseline when baseline.name is 'truth'")
         elif self.baseline.name is not None and not self.paths.grids_baseline:
             msg = "Specify paths.grids.baseline when baseline.type is not 'truth'"
             raise WXVXError(msg)

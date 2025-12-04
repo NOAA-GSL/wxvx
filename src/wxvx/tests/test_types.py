@@ -179,6 +179,19 @@ def test_types_Config__bad_duplicate_names(baseline, config_data, forecast, trut
     assert str(e.value) == "Distinct baseline.name (if set), forecast.name, and truth.name required"
 
 
+@mark.parametrize("ignore", [True, False])
+def test_types_Config__paths_grids_baseline_ignored(config_data, ignore, logged):
+    config_data["baseline"]["name"] = "truth"
+    del config_data["baseline"]["url"]
+    if ignore:
+        config_data["paths"]["grids"]["baseline"] = "/some/path"
+    else:
+        del config_data["paths"]["grids"]["baseline"]
+    types.Config(raw=config_data)
+    warned = logged("Ignoring paths.grids.baseline when baseline.name is 'truth'")
+    assert warned if ignore else not warned
+
+
 def test_types_Coords(config_data, coords):
     obj = coords
     assert hash(obj)
