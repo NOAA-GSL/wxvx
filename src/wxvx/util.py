@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 import sys
@@ -172,3 +173,8 @@ def to_timedelta(value: str | int) -> timedelta:
     keys = ["hours", "minutes", "seconds"]
     args = dict(zip(keys, map(int, value.split(":")), strict=False))
     return timedelta(**args)
+
+
+def version() -> str:
+    info = json.loads(resource("info.json"))
+    return "version %s build %s" % (info["version"], info["buildnum"])

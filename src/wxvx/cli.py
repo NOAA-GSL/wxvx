@@ -1,4 +1,3 @@
-import json
 import logging
 import sys
 import traceback
@@ -12,7 +11,7 @@ from uwtools.api.logging import use_uwtools_logger
 from wxvx import workflow
 from wxvx.net import configure_session
 from wxvx.types import validated_config
-from wxvx.util import WXVXError, fail, pkgname, resource
+from wxvx.util import WXVXError, fail, pkgname, version
 
 # Public
 
@@ -121,7 +120,7 @@ def _parse_args(argv: list[str]) -> Namespace:
         "--version",
         action="version",
         help="Show version and exit",
-        version=f"{Path(argv[0]).name} {_version()}",
+        version=f"{Path(argv[0]).name} {version()}",
     )
     return parser.parse_args(argv[1:])
 
@@ -146,8 +145,3 @@ def _show_tasks() -> None:
     logging.info("Available tasks:")
     for taskname in tasknames(workflow):
         logging.info("  %s", taskname)
-
-
-def _version() -> str:
-    info = json.loads(resource("info.json"))
-    return "version %s build %s" % (info["version"], info["buildnum"])

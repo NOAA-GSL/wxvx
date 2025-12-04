@@ -4,6 +4,7 @@ Tests for wxvx.util.
 
 import logging
 import os
+import re
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
@@ -206,3 +207,7 @@ def test_util_to_datetime(utc):
 def test_util_to_timedelta():
     assert util.to_timedelta(value="01:02:03") == timedelta(hours=1, minutes=2, seconds=3)
     assert util.to_timedelta(value="168:00:00") == timedelta(days=7)
+
+
+def test_util_version():
+    assert re.match(r"^version \d+\.\d+\.\d+ build \d+$", util.version())
