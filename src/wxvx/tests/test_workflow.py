@@ -84,11 +84,8 @@ TESTDATA = {
 @mark.parametrize("baseline_name", ["ERA5", "truth", None])
 @mark.parametrize("truth_type", [TruthType.GRID, TruthType.POINT])
 def test_workflow_grids(baseline_name, c, noop, truth_type):
-    c.baseline = replace(
-        c.baseline,
-        name=baseline_name,
-        url=None if baseline_name == "truth" else c.baseline.url,
-    )
+    url = None if baseline_name == "truth" else c.baseline.url
+    c.baseline = replace(c.baseline, name=baseline_name, url=url)
     c.truth = replace(c.truth, type=truth_type)
     expected = 1
     if baseline_name is not None:
@@ -105,11 +102,8 @@ def test_workflow_grids(baseline_name, c, noop, truth_type):
 
 @mark.parametrize("baseline_name", ["ERA5", "truth", None])
 def test_workflow_grids_baseline(baseline_name, c, ngrids, noop):
-    c.baseline = replace(
-        c.baseline,
-        name=baseline_name,
-        url=None if baseline_name == "truth" else c.baseline.url,
-    )
+    url = None if baseline_name == "truth" else c.baseline.url
+    c.baseline = replace(c.baseline, name=baseline_name, url=url)
     with patch.object(workflow, "_grid_grib", noop):
         node = workflow.grids_baseline(c=c)
     if baseline_name is not None:
