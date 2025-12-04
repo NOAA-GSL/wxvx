@@ -127,6 +127,7 @@ def test_types_Config__bad_baseline_name_vs_truth_type(config_data):
     del config_data["baseline"]["url"]
     config_data["baseline"]["name"] = "truth"
     config_data["truth"]["type"] = types.TruthType.POINT
+    config_data["truth"]["name"] = "PREPBUFR"
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
     assert str(e.value) == "Settings baseline.name 'truth' and truth.type 'point' are incompatible"

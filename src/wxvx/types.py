@@ -13,6 +13,10 @@ from uwtools.api.config import YAMLConfig, validate
 
 from wxvx.util import LINETYPE, WXVXError, expand, resource_path, to_datetime, to_timedelta
 
+_TRUTH_NAMES_GRID = ("GFS", "HRRR")
+_TRUTH_NAMES_POINT = ("PREPBUFR",)
+_TRUTH_NAMES = tuple(sorted([*_TRUTH_NAMES_GRID, *_TRUTH_NAMES_POINT]))
+
 _DatetimeT = str | datetime
 _TimedeltaT = str | int
 
@@ -322,7 +326,18 @@ class Truth:
 
     def __post_init__(self):
         # Handle name:
-        assert self.name in ("GFS", "HRRR", "PREPBUFR")
+        if self.name not in _TRUTH_NAMES:
+            raise WXVXError("Set truth.name to one of: %s" % ", ".join(_TRUTH_NAMES))
+        if self.type is TruthType.GRID and self.name not in _TRUTH_NAMES_GRID:
+            raise WXVXError(
+                "When truth.type is '%s' set truth.name to: %s"
+                % (self.type.name.lower(), ", ".join(_TRUTH_NAMES_GRID))
+            )
+        if self.type is TruthType.POINT and self.name not in _TRUTH_NAMES_POINT:
+            raise WXVXError(
+                "When truth.type is '%s' set truth.name to: %s"
+                % (self.type.name.lower(), ", ".join(_TRUTH_NAMES_POINT))
+            )
         # Handle type:
         typenames = ["grid", "point"]
         if isinstance(self.type, str):

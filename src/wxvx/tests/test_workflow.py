@@ -86,7 +86,8 @@ TESTDATA = {
 def test_workflow_grids(baseline_name, c, noop, truth_type):
     url = None if baseline_name == "truth" else c.baseline.url
     c.baseline = replace(c.baseline, name=baseline_name, url=url)
-    c.truth = replace(c.truth, type=truth_type)
+    truth_name = "GFS" if truth_type is TruthType.GRID else "PREPBUFR"
+    c.truth = replace(c.truth, name=truth_name, type=truth_type)
     expected = 1
     if baseline_name is not None:
         expected += 1
@@ -123,7 +124,8 @@ def test_workflow_grids_forecast(c, ngrids, noop):
 
 @mark.parametrize("truth_type", [TruthType.GRID, TruthType.POINT])
 def test_workflow_grids_truth(c, ngrids, noop, truth_type):
-    c.truth = replace(c.truth, type=truth_type)
+    truth_name = "GFS" if truth_type is TruthType.GRID else "PREPBUFR"
+    c.truth = replace(c.truth, name=truth_name, type=truth_type)
     expected = ngrids if truth_type is TruthType.GRID else 0
     with patch.object(workflow, "_grid_grib", noop):
         assert len(workflow.grids_truth(c=c).ref) == expected
