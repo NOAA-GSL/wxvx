@@ -108,8 +108,12 @@ def test_workflow_grids_baseline(baseline_name, c, ngrids, noop):
         node = workflow.grids_baseline(c=c)
     if baseline_name is None:
         assert node.req is None
+        assert node.taskname == "No baseline defined"
     else:
         assert len(cast(list[Node], node.req)) == ngrids
+        assert node.taskname == "Baseline grids for %s" % (
+            c.truth.name if baseline_name == "truth" else baseline_name
+        )
 
 
 def test_workflow_grids_forecast(c, ngrids, noop):
