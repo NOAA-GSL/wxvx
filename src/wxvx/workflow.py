@@ -37,6 +37,7 @@ from wxvx.util import (
     classify_url,
     mpexec,
     render,
+    version,
 )
 from wxvx.variables import VARMETA, Var, da_construct, da_select, ds_construct, metlevel
 
@@ -444,7 +445,8 @@ def _plot(
     plot_data = _prepare_plot_data(reqs, stat, width)
     hue = "LABEL" if "LABEL" in plot_data.columns else "MODEL"
     w = f"(width={width}) " if width else ""
-    with _PLOT_LOCK:
+    with _PLOT_LOCK, catch_warnings():
+        simplefilter("ignore")
         sns.set(style="darkgrid")
         plt.figure(figsize=(10, 6), constrained_layout=True)
         sns.lineplot(data=plot_data, x="FCST_LEAD", y=stat, hue=hue, marker="o", linewidth=2)
@@ -455,6 +457,8 @@ def _plot(
         plt.ylabel(f"{stat} ({meta.units})")
         plt.xticks(ticks=[int(lt) for lt in leadtimes], labels=leadtimes, rotation=90)
         plt.legend(title="Model", bbox_to_anchor=(1.02, 1), loc="upper left")
+        plt.figtext(0.403, 0.0, f"wxvx {version()}", fontsize=6)
+        plt.tight_layout(rect=(0, 0.005, 1, 1))
         path.parent.mkdir(parents=True, exist_ok=True)
         plt.savefig(path, bbox_inches="tight")
         plt.close()

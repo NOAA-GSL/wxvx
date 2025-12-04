@@ -22,7 +22,7 @@ from wxvx import variables, workflow
 from wxvx.tests.support import with_del
 from wxvx.times import gen_validtimes, tcinfo
 from wxvx.types import Config, Source, TruthType
-from wxvx.util import DataFormat, WXVXError
+from wxvx.util import DataFormat, WXVXError, resource_path
 from wxvx.variables import Var
 
 TESTDATA = {
@@ -583,6 +583,7 @@ def test_workflow__plot(c, dictkey, fakefs, fs):
         yield Asset(fakefs / f"{x}.stat", lambda: True)
 
     fs.add_real_directory(os.environ["CONDA_PREFIX"])
+    fs.add_real_file(resource_path("info.json"))
     varname, level, dfs, stat, width = TESTDATA[dictkey]
     with (
         patch.object(workflow, "_stat_reqs") as _stat_reqs,
