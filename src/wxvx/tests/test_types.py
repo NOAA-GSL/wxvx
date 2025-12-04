@@ -91,13 +91,14 @@ def test_types_Baseline(baseline, config_data):
     assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
     cfg = config_data["baseline"]
     assert obj == types.Baseline(**cfg)
-    assert obj != types.Baseline(**{**cfg, "name": "foo"})
+    assert obj != types.Baseline(**{**cfg, "name": "GFS"})
     assert obj != types.Baseline(**{**cfg, "url": "bar"})
     assert types.Baseline(name="truth")
     with raises(AssertionError):
         types.Baseline(name="truth", url="should-not-be-defined")
-    with raises(AssertionError):
-        types.Baseline(name="anything-else")  # url must be defined
+    with raises(WXVXError) as e:
+        types.Baseline(name="anything-else")
+    assert str(e.value).startswith("Set baseline.name to one of:")
 
 
 @mark.parametrize("baseline", [True, False])

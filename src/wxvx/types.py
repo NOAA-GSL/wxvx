@@ -68,6 +68,12 @@ class Baseline:
     url: str | None = None
 
     def __post_init__(self):
+        # Handle name:
+        names = [*_TRUTH_NAMES_GRID, "truth", None]
+        if self.name not in names:
+            strnames = [str(name) for name in names]
+            raise WXVXError("Set baseline.name to one of: %s" % ", ".join(strnames))
+        # Handle combination of name and url:
         if self.name == "truth":
             assert self.url is None
         elif self.name is not None:
