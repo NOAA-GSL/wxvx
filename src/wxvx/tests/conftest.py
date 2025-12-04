@@ -56,7 +56,7 @@ def c_real_fs(config_data, gen_config, tmp_path):
 def config_data():
     return {
         "baseline": {
-            "name": "ERA5",
+            "name": "HRRR",
             "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
         "cycles": {

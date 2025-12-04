@@ -81,7 +81,7 @@ TESTDATA = {
 # Task Tests
 
 
-@mark.parametrize("baseline_name", ["ERA5", "truth", None])
+@mark.parametrize("baseline_name", ["HRRR", "truth", None])
 @mark.parametrize("truth_type", [TruthType.GRID, TruthType.POINT])
 def test_workflow_grids(baseline_name, c, noop, truth_type):
     url = None if baseline_name == "truth" else c.baseline.url
@@ -100,7 +100,7 @@ def test_workflow_grids(baseline_name, c, noop, truth_type):
         assert len(workflow.grids(c=c).ref) == expected
 
 
-@mark.parametrize("baseline_name", ["ERA5", "truth", None])
+@mark.parametrize("baseline_name", ["HRRR", "truth", None])
 def test_workflow_grids_baseline(baseline_name, c, ngrids, noop):
     url = None if baseline_name == "truth" else c.baseline.url
     c.baseline = replace(c.baseline, name=baseline_name, url=url)

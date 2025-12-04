@@ -87,7 +87,7 @@ def test_types_validated_config__fail_json_schema(config_data, fs, logged):
 
 def test_types_Baseline(baseline, config_data):
     obj = baseline
-    assert obj.name == "ERA5"
+    assert obj.name == "HRRR"
     assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
     cfg = config_data["baseline"]
     assert obj == types.Baseline(**cfg)

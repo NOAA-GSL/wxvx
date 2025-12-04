@@ -71,7 +71,7 @@ def test_schema_baseline(logged, config_data, fs):
     assert not ok(with_set(config, "truth", "name"))
     assert ok(with_del(with_set(config, "truth", "name"), "url"))
     # If name is not "truth", URL must be specified:
-    assert not ok(with_del(with_set(config, "ERA5", "name"), "url"))
+    assert not ok(with_del(with_set(config, "GFS", "name"), "url"))
     assert logged("'url' is a required property")
 
 
