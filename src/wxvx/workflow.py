@@ -463,7 +463,6 @@ def _polyfile(path: Path, mask: tuple[tuple[float, float]]):
 
 @task
 def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str, source: Source):
-    assert source in (Source.BASELINE, Source.FORECAST)
     taskname = "Stats vs grid for %s %s %s" % (source.name.lower(), var, _at_validtime(tc))
     yield taskname
     yyyymmdd, hh, leadtime = tcinfo(tc)
@@ -636,7 +635,7 @@ def _stat_args(
         cycles = Cycles(dict(start=start, step=step, stop=stop))
     else:
         cycles = c.cycles
-    sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast}
+    sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast, Source.TRUTH: c.truth}
     name = cast(Named, sections[source]).name.lower()
     prefix = lambda var: "%s_%s" % (name, str(var).replace("-", "_"))
     args = [
@@ -654,7 +653,8 @@ def _stat_reqs(
     reqs_for = lambda source: [f(*args) for args in _stat_args(c, varname, level, source, cycle)]
     reqs: Sequence[Node] = reqs_for(Source.FORECAST)
     if c.baseline.name is not None:
-        reqs = [*reqs, *reqs_for(Source.BASELINE)]
+        source = Source.TRUTH if c.baseline.name == "truth" else Source.BASELINE
+        reqs = [*reqs, *reqs_for(source)]
     return reqs
 
 
