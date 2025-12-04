@@ -341,6 +341,26 @@ def test_types_Truth(config_data, truth, truth_type):
     assert obj != other2
 
 
+@mark.parametrize(
+    ("truth_name", "truth_type"),
+    [
+        ("GFS", types.TruthType.POINT),
+        ("PREPBUFR", types.TruthType.GRID),
+        ("foo", types.TruthType.GRID),
+    ],
+)
+def test_types_Truth__bad_name(truth_name, truth_type):
+    with raises(WXVXError) as e:
+        types.Truth(name=truth_name, type=truth_type, url="http://some.url")
+    if truth_name == "GFS":
+        msg = "When truth.type is 'point' set truth.name to:"
+    elif truth_name == "PREPBUFR":
+        msg = "When truth.type is 'grid' set truth.name to:"
+    elif truth_name == "foo":
+        msg = "Set truth.name to one of:"
+    assert str(e.value).startswith(msg)
+
+
 def test_types_VarMeta():
     def fails(k, v):
         with raises(AssertionError):
