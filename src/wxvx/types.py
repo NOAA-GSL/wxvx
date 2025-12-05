@@ -11,11 +11,11 @@ from typing import Any, Protocol, cast
 
 from uwtools.api.config import YAMLConfig, validate
 
-from wxvx.strings import STR
+from wxvx.strings import S
 from wxvx.util import LINETYPE, WXVXError, expand, resource_path, to_datetime, to_timedelta
 
-_TRUTH_NAMES_GRID = (STR.GFS, STR.HRRR)
-_TRUTH_NAMES_POINT = (STR.PREPBUFR,)
+_TRUTH_NAMES_GRID = (S.GFS, S.HRRR)
+_TRUTH_NAMES_POINT = (S.PREPBUFR,)
 _TRUTH_NAMES = tuple(sorted([*_TRUTH_NAMES_GRID, *_TRUTH_NAMES_POINT]))
 
 _DatetimeT = str | datetime
@@ -60,12 +60,12 @@ class Baseline:
 
     def __post_init__(self):
         # Handle 'name':
-        names = [*_TRUTH_NAMES_GRID, STR.truth, None]
+        names = [*_TRUTH_NAMES_GRID, S.truth, None]
         if self.name not in names:
             strnames = [str(name) for name in names]
             raise WXVXError("Set baseline.name to one of: %s" % ", ".join(strnames))
         # Handle combination of 'name' and 'url':
-        if self.name == STR.truth:
+        if self.name == S.truth:
             assert self.url is None
         elif self.name is not None:
             assert self.url is not None
@@ -73,27 +73,27 @@ class Baseline:
 
 class Config:
     def __init__(self, raw: dict):
-        baseline = raw.get(STR.baseline, {"name": None})
-        paths = raw[STR.paths]
-        grids = paths[STR.grids]
+        baseline = raw.get(S.baseline, {"name": None})
+        paths = raw[S.paths]
+        grids = paths[S.grids]
         self.baseline = Baseline(**baseline)
-        self.cycles = Cycles(raw["cycles"])
-        self.forecast = Forecast(**raw[STR.forecast])
-        self.leadtimes = Leadtimes(raw["leadtimes"])
+        self.cycles = Cycles(raw[S.cycles])
+        self.forecast = Forecast(**raw[S.forecast])
+        self.leadtimes = Leadtimes(raw[S.leadtimes])
         self.paths = Paths(
-            grids.get(STR.baseline),
-            grids.get(STR.forecast),
-            grids.get(STR.truth),
-            paths.get(STR.obs),
-            paths[STR.run],
+            grids.get(S.baseline),
+            grids.get(S.forecast),
+            grids.get(S.truth),
+            paths.get(S.obs),
+            paths[S.run],
         )
         self.raw = raw
         self.regrid = Regrid(**raw.get("regrid", {}))
-        self.truth = Truth(**raw[STR.truth])
-        self.variables = raw["variables"]
+        self.truth = Truth(**raw[S.truth])
+        self.variables = raw[S.variables]
         self._validate()
 
-    KEYS = (STR.baseline, "cycles", STR.forecast, "leadtimes", STR.paths, STR.truth, "variables")
+    KEYS = (S.baseline, S.cycles, S.forecast, S.leadtimes, S.paths, S.truth, S.variables)
 
     def __eq__(self, other):
         return all(getattr(self, k) == getattr(other, k) for k in self.KEYS)
@@ -114,7 +114,7 @@ class Config:
         if len(set(names)) != len(names):
             msg = "Distinct baseline.name (if set), forecast.name, and truth.name required"
             raise WXVXError(msg)
-        if self.baseline.name == STR.truth:
+        if self.baseline.name == S.truth:
             if self.truth.type is TruthType.POINT:
                 msg = "Settings baseline.name '%s' and truth.type '%s' are incompatible" % (
                     self.baseline.name,
@@ -126,7 +126,7 @@ class Config:
         elif self.baseline.name is not None and not self.paths.grids_baseline:
             msg = "Specify paths.grids.baseline when baseline.name is not 'truth'"
             raise WXVXError(msg)
-        if self.regrid.to == STR.OBS:
+        if self.regrid.to == S.OBS:
             msg = "Cannot regrid to observations per regrid.to config value"
             raise WXVXError(msg)
         if self.truth.type == TruthType.GRID and not self.paths.grids_truth:
@@ -269,7 +269,7 @@ class Paths:
     run: Path
 
     def __post_init__(self):
-        for key in ["grids_baseline", "grids_forecast", "grids_truth", STR.obs, STR.run]:
+        for key in ["grids_baseline", "grids_forecast", "grids_truth", S.obs, S.run]:
             if val := getattr(self, key):
                 _force(self, key, Path(val))
 
@@ -283,7 +283,7 @@ class Regrid:
     to: ToGrid | None = None
 
     def __post_init__(self):
-        _force(self, "to", ToGrid(STR.forecast if self.to is None else str(self.to)))
+        _force(self, "to", ToGrid(S.forecast if self.to is None else str(self.to)))
         assert self.to is not None
 
 
@@ -300,7 +300,7 @@ class Time:
 class ToGrid:
     def __init__(self, val: str):
         self.val: str | ToGridVal = val
-        mapping = {STR.forecast: ToGridVal.FCST, STR.truth: ToGridVal.OBS}
+        mapping = {S.forecast: ToGridVal.FCST, S.truth: ToGridVal.OBS}
         self.val = mapping.get(val, val)
 
     def __eq__(self, other):

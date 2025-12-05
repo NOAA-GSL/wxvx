@@ -7,7 +7,7 @@ import xarray as xr
 from pytest import fixture, mark, raises
 
 from wxvx import variables
-from wxvx.strings import STR
+from wxvx.strings import S
 from wxvx.util import WXVXError, render
 
 # Fixtures
@@ -104,7 +104,7 @@ def test_variables_da_construct(
     config_data, da_with_leadtime, da_with_validtime, fakefs, gen_config, leadtime, tc, validtime
 ):
     da = da_with_leadtime if leadtime else da_with_validtime
-    time = config_data[STR.forecast]["coords"]["time"]
+    time = config_data[S.forecast]["coords"]["time"]
     time["leadtime"] = leadtime
     time["validtime"] = validtime
     c = gen_config(config_data, fakefs)
@@ -211,7 +211,7 @@ def test_variables_metlevel__error():
 
 
 @mark.parametrize(
-    ("name", "obj"), [(STR.GFS, variables.GFS), (STR.HRRR, variables.HRRR), ("FOO", None)]
+    ("name", "obj"), [(S.GFS, variables.GFS), (S.HRRR, variables.HRRR), ("FOO", None)]
 )
 def test_variables_model_class(name, obj):
     if obj is None:
@@ -231,7 +231,7 @@ def test_variables_model_names():
     class C2(B): ...
 
     assert variables.model_names(A) == {"B", "C1", "C2"}
-    assert variables.model_names() == {STR.GFS, STR.HRRR, STR.PREPBUFR}
+    assert variables.model_names() == {S.GFS, S.HRRR, S.PREPBUFR}
 
 
 def test_variables__da_val__fail_unparesable(da_flat):

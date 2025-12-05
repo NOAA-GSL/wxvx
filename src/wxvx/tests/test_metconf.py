@@ -3,7 +3,7 @@ from collections.abc import Callable
 from pytest import mark, raises
 
 from wxvx import metconf
-from wxvx.strings import STR
+from wxvx.strings import S
 from wxvx.types import ToGridVal
 
 # Public:
@@ -53,7 +53,7 @@ def test_metconf_render(tidy):
             ],
         },
         "nc_pairs_flag": "FALSE",
-        STR.obs: {
+        S.obs: {
             "field": [
                 {
                     "cat_thresh": [
@@ -75,7 +75,7 @@ def test_metconf_render(tidy):
             "beg": -1800,
             "end": 1800,
         },
-        "obtype": STR.HRRR,
+        "obtype": S.HRRR,
         "output_flag": {
             "cnt": "BOTH",
         },
@@ -182,7 +182,7 @@ def test_metconf_render(tidy):
     }
     tmp_dir = "/path/to/dir";
     """
-        % STR.HRRR
+        % S.HRRR
     )
     expected = tidy(text)
     assert metconf.render(config=config).strip() == expected

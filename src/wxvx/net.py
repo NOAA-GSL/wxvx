@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from requests.adapters import HTTPAdapter
 
-from wxvx.strings import STR
+from wxvx.strings import S
 from wxvx.util import atomic
 
 if TYPE_CHECKING:
@@ -33,7 +33,7 @@ def fetch(taskname: str, url: str, path: Path, headers: dict[str, str] | None = 
     suffix = " %s" % headers.get("Range", "") if headers else ""
     logging.info("%s: Fetching %s%s", taskname, url, suffix)
     kwargs = dict(allow_redirects=True, stream=True, timeout=TIMEOUT, headers=headers or {})
-    with _STATE[STR.session].get(url, **kwargs) as response:
+    with _STATE[S.session].get(url, **kwargs) as response:
         expected = HTTPStatus.PARTIAL_CONTENT if headers and "Range" in headers else HTTPStatus.OK
         if response.status_code == expected:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -51,9 +51,9 @@ def configure_session(connections: int) -> None:
     adapter = HTTPAdapter(pool_connections=connections, pool_maxsize=connections)
     for scheme in ["http://", "https://"]:
         session.mount(scheme, adapter)
-    _STATE[STR.session] = session
+    _STATE[S.session] = session
 
 
 def status(url: str) -> int:
-    session: Session = _STATE[STR.session]
+    session: Session = _STATE[S.session]
     return session.head(url, timeout=TIMEOUT).status_code

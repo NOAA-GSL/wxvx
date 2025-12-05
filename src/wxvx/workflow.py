@@ -25,7 +25,7 @@ from iotaa import Asset, Node, collection, external, task
 from wxvx import variables
 from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
-from wxvx.strings import STR
+from wxvx.strings import S
 from wxvx.times import TimeCoords, gen_validtimes, hh, tcinfo, yyyymmdd
 from wxvx.types import Cycles, Named, Source, TruthType
 from wxvx.util import (
@@ -72,7 +72,7 @@ def grids_baseline(c: Config):
     else:
         name, source = (
             (c.truth.name, Source.TRUTH)
-            if c.baseline.name == STR.truth
+            if c.baseline.name == S.truth
             else (c.baseline.name, Source.BASELINE)
         )
         yield "Baseline grids for %s" % name
@@ -178,7 +178,7 @@ def _config_grid_stat(
         "mask": {"grid": [] if polyfile else ["FULL"], "poly": [polyfile.ref] if polyfile else []},
         "model": c.truth.name if source == Source.TRUTH else c.forecast.name,
         "nc_pairs_flag": "FALSE",
-        STR.obs: {"field": [field_obs]},
+        S.obs: {"field": [field_obs]},
         "obtype": c.truth.name,
         "output_flag": dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), "BOTH"),
         "output_prefix": f"{prefix}",
@@ -230,7 +230,7 @@ def _config_point_stat(
         "message_type": ["SFC" if surface else "ATM"],
         "message_type_group_map": {"ATM": "ADPUPA,AIRCAR,AIRCFT", "SFC": "ADPSFC"},
         "model": cast(Named, sections[source]).name,
-        STR.obs: {"field": [field_obs]},
+        S.obs: {"field": [field_obs]},
         "obs_window": {"beg": -900 if surface else -1800, "end": 900 if surface else 1800},
         "output_flag": {"cnt": "BOTH"},
         "output_prefix": f"{prefix}",
@@ -336,7 +336,7 @@ def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var, sourc
 def _grid_grib(c: Config, tc: TimeCoords, var: Var, source: Source):
     assert source in (Source.BASELINE, Source.TRUTH)
     template = c.truth.url
-    if source is Source.BASELINE and c.baseline.name != STR.truth:
+    if source is Source.BASELINE and c.baseline.name != S.truth:
         template = cast(str, c.baseline.url)
     url = render(template, tc, context=c.raw)
     proximity, src = classify_url(url)
@@ -668,7 +668,7 @@ def _stat_reqs(
     reqs_for = lambda source: [f(*args) for args in _stat_args(c, varname, level, source, cycle)]
     reqs: Sequence[Node] = reqs_for(Source.FORECAST)
     if c.baseline.name is not None:
-        source = Source.TRUTH if c.baseline.name == STR.truth else Source.BASELINE
+        source = Source.TRUTH if c.baseline.name == S.truth else Source.BASELINE
         reqs = [*reqs, *reqs_for(source)]
     return reqs
 

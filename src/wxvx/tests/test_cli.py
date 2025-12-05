@@ -13,7 +13,7 @@ import yaml
 from pytest import mark, raises
 
 from wxvx import cli
-from wxvx.strings import STR
+from wxvx.strings import S
 from wxvx.types import Config
 from wxvx.util import WXVXError, pkgname, resource_path
 
@@ -48,7 +48,7 @@ def test_cli_main__bad_config(fakefs, fs):
     bad_config = fakefs / "config.yaml"
     bad_config.write_text("{}")
     with (
-        patch.object(cli.sys, "argv", [pkgname, "-c", str(bad_config), "-t", STR.grids]),
+        patch.object(cli.sys, "argv", [pkgname, "-c", str(bad_config), "-t", S.grids]),
         raises(SystemExit) as e,
     ):
         cli.main()
@@ -62,11 +62,11 @@ def test_cli_main__check_config(fs, switch, truthtype):
     fs.add_real_file(resource_path("config.jsonschema"))
     fs.add_real_file(resource_path("info.json"))
     fs.add_real_file(resource_path(fn))
-    argv = [pkgname, switch, "-c", str(resource_path(fn)), "-t", STR.grids]
+    argv = [pkgname, switch, "-c", str(resource_path(fn)), "-t", S.grids]
     with (
         patch.object(cli.sys, "argv", argv),
-        patch.object(cli, "tasknames", return_value=[STR.grids]),
-        patch.object(cli.workflow, STR.grids) as grids,
+        patch.object(cli, "tasknames", return_value=[S.grids]),
+        patch.object(cli.workflow, S.grids) as grids,
         raises(SystemExit) as e,
     ):
         cli.main()

@@ -7,6 +7,7 @@ from datetime import timedelta
 from pytest import mark
 
 from wxvx import times
+from wxvx.strings import S
 from wxvx.types import Cycles, Leadtimes
 
 # Tests
@@ -44,8 +45,8 @@ def test_times_gen_validtimes(config_data, utc):
     actual = {
         vt.validtime
         for vt in times.gen_validtimes(
-            cycles=Cycles(raw=config_data["cycles"]),
-            leadtimes=Leadtimes(raw=config_data["leadtimes"]),
+            cycles=Cycles(raw=config_data[S.cycles]),
+            leadtimes=Leadtimes(raw=config_data[S.leadtimes]),
         )
     }
     expected = {

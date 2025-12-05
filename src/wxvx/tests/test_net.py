@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 from pytest import mark
 
 from wxvx import net
-from wxvx.strings import STR
+from wxvx.strings import S
 
 URL = "https://some.url"
 
@@ -36,7 +36,7 @@ def test_net_fetch__fail(byterange, code, fs, logged, out, ret):
     session = Mock(get=get)
     headers = {"Range": "bytes=1-2"} if byterange else {}
     path = Path(fs.create_file("f").path)
-    with patch.dict(net._STATE, {STR.session: session}):
+    with patch.dict(net._STATE, {S.session: session}):
         assert net.fetch(taskname="task", url=URL, path=path, headers=headers) is ret
     assert path.read_text(encoding="utf-8") == out
     assert logged(f"Could not fetch {URL}" if code == 404 else f"Wrote {path}")
@@ -46,6 +46,6 @@ def test_net_status():
     code = 42
     response = Mock(status_code=code)
     session = Mock(get=Mock(return_value=response), head=Mock(return_value=response))
-    with patch.dict(net._STATE, {STR.session: session}):
+    with patch.dict(net._STATE, {S.session: session}):
         assert net.status(url=URL) == code
     session.head.assert_called_once_with(URL, timeout=net.TIMEOUT)

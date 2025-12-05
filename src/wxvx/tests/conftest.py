@@ -14,7 +14,7 @@ from iotaa import Node
 from pytest import fixture
 
 from wxvx import times
-from wxvx.strings import STR
+from wxvx.strings import S
 from wxvx.types import Config
 
 if TYPE_CHECKING:
@@ -56,16 +56,16 @@ def c_real_fs(config_data, gen_config, tmp_path):
 @fixture
 def config_data():
     return {
-        STR.baseline: {
-            "name": STR.HRRR,
+        S.baseline: {
+            "name": S.HRRR,
             "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
-        "cycles": {
+        S.cycles: {
             "start": "2024-12-19T18:00:00",
             "step": "12:00:00",
             "stop": "2024-12-20T06:00:00",
         },
-        STR.forecast: {
+        S.forecast: {
             "coords": {
                 "latitude": "latitude",
                 "level": "level",
@@ -93,30 +93,30 @@ def config_data():
                 "proj": "lcc",
             },
         },
-        "leadtimes": {
+        S.leadtimes: {
             "start": "00:00:00",
             "step": "06:00:00",
             "stop": "12:00:00",
         },
-        STR.paths: {
-            STR.grids: {
-                STR.baseline: "/path/to/grids/baseline",
-                STR.forecast: "/path/to/grids/forecast",
-                STR.truth: "/path/to/grids/truth",
+        S.paths: {
+            S.grids: {
+                S.baseline: "/path/to/grids/baseline",
+                S.forecast: "/path/to/grids/forecast",
+                S.truth: "/path/to/grids/truth",
             },
-            STR.obs: "/path/to/obs",
-            STR.run: "/path/to/run",
+            S.obs: "/path/to/obs",
+            S.run: "/path/to/run",
         },
         "regrid": {
             "method": "NEAREST",
-            "to": STR.forecast,
+            "to": S.forecast,
         },
-        STR.truth: {
-            "name": STR.GFS,
+        S.truth: {
+            "name": S.GFS,
             "type": "grid",
             "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
-        "variables": {
+        S.variables: {
             "HGT": {
                 "level_type": "isobaricInhPa",
                 "levels": [900],
@@ -182,21 +182,21 @@ def fakefs(fs):
 @fixture
 def gen_config():
     def gen_config(config_data, rootpath) -> Config:
-        dirs = ("grids/baseline", "grids/forecast", "grids/truth", STR.obs, STR.run)
+        dirs = ("grids/baseline", "grids/forecast", "grids/truth", S.obs, S.run)
         grids_baseline, grids_forecast, grids_truth, obs, run = [str(rootpath / x) for x in dirs]
         for x in grids_truth, grids_forecast, obs, run:
             Path(x).mkdir(parents=True)
         return Config(
             {
                 **config_data,
-                STR.paths: {
-                    STR.grids: {
-                        STR.baseline: grids_baseline,
-                        STR.forecast: grids_forecast,
-                        STR.truth: grids_truth,
+                S.paths: {
+                    S.grids: {
+                        S.baseline: grids_baseline,
+                        S.forecast: grids_forecast,
+                        S.truth: grids_truth,
                     },
-                    STR.obs: obs,
-                    STR.run: run,
+                    S.obs: obs,
+                    S.run: run,
                 },
             }
         )

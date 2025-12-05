@@ -2,16 +2,24 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class STR:
+class S:
     GFS: str = "GFS"
     HRRR: str = "HRRR"
-    PREPBUFR: str = "PREPBUFR"
     OBS: str = "OBS"
+    PREPBUFR: str = "PREPBUFR"
+    baseline: str = "baseline"
+    cycles: str = "cycles"
+    forecast: str = "forecast"
+    grids: str = "grids"
+    leadtimes: str = "leadtimes"
+    obs: str = "obs"
+    paths: str = "paths"
+    properties: str = "properties"
+    run: str = "run"
     session: str = "session"
     truth: str = "truth"
-    forecast: str = "forecast"
-    baseline: str = "baseline"
-    obs: str = "obs"
-    run: str = "run"
-    paths: str = "paths"
-    grids: str = "grids"
+    variables: str = "variables"
+    # names
+    # types
+    # coords
+    # tim
