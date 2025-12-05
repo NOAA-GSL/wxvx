@@ -73,19 +73,19 @@ class Baseline:
 
 class Config:
     def __init__(self, raw: dict):
-        baseline = raw.get("baseline", {"name": None})
-        paths = raw["paths"]
-        grids = paths["grids"]
+        baseline = raw.get(STR.baseline, {"name": None})
+        paths = raw[STR.paths]
+        grids = paths[STR.grids]
         self.baseline = Baseline(**baseline)
         self.cycles = Cycles(raw["cycles"])
-        self.forecast = Forecast(**raw["forecast"])
+        self.forecast = Forecast(**raw[STR.forecast])
         self.leadtimes = Leadtimes(raw["leadtimes"])
         self.paths = Paths(
-            grids.get("baseline"),
-            grids.get("forecast"),
+            grids.get(STR.baseline),
+            grids.get(STR.forecast),
             grids.get(STR.truth),
-            paths.get("obs"),
-            paths["run"],
+            paths.get(STR.obs),
+            paths[STR.run],
         )
         self.raw = raw
         self.regrid = Regrid(**raw.get("regrid", {}))
@@ -93,7 +93,7 @@ class Config:
         self.variables = raw["variables"]
         self._validate()
 
-    KEYS = ("baseline", "cycles", "forecast", "leadtimes", "paths", STR.truth, "variables")
+    KEYS = (STR.baseline, "cycles", STR.forecast, "leadtimes", STR.paths, STR.truth, "variables")
 
     def __eq__(self, other):
         return all(getattr(self, k) == getattr(other, k) for k in self.KEYS)
@@ -269,7 +269,7 @@ class Paths:
     run: Path
 
     def __post_init__(self):
-        for key in ["grids_baseline", "grids_forecast", "grids_truth", "obs", "run"]:
+        for key in ["grids_baseline", "grids_forecast", "grids_truth", STR.obs, STR.run]:
             if val := getattr(self, key):
                 _force(self, key, Path(val))
 
@@ -283,7 +283,7 @@ class Regrid:
     to: ToGrid | None = None
 
     def __post_init__(self):
-        _force(self, "to", ToGrid("forecast" if self.to is None else str(self.to)))
+        _force(self, "to", ToGrid(STR.forecast if self.to is None else str(self.to)))
         assert self.to is not None
 
 
@@ -300,7 +300,7 @@ class Time:
 class ToGrid:
     def __init__(self, val: str):
         self.val: str | ToGridVal = val
-        mapping = {"forecast": ToGridVal.FCST, STR.truth: ToGridVal.OBS}
+        mapping = {STR.forecast: ToGridVal.FCST, STR.truth: ToGridVal.OBS}
         self.val = mapping.get(val, val)
 
     def __eq__(self, other):

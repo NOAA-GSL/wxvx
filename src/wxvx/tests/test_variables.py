@@ -104,7 +104,7 @@ def test_variables_da_construct(
     config_data, da_with_leadtime, da_with_validtime, fakefs, gen_config, leadtime, tc, validtime
 ):
     da = da_with_leadtime if leadtime else da_with_validtime
-    time = config_data["forecast"]["coords"]["time"]
+    time = config_data[STR.forecast]["coords"]["time"]
     time["leadtime"] = leadtime
     time["validtime"] = validtime
     c = gen_config(config_data, fakefs)

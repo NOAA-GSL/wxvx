@@ -24,9 +24,9 @@ def test_schema(logged, config_data, fs):
     # Certain top-level keys are required:
     for key in [
         "cycles",
-        "forecast",
+        STR.forecast,
         "leadtimes",
-        "paths",
+        STR.paths,
         STR.truth,
         "variables",
     ]:
@@ -39,7 +39,7 @@ def test_schema(logged, config_data, fs):
     for key in ["cycles", "leadtimes"]:
         assert not ok(with_set(config, None, key))
         assert logged("is not valid")
-    for key in ["paths", "variables"]:
+    for key in [STR.paths, "variables"]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'object'")
 
@@ -64,8 +64,8 @@ def test_schema_defs_timedelta(fs):
 
 
 def test_schema_baseline(logged, config_data, fs):
-    ok = validator(fs, "properties", "baseline")
-    config = config_data["baseline"]
+    ok = validator(fs, "properties", STR.baseline)
+    config = config_data[STR.baseline]
     # Basic correctness:
     assert ok(config)
     # The "name" property's value can be "truth", in which case "url" must not be set:
@@ -98,8 +98,8 @@ def test_schema_cycles(logged, config_data, fs, utc):
 
 
 def test_schema_forecast(logged, config_data, fs):
-    ok = validator(fs, "properties", "forecast")
-    config = config_data["forecast"]
+    ok = validator(fs, "properties", STR.forecast)
+    config = config_data[STR.forecast]
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
@@ -123,8 +123,8 @@ def test_schema_forecast(logged, config_data, fs):
 
 
 def test_schema_forecast_coords(logged, config_data, fs):
-    ok = validator(fs, "properties", "forecast", "properties", "coords")
-    config = config_data["forecast"]["coords"]
+    ok = validator(fs, "properties", STR.forecast, "properties", "coords")
+    config = config_data[STR.forecast]["coords"]
     assert ok(config)
     # All keys are required:
     for key in ["latitude", "level", "longitude", "time"]:
@@ -137,9 +137,9 @@ def test_schema_forecast_coords(logged, config_data, fs):
 
 
 def test_schema_forecast_coords_time(logged, config_data, fs):
-    ok = validator(fs, "properties", "forecast", "properties", "coords", "properties", "time")
+    ok = validator(fs, "properties", STR.forecast, "properties", "coords", "properties", "time")
     # Basic correctness of fixture:
-    config = config_data["forecast"]["coords"]["time"]
+    config = config_data[STR.forecast]["coords"]["time"]
     assert ok(config)
     obj = {"inittime": "a", "leadtime": "b", "validtime": "c"}
     # Overspecified (leadtime and validtime are mutually exclusive):
@@ -158,16 +158,16 @@ def test_schema_forecast_coords_time(logged, config_data, fs):
 
 
 def test_schema_forecast_mask(logged, config_data, fs):
-    ok = validator(fs, "properties", "forecast", "properties", "mask")
-    config = config_data["forecast"]["mask"]
+    ok = validator(fs, "properties", STR.forecast, "properties", "mask")
+    config = config_data[STR.forecast]["mask"]
     assert ok(config)
     assert not ok("string")
     assert logged("'string' is not of type 'array'")
 
 
 def test_schema_forecast_projection(logged, config_data, fs):
-    ok = validator(fs, "properties", "forecast", "properties", "projection")
-    config = config_data["forecast"]["projection"]
+    ok = validator(fs, "properties", STR.forecast, "properties", "projection")
+    config = config_data[STR.forecast]["projection"]
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
@@ -226,47 +226,47 @@ def test_schema_meta(config_data, fs, logged):
 
 
 def test_schema_paths(config_data, fs, logged):
-    ok = validator(fs, "properties", "paths")
-    config = config_data["paths"]
+    ok = validator(fs, "properties", STR.paths)
+    config = config_data[STR.paths]
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in ["run"]:
+    for key in [STR.run]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Additional keys are not allowed:
     assert not ok(with_set(config, 42, "n"))
     # Some keys have object values:
-    for key in ["grids"]:
+    for key in [STR.grids]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'object'")
     # Some keys have string values:
-    for key in ["run"]:
+    for key in [STR.run]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
     # Either grids.truth or obs is required:
-    assert ok(with_del(config, "grids", STR.truth))
-    assert ok(with_del(config, "obs"))
-    assert not ok(with_del(with_del(config, "grids", STR.truth), "obs"))
+    assert ok(with_del(config, STR.grids, STR.truth))
+    assert ok(with_del(config, STR.obs))
+    assert not ok(with_del(with_del(config, STR.grids, STR.truth), STR.obs))
 
 
 def test_schema_paths_grids(config_data, fs, logged):
-    ok = validator(fs, "properties", "paths", "properties", "grids")
-    config = config_data["paths"]["grids"]
+    ok = validator(fs, "properties", STR.paths, "properties", STR.grids)
+    config = config_data[STR.paths][STR.grids]
     # Basic correctness:
     assert ok(config)
     # Additional keys are not allowed:
     assert not ok(with_set(config, 42, "n"))
     # Some keys have string values:
-    for key in ["forecast", STR.truth]:
+    for key in [STR.forecast, STR.truth]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
     # Some values are required:
-    for key in ["forecast"]:
+    for key in [STR.forecast]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Some values are optional:
-    for key in ["baseline"]:
+    for key in [STR.baseline]:
         assert ok(with_del(config, key))
 
 

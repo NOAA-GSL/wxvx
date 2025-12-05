@@ -18,12 +18,12 @@ from wxvx.util import WXVXError, resource_path
 
 @fixture
 def baseline(config_data):
-    return types.Baseline(**config_data["baseline"])
+    return types.Baseline(**config_data[STR.baseline])
 
 
 @fixture
 def coords(config_data):
-    return types.Coords(**config_data["forecast"]["coords"])
+    return types.Coords(**config_data[STR.forecast]["coords"])
 
 
 @fixture
@@ -33,7 +33,7 @@ def cycles(config_data):
 
 @fixture
 def forecast(config_data):
-    return types.Forecast(**config_data["forecast"])
+    return types.Forecast(**config_data[STR.forecast])
 
 
 @fixture
@@ -44,11 +44,11 @@ def leadtimes(config_data):
 @fixture
 def paths(config_data):
     return types.Paths(
-        grids_baseline=Path(config_data["paths"]["grids"]["baseline"]),
-        grids_forecast=Path(config_data["paths"]["grids"]["forecast"]),
-        grids_truth=Path(config_data["paths"]["grids"][STR.truth]),
-        obs=Path(config_data["paths"]["obs"]),
-        run=Path(config_data["paths"]["run"]),
+        grids_baseline=Path(config_data[STR.paths][STR.grids][STR.baseline]),
+        grids_forecast=Path(config_data[STR.paths][STR.grids][STR.forecast]),
+        grids_truth=Path(config_data[STR.paths][STR.grids][STR.truth]),
+        obs=Path(config_data[STR.paths][STR.obs]),
+        run=Path(config_data[STR.paths][STR.run]),
     )
 
 
@@ -59,7 +59,7 @@ def regrid(config_data):
 
 @fixture
 def time(config_data):
-    return types.Time(**config_data["forecast"]["coords"]["time"])
+    return types.Time(**config_data[STR.forecast]["coords"]["time"])
 
 
 @fixture
@@ -90,7 +90,7 @@ def test_types_Baseline(baseline, config_data):
     obj = baseline
     assert obj.name == STR.HRRR
     assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
-    cfg = config_data["baseline"]
+    cfg = config_data[STR.baseline]
     assert obj == types.Baseline(**cfg)
     assert obj != types.Baseline(**{**cfg, "name": STR.GFS})
     assert obj != types.Baseline(**{**cfg, "url": "bar"})
@@ -102,11 +102,11 @@ def test_types_Baseline(baseline, config_data):
     assert str(e.value).startswith("Set baseline.name to one of:")
 
 
-@mark.parametrize("baseline", [True, False])
+@mark.parametrize(STR.baseline, [True, False])
 def test_types_Config(baseline, config_data, cycles, forecast, leadtimes, paths, regrid, truth):
     if not baseline:
-        del config_data["baseline"]
-        del config_data["paths"]["grids"]["baseline"]
+        del config_data[STR.baseline]
+        del config_data[STR.paths][STR.grids][STR.baseline]
         paths = replace(paths, grids_baseline=None)
     obj = types.Config(raw=config_data)
     assert hash(obj)
@@ -126,8 +126,8 @@ def test_types_Config(baseline, config_data, cycles, forecast, leadtimes, paths,
 
 
 def test_types_Config__bad_baseline_name_vs_truth_type(config_data):
-    del config_data["baseline"]["url"]
-    config_data["baseline"]["name"] = STR.truth
+    del config_data[STR.baseline]["url"]
+    config_data[STR.baseline]["name"] = STR.truth
     config_data[STR.truth]["type"] = types.TruthType.POINT
     config_data[STR.truth]["name"] = STR.PREPBUFR
     with raises(WXVXError) as e:
@@ -136,8 +136,8 @@ def test_types_Config__bad_baseline_name_vs_truth_type(config_data):
 
 
 def test_types_Config__bad_paths_grids_baseline(config_data):
-    config_data["baseline"]["name"] = STR.HRRR
-    del config_data["paths"]["grids"]["baseline"]
+    config_data[STR.baseline]["name"] = STR.HRRR
+    del config_data[STR.paths][STR.grids][STR.baseline]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
     assert str(e.value) == "Specify paths.grids.baseline when baseline.name is not 'truth'"
@@ -145,7 +145,7 @@ def test_types_Config__bad_paths_grids_baseline(config_data):
 
 def test_types_Config__bad_paths_grids_truth(config_data):
     config_data[STR.truth]["type"] = "grid"
-    del config_data["paths"]["grids"][STR.truth]
+    del config_data[STR.paths][STR.grids][STR.truth]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
     assert str(e.value) == "Specify paths.grids.truth when truth.type is 'grid'"
@@ -154,7 +154,7 @@ def test_types_Config__bad_paths_grids_truth(config_data):
 def test_types_Config__bad_paths_obs(config_data):
     config_data[STR.truth]["type"] = "point"
     config_data[STR.truth]["name"] = STR.PREPBUFR
-    del config_data["paths"]["obs"]
+    del config_data[STR.paths][STR.obs]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
     assert str(e.value) == "Specify paths.obs when truth.type is 'point'"
@@ -168,12 +168,12 @@ def test_types_Config__bad_regrid_to(config_data):
 
 
 @mark.parametrize(
-    ("baseline", "forecast", STR.truth),
+    (STR.baseline, STR.forecast, STR.truth),
     [(STR.GFS, STR.GFS, STR.HRRR), (STR.GFS, STR.HRRR, STR.GFS), (STR.HRRR, STR.GFS, STR.GFS)],
 )
 def test_types_Config__bad_duplicate_names(baseline, config_data, forecast, truth):
-    config_data["baseline"]["name"] = baseline
-    config_data["forecast"]["name"] = forecast
+    config_data[STR.baseline]["name"] = baseline
+    config_data[STR.forecast]["name"] = forecast
     config_data[STR.truth]["name"] = truth
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
@@ -182,12 +182,12 @@ def test_types_Config__bad_duplicate_names(baseline, config_data, forecast, trut
 
 @mark.parametrize("ignore", [True, False])
 def test_types_Config__paths_grids_baseline_ignored(config_data, ignore, logged):
-    config_data["baseline"]["name"] = STR.truth
-    del config_data["baseline"]["url"]
+    config_data[STR.baseline]["name"] = STR.truth
+    del config_data[STR.baseline]["url"]
     if ignore:
-        config_data["paths"]["grids"]["baseline"] = "/some/path"
+        config_data[STR.paths][STR.grids][STR.baseline] = "/some/path"
     else:
-        del config_data["paths"]["grids"]["baseline"]
+        del config_data[STR.paths][STR.grids][STR.baseline]
     types.Config(raw=config_data)
     warned = logged("Ignoring paths.grids.baseline when baseline.name is 'truth'")
     assert warned if ignore else not warned
@@ -201,7 +201,7 @@ def test_types_Coords(config_data, coords):
     assert obj.longitude == "longitude"
     assert obj.time.inittime == "time"
     assert obj.time.leadtime == "lead_time"
-    cfg = config_data["forecast"]["coords"]
+    cfg = config_data[STR.forecast]["coords"]
     other1 = types.Coords(**{**cfg, "time": types.Time(inittime="time", leadtime="lead_time")})
     assert obj == other1
     other2 = types.Coords(**{**cfg, "latitude": "lat"})
@@ -240,7 +240,7 @@ def test_types_Forecast(config_data, forecast):
     assert obj.coords.time.leadtime == "lead_time"
     assert obj.name == "Forecast"
     assert obj.path == "/path/to/forecast-{{ yyyymmdd }}-{{ hh }}-{{ '%03d' % fh }}.nc"
-    cfg = config_data["forecast"]
+    cfg = config_data[STR.forecast]
     other1 = types.Forecast(**cfg)
     assert obj == other1
     other2 = types.Forecast(**{**cfg, "name": "foo"})
@@ -278,20 +278,20 @@ def test_types_Leadtimes():
 
 def test_types_Paths(paths, config_data):
     obj = paths
-    assert obj.grids_baseline == Path(config_data["paths"]["grids"]["baseline"])
-    assert obj.grids_forecast == Path(config_data["paths"]["grids"]["forecast"])
-    assert obj.grids_truth == Path(config_data["paths"]["grids"][STR.truth])
-    assert obj.run == Path(config_data["paths"]["run"])
+    assert obj.grids_baseline == Path(config_data[STR.paths][STR.grids][STR.baseline])
+    assert obj.grids_forecast == Path(config_data[STR.paths][STR.grids][STR.forecast])
+    assert obj.grids_truth == Path(config_data[STR.paths][STR.grids][STR.truth])
+    assert obj.run == Path(config_data[STR.paths][STR.run])
     cfg = {
-        "grids_baseline": Path(config_data["paths"]["grids"]["baseline"]),
-        "grids_forecast": Path(config_data["paths"]["grids"]["forecast"]),
-        "grids_truth": Path(config_data["paths"]["grids"][STR.truth]),
-        "obs": Path(config_data["paths"]["obs"]),
-        "run": Path(config_data["paths"]["run"]),
+        "grids_baseline": Path(config_data[STR.paths][STR.grids][STR.baseline]),
+        "grids_forecast": Path(config_data[STR.paths][STR.grids][STR.forecast]),
+        "grids_truth": Path(config_data[STR.paths][STR.grids][STR.truth]),
+        STR.obs: Path(config_data[STR.paths][STR.obs]),
+        STR.run: Path(config_data[STR.paths][STR.run]),
     }
     other1 = types.Paths(**cfg)
     assert obj == other1
-    cfg["run"] = Path("/other/path")
+    cfg[STR.run] = Path("/other/path")
     other2 = types.Paths(**cfg)
     assert obj != other2
 
@@ -313,7 +313,7 @@ def test_types_Time(config_data, time):
     assert hash(obj)
     assert obj.inittime == "time"
     assert obj.leadtime == "lead_time"
-    cfg = config_data["forecast"]["coords"]["time"]
+    cfg = config_data[STR.forecast]["coords"]["time"]
     other1 = types.Time(**cfg)
     assert obj == other1
     other2 = types.Time(**{**cfg, "inittime": "foo"})
@@ -323,12 +323,12 @@ def test_types_Time(config_data, time):
 def test_types_ToGrid():
     for f in [repr, str]:
         f = cast(Callable, f)
-        assert f(types.ToGrid(val="forecast")) == types.ToGridVal.FCST.name
+        assert f(types.ToGrid(val=STR.forecast)) == types.ToGridVal.FCST.name
         assert f(types.ToGrid(val=STR.truth)) == types.ToGridVal.OBS.name
         assert f(types.ToGrid(val="G104")) == "G104"
     assert hash(types.ToGrid(val="G104")) == hash(types.ToGrid(val="G104"))
     assert types.ToGrid(val="G104") == types.ToGrid(val="G104")
-    assert types.ToGrid(val="forecast") != types.ToGrid(val=STR.truth)
+    assert types.ToGrid(val=STR.forecast) != types.ToGrid(val=STR.truth)
 
 
 @mark.parametrize("truth_type", ["grid", types.TruthType.GRID])

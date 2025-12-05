@@ -396,14 +396,14 @@ def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, testv
 
 
 def test_workflow__existing(fakefs):
-    path = fakefs / "forecast"
+    path = fakefs / STR.forecast
     assert not workflow._existing(path=path).ready
     path.touch()
     assert workflow._existing(path=path).ready
 
 
 def test_workflow__forecast_dataset(da_with_leadtime, fakefs):
-    path = fakefs / "forecast"
+    path = fakefs / STR.forecast
     assert not workflow._forecast_dataset(path=path).ready
     path.touch()
     with patch.object(workflow.xr, "open_dataset", return_value=da_with_leadtime.to_dataset()):
@@ -527,7 +527,7 @@ def test_workflow__grid_nc(c_real_fs, check_cf_metadata, da_with_leadtime, tc, t
 
 
 def test_workflow__grid_nc__no_paths_grids_forecast(config_data, tc, testvars):
-    c = Config(raw=with_del(config_data, "paths", "grids", "forecast"))
+    c = Config(raw=with_del(config_data, STR.paths, STR.grids, STR.forecast))
     with raises(WXVXError) as e:
         workflow._grid_nc(c=c, varname="HGT", tc=tc, var=testvars["gh"])
     assert str(e.value) == "Specify path.grids.forecast when forecast dataset is netCDF or Zarr"
@@ -640,7 +640,7 @@ def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars)
         yield Asset(Path("/some/file"), lambda: True)
 
     taskfunc = workflow._stats_vs_grid
-    rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
+    rundir = fakefs / STR.run / "stats" / "19700101" / "00" / "000"
     taskname = (
         "Stats vs grid for %s 2t-heightAboveGround-0002 at 19700101 00Z 000"
         % str(source).split(".")[1].lower()
@@ -677,7 +677,7 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, source, tc, testvars):
 
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
     c.truth = replace(c.truth, name=STR.PREPBUFR, type="point", url=url)
-    rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
+    rundir = fakefs / STR.run / "stats" / "19700101" / "00" / "000"
     var = testvars["2t"]
     taskname = "Stats vs obs for %s %s at 19700101 00Z 000" % (source.name.lower(), var)
     kwargs = dict(c=c, varname="T2M", tc=tc, var=var, prefix="foo", source=source)

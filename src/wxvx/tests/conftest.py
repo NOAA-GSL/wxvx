@@ -56,7 +56,7 @@ def c_real_fs(config_data, gen_config, tmp_path):
 @fixture
 def config_data():
     return {
-        "baseline": {
+        STR.baseline: {
             "name": STR.HRRR,
             "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
@@ -65,7 +65,7 @@ def config_data():
             "step": "12:00:00",
             "stop": "2024-12-20T06:00:00",
         },
-        "forecast": {
+        STR.forecast: {
             "coords": {
                 "latitude": "latitude",
                 "level": "level",
@@ -98,18 +98,18 @@ def config_data():
             "step": "06:00:00",
             "stop": "12:00:00",
         },
-        "paths": {
-            "grids": {
-                "baseline": "/path/to/grids/baseline",
-                "forecast": "/path/to/grids/forecast",
+        STR.paths: {
+            STR.grids: {
+                STR.baseline: "/path/to/grids/baseline",
+                STR.forecast: "/path/to/grids/forecast",
                 STR.truth: "/path/to/grids/truth",
             },
-            "obs": "/path/to/obs",
-            "run": "/path/to/run",
+            STR.obs: "/path/to/obs",
+            STR.run: "/path/to/run",
         },
         "regrid": {
             "method": "NEAREST",
-            "to": "forecast",
+            "to": STR.forecast,
         },
         STR.truth: {
             "name": STR.GFS,
@@ -182,21 +182,21 @@ def fakefs(fs):
 @fixture
 def gen_config():
     def gen_config(config_data, rootpath) -> Config:
-        dirs = ("grids/baseline", "grids/forecast", "grids/truth", "obs", "run")
+        dirs = ("grids/baseline", "grids/forecast", "grids/truth", STR.obs, STR.run)
         grids_baseline, grids_forecast, grids_truth, obs, run = [str(rootpath / x) for x in dirs]
         for x in grids_truth, grids_forecast, obs, run:
             Path(x).mkdir(parents=True)
         return Config(
             {
                 **config_data,
-                "paths": {
-                    "grids": {
-                        "baseline": grids_baseline,
-                        "forecast": grids_forecast,
+                STR.paths: {
+                    STR.grids: {
+                        STR.baseline: grids_baseline,
+                        STR.forecast: grids_forecast,
                         STR.truth: grids_truth,
                     },
-                    "obs": obs,
-                    "run": run,
+                    STR.obs: obs,
+                    STR.run: run,
                 },
             }
         )
