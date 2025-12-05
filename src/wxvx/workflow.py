@@ -223,13 +223,12 @@ def _config_point_stat(
     field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
     surface = var.level_type in ("heightAboveGround", "surface")
     sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast, Source.TRUTH: c.truth}
-    model = cast(Named, sections[source]).name
     config = {
         "fcst": {"field": [field_fcst]},
         "interp": {"shape": "SQUARE", "type": {"method": "BILIN", "width": 2}, "vld_thresh": 1.0},
         "message_type": ["SFC" if surface else "ATM"],
         "message_type_group_map": {"ATM": "ADPUPA,AIRCAR,AIRCFT", "SFC": "ADPSFC"},
-        "model": model,
+        "model": cast(Named, sections[source]).name,
         "obs": {"field": [field_obs]},
         "obs_window": {"beg": -900 if surface else -1800, "end": 900 if surface else 1800},
         "output_flag": {"cnt": "BOTH"},
