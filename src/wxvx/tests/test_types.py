@@ -152,6 +152,7 @@ def test_types_Config__bad_paths_grids_truth(config_data):
 
 def test_types_Config__bad_paths_obs(config_data):
     config_data["truth"]["type"] = "point"
+    config_data["truth"]["name"] = "PREPBUFR"
     del config_data["paths"]["obs"]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)

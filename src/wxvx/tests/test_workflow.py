@@ -552,7 +552,7 @@ def test_workflow__missing(fakefs):
 def test_workflow__netcdf_from_obs(c, tc):
     yyyymmdd, hh, _ = tcinfo(tc)
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.truth = replace(c.truth, type="point", url=url)
+    c.truth = replace(c.truth, name="PREPBUFR", type="point", url=url)
     path = c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nc"
     assert not path.is_file()
     prepbufr = path.with_suffix(".nr")
@@ -671,7 +671,7 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, source, tc, testvars):
         yield Asset(Path("/some/file"), lambda: True)
 
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.truth = replace(c.truth, type="point", url=url)
+    c.truth = replace(c.truth, name="PREPBUFR", type="point", url=url)
     rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
     var = testvars["2t"]
     taskname = "Stats vs obs for %s %s at 19700101 00Z 000" % (source.name.lower(), var)
@@ -922,7 +922,7 @@ def noop():
 @fixture
 def obs_info(c):
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.truth = replace(c.truth, type="point", url=url)
+    c.truth = replace(c.truth, name="PREPBUFR", type="point", url=url)
     expected = [
         c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.x"
         for (yyyymmdd, hh) in [

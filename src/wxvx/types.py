@@ -331,6 +331,17 @@ class Truth:
     url: str
 
     def __post_init__(self):
+        # Handle 'type': Check validity and normalize values:
+        types = dict(
+            zip(
+                [TruthType.GRID.name.lower(), TruthType.POINT.name.lower()],
+                [TruthType.GRID, TruthType.POINT],
+                strict=True,
+            )
+        )
+        if isinstance(self.type, str):
+            assert self.type in types
+        _force(self, "type", types.get(str(self.type), self.type))
         # Handle 'name':
         if self.name not in _TRUTH_NAMES:
             raise WXVXError("Set truth.name to one of: %s" % ", ".join(_TRUTH_NAMES))
@@ -344,12 +355,6 @@ class Truth:
                 "When truth.type is '%s' set truth.name to: %s"
                 % (self.type.name.lower(), ", ".join(_TRUTH_NAMES_POINT))
             )
-        # Handle 'type': Check validity and normalize values:
-        typenames = [TruthType.GRID.name.lower(), TruthType.POINT.name.lower()]
-        if isinstance(self.type, str):
-            assert self.type in typenames
-        types = dict(zip(typenames, [TruthType.GRID, TruthType.POINT], strict=True))
-        _force(self, "type", types.get(str(self.type), self.type))
 
 
 @dataclass(frozen=True)
