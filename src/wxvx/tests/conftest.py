@@ -102,7 +102,7 @@ def config_data():
             "grids": {
                 "baseline": "/path/to/grids/baseline",
                 "forecast": "/path/to/grids/forecast",
-                "truth": "/path/to/grids/truth",
+                STR.truth: "/path/to/grids/truth",
             },
             "obs": "/path/to/obs",
             "run": "/path/to/run",
@@ -111,7 +111,7 @@ def config_data():
             "method": "NEAREST",
             "to": "forecast",
         },
-        "truth": {
+        STR.truth: {
             "name": STR.GFS,
             "type": "grid",
             "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
@@ -193,7 +193,7 @@ def gen_config():
                     "grids": {
                         "baseline": grids_baseline,
                         "forecast": grids_forecast,
-                        "truth": grids_truth,
+                        STR.truth: grids_truth,
                     },
                     "obs": obs,
                     "run": run,

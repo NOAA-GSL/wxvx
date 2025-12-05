@@ -27,7 +27,7 @@ def test_schema(logged, config_data, fs):
         "forecast",
         "leadtimes",
         "paths",
-        "truth",
+        STR.truth,
         "variables",
     ]:
         assert not ok(with_del(config, key))
@@ -69,8 +69,8 @@ def test_schema_baseline(logged, config_data, fs):
     # Basic correctness:
     assert ok(config)
     # The "name" property's value can be "truth", in which case "url" must not be set:
-    assert not ok(with_set(config, "truth", "name"))
-    assert ok(with_del(with_set(config, "truth", "name"), "url"))
+    assert not ok(with_set(config, STR.truth, "name"))
+    assert ok(with_del(with_set(config, STR.truth, "name"), "url"))
     # If name is not "truth", URL must be specified:
     assert not ok(with_del(with_set(config, STR.GFS, "name"), "url"))
     assert logged("'url' is a required property")
@@ -245,9 +245,9 @@ def test_schema_paths(config_data, fs, logged):
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
     # Either grids.truth or obs is required:
-    assert ok(with_del(config, "grids", "truth"))
+    assert ok(with_del(config, "grids", STR.truth))
     assert ok(with_del(config, "obs"))
-    assert not ok(with_del(with_del(config, "grids", "truth"), "obs"))
+    assert not ok(with_del(with_del(config, "grids", STR.truth), "obs"))
 
 
 def test_schema_paths_grids(config_data, fs, logged):
@@ -258,7 +258,7 @@ def test_schema_paths_grids(config_data, fs, logged):
     # Additional keys are not allowed:
     assert not ok(with_set(config, 42, "n"))
     # Some keys have string values:
-    for key in ["forecast", "truth"]:
+    for key in ["forecast", STR.truth]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
     # Some values are required:
@@ -291,8 +291,8 @@ def test_schema_regrid(logged, config_data, fs):
 
 
 def test_schema_truth(logged, config_data, fs):
-    ok = validator(fs, "properties", "truth")
-    config = config_data["truth"]
+    ok = validator(fs, "properties", STR.truth)
+    config = config_data[STR.truth]
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:

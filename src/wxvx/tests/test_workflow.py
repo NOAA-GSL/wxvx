@@ -82,10 +82,10 @@ TESTDATA = {
 # Task Tests
 
 
-@mark.parametrize("baseline_name", [STR.HRRR, "truth", None])
+@mark.parametrize("baseline_name", [STR.HRRR, STR.truth, None])
 @mark.parametrize("truth_type", [TruthType.GRID, TruthType.POINT])
 def test_workflow_grids(baseline_name, c, noop, truth_type):
-    url = None if baseline_name == "truth" else c.baseline.url
+    url = None if baseline_name == STR.truth else c.baseline.url
     c.baseline = replace(c.baseline, name=baseline_name, url=url)
     truth_name = "GFS" if truth_type is TruthType.GRID else STR.PREPBUFR
     c.truth = replace(c.truth, name=truth_name, type=truth_type)
@@ -102,9 +102,9 @@ def test_workflow_grids(baseline_name, c, noop, truth_type):
         assert len(workflow.grids(c=c).ref) == expected
 
 
-@mark.parametrize("baseline_name", [STR.HRRR, "truth", None])
+@mark.parametrize("baseline_name", [STR.HRRR, STR.truth, None])
 def test_workflow_grids_baseline(baseline_name, c, ngrids, noop):
-    url = None if baseline_name == "truth" else c.baseline.url
+    url = None if baseline_name == STR.truth else c.baseline.url
     c.baseline = replace(c.baseline, name=baseline_name, url=url)
     with patch.object(workflow, "_grid_grib", noop):
         node = workflow.grids_baseline(c=c)
@@ -114,7 +114,7 @@ def test_workflow_grids_baseline(baseline_name, c, ngrids, noop):
     else:
         assert len(cast(list[Node], node.req)) == ngrids
         assert node.taskname == "Baseline grids for %s" % (
-            c.truth.name if baseline_name == "truth" else baseline_name
+            c.truth.name if baseline_name == STR.truth else baseline_name
         )
 
 
@@ -473,7 +473,7 @@ def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, node
 
 @mark.parametrize("template", ["{root}/foo", "file://{root}/foo"])
 def test_workflow__grid_grib__local(config_data, fakefs, gen_config, node, tc, template, testvars):
-    config_data["truth"]["url"] = template.format(root=fakefs)
+    config_data[STR.truth]["url"] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
     with patch.object(
         workflow, "_grib_message_in_file", return_value=node
@@ -823,13 +823,13 @@ def test_workflow__stat_args(c, statkit, cycle):
     ]
 
 
-@mark.parametrize("baseline_name", [STR.HRRR, "truth", None])
+@mark.parametrize("baseline_name", [STR.HRRR, STR.truth, None])
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
 def test_workflow__stat_reqs(baseline_name, c, statkit, cycle):
     c.baseline = replace(
         c.baseline,
         name=baseline_name,
-        url=None if baseline_name == "truth" else c.baseline.url,
+        url=None if baseline_name == STR.truth else c.baseline.url,
     )
     with (
         patch.object(workflow, "_stats_vs_grid") as _stats_vs_grid,

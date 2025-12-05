@@ -3,10 +3,9 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class STR:
-    BASELINE: str = "BASELINE"
-    FORECAST: str = "FORECAST"
     GFS: str = "GFS"
     HRRR: str = "HRRR"
     PREPBUFR: str = "PREPBUFR"
-    TRUTH: str = "TRUTH"
+    OBS: str = "OBS"
     session: str = "session"
+    truth: str = "truth"

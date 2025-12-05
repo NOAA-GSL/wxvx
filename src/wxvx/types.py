@@ -26,30 +26,20 @@ class Named(Protocol):
     name: str
 
 
-Source = Enum(
-    "Source",
-    [
-        ("BASELINE", auto()),
-        ("FORECAST", auto()),
-        ("TRUTH", auto()),
-    ],
-)
+class Source(Enum):
+    BASELINE = auto()
+    FORECAST = auto()
+    TRUTH = auto()
 
-ToGridVal = Enum(
-    "ToGridVal",
-    [
-        ("FCST", auto()),
-        ("OBS", auto()),
-    ],
-)
 
-TruthType = Enum(
-    "TruthType",
-    [
-        ("GRID", auto()),
-        ("POINT", auto()),
-    ],
-)
+class ToGridVal(Enum):
+    FCST = auto()
+    OBS = auto()
+
+
+class TruthType(Enum):
+    GRID = auto()
+    POINT = auto()
 
 
 def validated_config(yc: YAMLConfig) -> Config:
@@ -70,12 +60,12 @@ class Baseline:
 
     def __post_init__(self):
         # Handle 'name':
-        names = [*_TRUTH_NAMES_GRID, "truth", None]
+        names = [*_TRUTH_NAMES_GRID, STR.truth, None]
         if self.name not in names:
             strnames = [str(name) for name in names]
             raise WXVXError("Set baseline.name to one of: %s" % ", ".join(strnames))
         # Handle combination of 'name' and 'url':
-        if self.name == "truth":
+        if self.name == STR.truth:
             assert self.url is None
         elif self.name is not None:
             assert self.url is not None
@@ -93,17 +83,17 @@ class Config:
         self.paths = Paths(
             grids.get("baseline"),
             grids.get("forecast"),
-            grids.get("truth"),
+            grids.get(STR.truth),
             paths.get("obs"),
             paths["run"],
         )
         self.raw = raw
         self.regrid = Regrid(**raw.get("regrid", {}))
-        self.truth = Truth(**raw["truth"])
+        self.truth = Truth(**raw[STR.truth])
         self.variables = raw["variables"]
         self._validate()
 
-    KEYS = ("baseline", "cycles", "forecast", "leadtimes", "paths", "truth", "variables")
+    KEYS = ("baseline", "cycles", "forecast", "leadtimes", "paths", STR.truth, "variables")
 
     def __eq__(self, other):
         return all(getattr(self, k) == getattr(other, k) for k in self.KEYS)
@@ -124,7 +114,7 @@ class Config:
         if len(set(names)) != len(names):
             msg = "Distinct baseline.name (if set), forecast.name, and truth.name required"
             raise WXVXError(msg)
-        if self.baseline.name == "truth":
+        if self.baseline.name == STR.truth:
             if self.truth.type is TruthType.POINT:
                 msg = "Settings baseline.name '%s' and truth.type '%s' are incompatible" % (
                     self.baseline.name,
@@ -136,7 +126,7 @@ class Config:
         elif self.baseline.name is not None and not self.paths.grids_baseline:
             msg = "Specify paths.grids.baseline when baseline.name is not 'truth'"
             raise WXVXError(msg)
-        if self.regrid.to == "OBS":
+        if self.regrid.to == STR.OBS:
             msg = "Cannot regrid to observations per regrid.to config value"
             raise WXVXError(msg)
         if self.truth.type == TruthType.GRID and not self.paths.grids_truth:
@@ -310,7 +300,7 @@ class Time:
 class ToGrid:
     def __init__(self, val: str):
         self.val: str | ToGridVal = val
-        mapping = {"forecast": ToGridVal.FCST, "truth": ToGridVal.OBS}
+        mapping = {"forecast": ToGridVal.FCST, STR.truth: ToGridVal.OBS}
         self.val = mapping.get(val, val)
 
     def __eq__(self, other):
