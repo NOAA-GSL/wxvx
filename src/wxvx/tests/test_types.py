@@ -345,8 +345,8 @@ def test_types_Truth(config_data, truth, truth_type):
 @mark.parametrize(
     ("truth_name", "truth_type"),
     [
-        ("GFS", types.TruthType.POINT),
-        ("PREPBUFR", types.TruthType.GRID),
+        *[("GFS", x) for x in (types.TruthType.POINT, "point")],
+        *[("PREPBUFR", x) for x in (types.TruthType.GRID, "grid")],
         ("foo", types.TruthType.GRID),
     ],
 )

@@ -68,12 +68,12 @@ class Baseline:
     url: str | None = None
 
     def __post_init__(self):
-        # Handle name:
+        # Handle 'name':
         names = [*_TRUTH_NAMES_GRID, "truth", None]
         if self.name not in names:
             strnames = [str(name) for name in names]
             raise WXVXError("Set baseline.name to one of: %s" % ", ".join(strnames))
-        # Handle combination of name and url:
+        # Handle combination of 'name' and 'url':
         if self.name == "truth":
             assert self.url is None
         elif self.name is not None:
@@ -331,7 +331,7 @@ class Truth:
     url: str
 
     def __post_init__(self):
-        # Handle name:
+        # Handle 'name':
         if self.name not in _TRUTH_NAMES:
             raise WXVXError("Set truth.name to one of: %s" % ", ".join(_TRUTH_NAMES))
         if self.type is TruthType.GRID and self.name not in _TRUTH_NAMES_GRID:
@@ -344,8 +344,8 @@ class Truth:
                 "When truth.type is '%s' set truth.name to: %s"
                 % (self.type.name.lower(), ", ".join(_TRUTH_NAMES_POINT))
             )
-        # Handle type:
-        typenames = ["grid", "point"]
+        # Handle 'type': Check validity and normalize values:
+        typenames = [TruthType.GRID.name.lower(), TruthType.POINT.name.lower()]
         if isinstance(self.type, str):
             assert self.type in typenames
         types = dict(zip(typenames, [TruthType.GRID, TruthType.POINT], strict=True))
