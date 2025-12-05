@@ -64,6 +64,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │     baseline:      │     Baseline grids                        │
 │     forecast:      │     Forecast grids                        │
 │     truth:         │     Truth grids                           │
+│   obs:             │   Where to store observations             │
 │   run:             │   Where to store run data                 │
 │ regrid:            │ MET regrid options                        │
 │   method:          │   Regridding method                       │
