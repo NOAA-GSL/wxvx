@@ -828,7 +828,7 @@ def test_workflow__stat_reqs(baseline_name, c, statkit, cycle):
     c.baseline = replace(
         c.baseline,
         name=baseline_name,
-        url=None if baseline_name == "truth" else c.baseline.name,
+        url=None if baseline_name == "truth" else c.baseline.url,
     )
     with (
         patch.object(workflow, "_stats_vs_grid") as _stats_vs_grid,
