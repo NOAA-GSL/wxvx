@@ -139,10 +139,10 @@ class Config:
             msg = "Cannot regrid to observations per regrid.to config value"
             raise WXVXError(msg)
         if self.truth.type == TruthType.GRID and not self.paths.grids_truth:
-            msg = "Specify path.grids.truth when truth.type is '%s'" % TruthType.GRID.name.lower()
+            msg = "Specify paths.grids.truth when truth.type is '%s'" % TruthType.GRID.name.lower()
             raise WXVXError(msg)
         if self.truth.type == TruthType.POINT and not self.paths.obs:
-            msg = "Specify path.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
+            msg = "Specify paths.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
             raise WXVXError(msg)
 
 
