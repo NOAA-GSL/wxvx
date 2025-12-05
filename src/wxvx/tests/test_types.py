@@ -147,7 +147,7 @@ def test_types_Config__bad_paths_grids_truth(config_data):
     del config_data["paths"]["grids"]["truth"]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
-    assert str(e.value) == "Specify path.grids.truth when truth.type is 'grid'"
+    assert str(e.value) == "Specify paths.grids.truth when truth.type is 'grid'"
 
 
 def test_types_Config__bad_paths_obs(config_data):
