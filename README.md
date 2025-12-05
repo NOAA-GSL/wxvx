@@ -315,6 +315,7 @@ paths:
   run: "{{ meta.workdir }}/run"
 truth:
   name: HRRR
+  type: grid
   url: https://noaa-hrrr-bdp-pds.s3.amazonaws.com/hrrr.{{ yyyymmdd }}/conus/hrrr.t{{ hh }}z.wrfprsf{{ "%02d" % fh }}.grib2
 variables:
   HGT:
