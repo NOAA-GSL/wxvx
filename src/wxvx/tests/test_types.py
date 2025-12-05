@@ -10,6 +10,7 @@ from pytest import fixture, mark, raises
 from uwtools.api.config import get_yaml_config
 
 from wxvx import types
+from wxvx.strings import STR
 from wxvx.util import WXVXError, resource_path
 
 # Fixtures
@@ -87,11 +88,11 @@ def test_types_validated_config__fail_json_schema(config_data, fs, logged):
 
 def test_types_Baseline(baseline, config_data):
     obj = baseline
-    assert obj.name == "HRRR"
+    assert obj.name == STR.HRRR
     assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
     cfg = config_data["baseline"]
     assert obj == types.Baseline(**cfg)
-    assert obj != types.Baseline(**{**cfg, "name": "GFS"})
+    assert obj != types.Baseline(**{**cfg, "name": STR.GFS})
     assert obj != types.Baseline(**{**cfg, "url": "bar"})
     assert types.Baseline(name="truth")
     with raises(AssertionError):
@@ -128,14 +129,14 @@ def test_types_Config__bad_baseline_name_vs_truth_type(config_data):
     del config_data["baseline"]["url"]
     config_data["baseline"]["name"] = "truth"
     config_data["truth"]["type"] = types.TruthType.POINT
-    config_data["truth"]["name"] = "PREPBUFR"
+    config_data["truth"]["name"] = STR.PREPBUFR
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
     assert str(e.value) == "Settings baseline.name 'truth' and truth.type 'point' are incompatible"
 
 
 def test_types_Config__bad_paths_grids_baseline(config_data):
-    config_data["baseline"]["name"] = "HRRR"
+    config_data["baseline"]["name"] = STR.HRRR
     del config_data["paths"]["grids"]["baseline"]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
@@ -152,7 +153,7 @@ def test_types_Config__bad_paths_grids_truth(config_data):
 
 def test_types_Config__bad_paths_obs(config_data):
     config_data["truth"]["type"] = "point"
-    config_data["truth"]["name"] = "PREPBUFR"
+    config_data["truth"]["name"] = STR.PREPBUFR
     del config_data["paths"]["obs"]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
@@ -168,7 +169,7 @@ def test_types_Config__bad_regrid_to(config_data):
 
 @mark.parametrize(
     ("baseline", "forecast", "truth"),
-    [("GFS", "GFS", "HRRR"), ("GFS", "HRRR", "GFS"), ("HRRR", "GFS", "GFS")],
+    [(STR.GFS, STR.GFS, STR.HRRR), (STR.GFS, STR.HRRR, STR.GFS), (STR.HRRR, STR.GFS, STR.GFS)],
 )
 def test_types_Config__bad_duplicate_names(baseline, config_data, forecast, truth):
     config_data["baseline"]["name"] = baseline
@@ -333,30 +334,30 @@ def test_types_ToGrid():
 @mark.parametrize("truth_type", ["grid", types.TruthType.GRID])
 def test_types_Truth(config_data, truth, truth_type):
     obj = truth
-    assert obj.name == "GFS"
+    assert obj.name == STR.GFS
     assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
     cfg = config_data["truth"]
     cfg["type"] = truth_type
     other1 = types.Truth(**cfg)
     assert obj == other1
-    other2 = types.Truth(**{**cfg, "name": "HRRR"})
+    other2 = types.Truth(**{**cfg, "name": STR.HRRR})
     assert obj != other2
 
 
 @mark.parametrize(
     ("truth_name", "truth_type"),
     [
-        *[("GFS", x) for x in (types.TruthType.POINT, "point")],
-        *[("PREPBUFR", x) for x in (types.TruthType.GRID, "grid")],
+        *[(STR.GFS, x) for x in (types.TruthType.POINT, "point")],
+        *[(STR.PREPBUFR, x) for x in (types.TruthType.GRID, "grid")],
         ("foo", types.TruthType.GRID),
     ],
 )
 def test_types_Truth__bad_name(truth_name, truth_type):
     with raises(WXVXError) as e:
         types.Truth(name=truth_name, type=truth_type, url="http://some.url")
-    if truth_name == "GFS":
+    if truth_name == STR.GFS:
         msg = "When truth.type is 'point' set truth.name to:"
-    elif truth_name == "PREPBUFR":
+    elif truth_name == STR.PREPBUFR:
         msg = "When truth.type is 'grid' set truth.name to:"
     else:  # truth_name == "foo"
         msg = "Set truth.name to one of:"

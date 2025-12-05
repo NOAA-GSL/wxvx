@@ -14,6 +14,7 @@ from iotaa import Node
 from pytest import fixture
 
 from wxvx import times
+from wxvx.strings import STR
 from wxvx.types import Config
 
 if TYPE_CHECKING:
@@ -56,7 +57,7 @@ def c_real_fs(config_data, gen_config, tmp_path):
 def config_data():
     return {
         "baseline": {
-            "name": "HRRR",
+            "name": STR.HRRR,
             "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
         "cycles": {
@@ -111,7 +112,7 @@ def config_data():
             "to": "forecast",
         },
         "truth": {
-            "name": "GFS",
+            "name": STR.GFS,
             "type": "grid",
             "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },

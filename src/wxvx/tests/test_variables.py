@@ -7,6 +7,7 @@ import xarray as xr
 from pytest import fixture, mark, raises
 
 from wxvx import variables
+from wxvx.strings import STR
 from wxvx.util import WXVXError, render
 
 # Fixtures
@@ -210,7 +211,7 @@ def test_variables_metlevel__error():
 
 
 @mark.parametrize(
-    ("name", "obj"), [("GFS", variables.GFS), ("HRRR", variables.HRRR), ("FOO", None)]
+    ("name", "obj"), [(STR.GFS, variables.GFS), (STR.HRRR, variables.HRRR), ("FOO", None)]
 )
 def test_variables_model_class(name, obj):
     if obj is None:
@@ -230,7 +231,7 @@ def test_variables_model_names():
     class C2(B): ...
 
     assert variables.model_names(A) == {"B", "C1", "C2"}
-    assert variables.model_names() == {"GFS", "HRRR", "PREPBUFR"}
+    assert variables.model_names() == {STR.GFS, STR.HRRR, STR.PREPBUFR}
 
 
 def test_variables__da_val__fail_unparesable(da_flat):

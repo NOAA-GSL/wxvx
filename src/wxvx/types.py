@@ -11,10 +11,11 @@ from typing import Any, Protocol, cast
 
 from uwtools.api.config import YAMLConfig, validate
 
+from wxvx.strings import STR
 from wxvx.util import LINETYPE, WXVXError, expand, resource_path, to_datetime, to_timedelta
 
-_TRUTH_NAMES_GRID = ("GFS", "HRRR")
-_TRUTH_NAMES_POINT = ("PREPBUFR",)
+_TRUTH_NAMES_GRID = (STR.GFS, STR.HRRR)
+_TRUTH_NAMES_POINT = (STR.PREPBUFR,)
 _TRUTH_NAMES = tuple(sorted([*_TRUTH_NAMES_GRID, *_TRUTH_NAMES_POINT]))
 
 _DatetimeT = str | datetime

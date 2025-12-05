@@ -19,6 +19,7 @@ from iotaa import Asset, Node, external
 from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
+from wxvx.strings import STR
 from wxvx.tests.support import with_del
 from wxvx.times import TimeCoords, gen_validtimes, tcinfo
 from wxvx.types import Config, Source, TruthType
@@ -81,12 +82,12 @@ TESTDATA = {
 # Task Tests
 
 
-@mark.parametrize("baseline_name", ["HRRR", "truth", None])
+@mark.parametrize("baseline_name", [STR.HRRR, "truth", None])
 @mark.parametrize("truth_type", [TruthType.GRID, TruthType.POINT])
 def test_workflow_grids(baseline_name, c, noop, truth_type):
     url = None if baseline_name == "truth" else c.baseline.url
     c.baseline = replace(c.baseline, name=baseline_name, url=url)
-    truth_name = "GFS" if truth_type is TruthType.GRID else "PREPBUFR"
+    truth_name = "GFS" if truth_type is TruthType.GRID else STR.PREPBUFR
     c.truth = replace(c.truth, name=truth_name, type=truth_type)
     expected = 1
     if baseline_name is not None:
@@ -101,7 +102,7 @@ def test_workflow_grids(baseline_name, c, noop, truth_type):
         assert len(workflow.grids(c=c).ref) == expected
 
 
-@mark.parametrize("baseline_name", ["HRRR", "truth", None])
+@mark.parametrize("baseline_name", [STR.HRRR, "truth", None])
 def test_workflow_grids_baseline(baseline_name, c, ngrids, noop):
     url = None if baseline_name == "truth" else c.baseline.url
     c.baseline = replace(c.baseline, name=baseline_name, url=url)
@@ -124,7 +125,7 @@ def test_workflow_grids_forecast(c, ngrids, noop):
 
 @mark.parametrize("truth_type", [TruthType.GRID, TruthType.POINT])
 def test_workflow_grids_truth(c, ngrids, noop, truth_type):
-    truth_name = "GFS" if truth_type is TruthType.GRID else "PREPBUFR"
+    truth_name = "GFS" if truth_type is TruthType.GRID else STR.PREPBUFR
     c.truth = replace(c.truth, name=truth_name, type=truth_type)
     expected = ngrids if truth_type is TruthType.GRID else 0
     with patch.object(workflow, "_grid_grib", noop):
@@ -556,7 +557,7 @@ def test_workflow__missing(fakefs):
 def test_workflow__netcdf_from_obs(c, tc):
     yyyymmdd, hh, _ = tcinfo(tc)
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.truth = replace(c.truth, name="PREPBUFR", type="point", url=url)
+    c.truth = replace(c.truth, name=STR.PREPBUFR, type="point", url=url)
     path = c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.nc"
     assert not path.is_file()
     prepbufr = path.with_suffix(".nr")
@@ -675,7 +676,7 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, source, tc, testvars):
         yield Asset(Path("/some/file"), lambda: True)
 
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.truth = replace(c.truth, name="PREPBUFR", type="point", url=url)
+    c.truth = replace(c.truth, name=STR.PREPBUFR, type="point", url=url)
     rundir = fakefs / "run" / "stats" / "19700101" / "00" / "000"
     var = testvars["2t"]
     taskname = "Stats vs obs for %s %s at 19700101 00Z 000" % (source.name.lower(), var)
@@ -822,7 +823,7 @@ def test_workflow__stat_args(c, statkit, cycle):
     ]
 
 
-@mark.parametrize("baseline_name", ["HRRR", "truth", None])
+@mark.parametrize("baseline_name", [STR.HRRR, "truth", None])
 @mark.parametrize("cycle", [datetime(2024, 12, 19, 18, tzinfo=timezone.utc), None])
 def test_workflow__stat_reqs(baseline_name, c, statkit, cycle):
     c.baseline = replace(
@@ -926,7 +927,7 @@ def noop():
 @fixture
 def obs_info(c):
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
-    c.truth = replace(c.truth, name="PREPBUFR", type="point", url=url)
+    c.truth = replace(c.truth, name=STR.PREPBUFR, type="point", url=url)
     expected = [
         c.paths.obs / yyyymmdd / hh / f"gdas.{yyyymmdd}.t{hh}z.prepbufr.x"
         for (yyyymmdd, hh) in [

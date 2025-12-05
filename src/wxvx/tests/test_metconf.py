@@ -3,6 +3,7 @@ from collections.abc import Callable
 from pytest import mark, raises
 
 from wxvx import metconf
+from wxvx.strings import STR
 from wxvx.types import ToGridVal
 
 # Public:
@@ -74,7 +75,7 @@ def test_metconf_render(tidy):
             "beg": -1800,
             "end": 1800,
         },
-        "obtype": "HRRR",
+        "obtype": STR.HRRR,
         "output_flag": {
             "cnt": "BOTH",
         },
@@ -93,7 +94,8 @@ def test_metconf_render(tidy):
         },
         "tmp_dir": "/path/to/dir",
     }
-    text = """
+    text = (
+        """
     fcst = {
       field = [
         {
@@ -161,7 +163,7 @@ def test_metconf_render(tidy):
       beg = -1800;
       end = 1800;
     }
-    obtype = "HRRR";
+    obtype = "%s";
     output_flag = {
       cnt = BOTH;
     }
@@ -180,6 +182,8 @@ def test_metconf_render(tidy):
     }
     tmp_dir = "/path/to/dir";
     """
+        % STR.HRRR
+    )
     expected = tidy(text)
     assert metconf.render(config=config).strip() == expected
 
