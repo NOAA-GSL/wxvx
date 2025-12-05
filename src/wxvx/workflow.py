@@ -350,7 +350,7 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var, source: Source):
         gridsdir = c.paths.grids_truth if source is Source.TRUTH else c.paths.grids_baseline
         outdir = gridsdir / yyyymmdd / hh / leadtime
         path = outdir / f"{var}.grib2"
-        taskname = "Truth grid %s" % path
+        taskname = "%s grid %s" % (source.name.lower().capitalize(), path)
         yield taskname
         yield Asset(path, path.is_file)
         idxdata = _grib_index_data_wgrib2(c, outdir, tc, url=f"{url}.idx")
