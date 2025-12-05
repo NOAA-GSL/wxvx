@@ -60,7 +60,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │   stop:            │   Last leadtime                           │
 │ meta:              │ Optional free-form data section           │
 │ paths:             │ Paths                                     │
-│   grids:           │   Where to store grids                    │
+│   grids:           │   Where to store...                       │
 │     baseline:      │     Baseline grids                        │
 │     forecast:      │     Forecast grids                        │
 │     truth:         │     Truth grids                           │
@@ -72,7 +72,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │ truth:             │ Description of the truth dataset          │
 │   name:            │   Dataset descriptive name                │
 │   type:            │   Either 'grid' or 'point'                │
-│   url:             │   Template for truth GRIB location        │
+│   url:             │   Template for grid or point truth files  │
 │ variables:         │ Mapping describing variables to verify    │
 │   VAR:             │   Forecast-dataset variable name          │
 │     level_type:    │     Generic level type                    │
