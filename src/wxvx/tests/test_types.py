@@ -139,7 +139,7 @@ def test_types_Config__bad_paths_grids_baseline(config_data):
     del config_data["paths"]["grids"]["baseline"]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
-    assert str(e.value) == "Specify paths.grids.baseline when baseline.type is not 'truth'"
+    assert str(e.value) == "Specify paths.grids.baseline when baseline.name is not 'truth'"
 
 
 def test_types_Config__bad_paths_grids_truth(config_data):
@@ -155,7 +155,7 @@ def test_types_Config__bad_paths_obs(config_data):
     del config_data["paths"]["obs"]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
-    assert str(e.value) == "Specify path.obs when truth.type is 'point'"
+    assert str(e.value) == "Specify paths.obs when truth.type is 'point'"
 
 
 def test_types_Config__bad_regrid_to(config_data):
