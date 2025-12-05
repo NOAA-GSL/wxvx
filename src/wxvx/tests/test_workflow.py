@@ -441,7 +441,9 @@ def test_workflow__grib_index_file_eccodes(c, fakefs, logged, tc):
     grib.touch()
     with patch.object(workflow, "ec") as ec:
         ec.codes_index_write.side_effect = lambda _idx, p: Path(p).touch()
-        assert workflow._grib_index_file_eccodes(c=c, grib_path=grib, tc=tc).ready
+        assert workflow._grib_index_file_eccodes(
+            c=c, grib_path=grib, tc=tc, source=Source.TRUTH
+        ).ready
     yyyymmdd, hh, leadtime = tcinfo(tc)
     idx_path = c.paths.grids_truth / yyyymmdd / hh / leadtime / f"{grib.name}.ecidx"
     assert idx_path.is_file()
@@ -460,7 +462,9 @@ def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, node
         patch.object(workflow, "ec") as ec,
     ):
         ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
-        node = workflow._grib_message_in_file(c=c, path=grib_path, tc=tc, var=testvars["gh"])
+        node = workflow._grib_message_in_file(
+            c=c, path=grib_path, tc=tc, var=testvars["gh"], source=Source.TRUTH
+        )
         assert node.ready is expected
         if msgs == 2:
             assert logged("Found 2 GRIB messages")

@@ -290,9 +290,10 @@ def _grib_index_data_wgrib2(c: Config, outdir: Path, tc: TimeCoords, url: str):
 
 
 @task
-def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords):
+def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source: Source):
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    outdir = c.paths.grids_truth / yyyymmdd / hh / leadtime
+    gridsdir = c.paths.grids_truth if source is Source.TRUTH else c.paths.grids_baseline
+    outdir = gridsdir / yyyymmdd / hh / leadtime
     outdir.mkdir(parents=True, exist_ok=True)
     path = outdir / f"{grib_path.name}.ecidx"
     taskname = "GRIB index file %s %s" % (path, _at_validtime(tc))
@@ -307,12 +308,12 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords):
 
 
 @task
-def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var):
+def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var, source: Source):
     taskname = "GRIB message for %s in %s %s" % (var, path, _at_validtime(tc))
     yield taskname
     exists = [False]
     yield Asset(exists, lambda: exists[0])
-    idx = _grib_index_file_eccodes(c, path, tc)
+    idx = _grib_index_file_eccodes(c, path, tc, source)
     yield idx
     idx = ec.codes_index_read(str(idx.ref))
     for k, v in [
@@ -342,7 +343,7 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var, source: Source):
         yield "GRIB file %s providing %s grid %s" % (src, var, _at_validtime(tc))
         exists = [False]
         yield Asset(src, lambda: exists[0])
-        msg = _grib_message_in_file(c, src, tc, var)
+        msg = _grib_message_in_file(c, src, tc, var, source)
         yield msg
         exists[0] = msg.ready
     else:
