@@ -42,7 +42,7 @@ VARMETA = {
             level_type=S.atmosphere,
             met_stats=[MET.FSS, MET.PODY],
             name="refc",
-            nbrhd_shape="CIRCLE",
+            nbrhd_shape=MET.CIRCLE,
             nbrhd_width=[3, 5, 11],
             units="dBZ",
         ),

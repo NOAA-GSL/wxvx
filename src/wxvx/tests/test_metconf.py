@@ -14,14 +14,14 @@ def test_metconf_render(tidy):
         MET.fcst: {
             MET.field: [
                 {
-                    "cat_thresh": [
+                    MET.cat_thresh: [
                         ">=20",
                         ">=30",
                     ],
-                    "level": [
+                    MET.level: [
                         "(0,0,*,*)",
                     ],
-                    "name": "T2M",
+                    MET.name: "T2M",
                 }
             ]
         },
@@ -41,7 +41,7 @@ def test_metconf_render(tidy):
         MET.message_type: [
             "AIRUPA",
         ],
-        "message_type_group_map": {
+        MET.message_type_group_map: {
             "AIRUPA": "ADPUPA,AIRCAR,AIRCFT",
         },
         MET.model: "GraphHRRR",
@@ -56,14 +56,14 @@ def test_metconf_render(tidy):
         MET.obs: {
             MET.field: [
                 {
-                    "cat_thresh": [
+                    MET.cat_thresh: [
                         ">=20",
                         ">=30",
                     ],
-                    "level": [
+                    MET.level: [
                         "Z2",
                     ],
-                    "name": "TMP",
+                    MET.name: "TMP",
                 },
             ]
         },
@@ -230,7 +230,7 @@ def test_metconf__field_mapping(tidy):
     expected = tidy(text)
     assert (
         metconf._field_mapping(
-            d={"name": "foo", "cnt_thresh": [1, 2], "level": ["(0,0,*,*)"]}, level=0
+            d={MET.name: "foo", MET.cnt_thresh: [1, 2], MET.level: ["(0,0,*,*)"]}, level=0
         )
         == expected
     )
@@ -266,8 +266,8 @@ def test_metconf__field_sequence(tidy):
     ];
     """
     expected = tidy(text).split("\n")
-    d1 = {"name": "foo", "cnt_thresh": [1, 2], "level": ["(0,0,*,*)"]}
-    d2 = {"name": "bar", "cat_thresh": [3, 4], "level": ["P1000"]}
+    d1 = {MET.name: "foo", MET.cnt_thresh: [1, 2], MET.level: ["(0,0,*,*)"]}
+    d2 = {MET.name: "bar", MET.cat_thresh: [3, 4], MET.level: ["P1000"]}
     assert metconf._field_sequence(k=MET.field, v=[d1, d2], level=0) == expected
 
 

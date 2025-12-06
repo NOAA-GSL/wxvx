@@ -55,10 +55,10 @@ def _field_mapping(d: dict, level: int) -> str:
 def _field_mapping_kvpairs(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Scalar: quoted.
-        case "name" | "set_attr_level":
+        case MET.name | MET.set_attr_level:
             return _kvpair(k, _quoted(v), level)
         # Sequence: bare.
-        case "cat_thresh" | "cnt_thresh":
+        case MET.cat_thresh | MET.cnt_thresh:
             return _sequence(k, v, _bare, level)
         # Sequence: quoted.
         case "level":
@@ -221,7 +221,7 @@ def _top(k: str, v: Any, level: int) -> list[str]:
         case MET.message_type | MET.obs_bufr_var:
             return _sequence(k, v, _quoted, level)
         # Sequence: list of single key-val dictionaries.
-        case "message_type_group_map" | "obs_bufr_map":
+        case MET.message_type_group_map | "obs_bufr_map":
             return _key_val_map_list(k, v, level)
     return _fail(k)
 

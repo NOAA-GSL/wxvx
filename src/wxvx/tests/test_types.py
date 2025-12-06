@@ -377,7 +377,7 @@ def test_types_VarMeta():
         level_type=S.atmosphere,
         met_stats=[MET.FSS, MET.PODY],
         name="refc",
-        nbrhd_shape="CIRCLE",
+        nbrhd_shape=MET.CIRCLE,
         nbrhd_width=[3, 5, 11],
         units="dBZ",
     )
@@ -394,6 +394,6 @@ def test_types_VarMeta():
     for k, v in [
         (S.level_type, "intergalactic"),
         ("met_stats", ["XYZ"]),
-        ("nbrhd_shape", "TRIANGLE"),
+        (MET.nbrhd_shape, "TRIANGLE"),
     ]:
         fails(k, v)

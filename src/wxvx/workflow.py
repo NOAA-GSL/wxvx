@@ -237,7 +237,7 @@ def _config_point_stat(
             MET.vld_thresh: 1.0,
         },
         MET.message_type: [MET.SFC if surface else MET.ATM],
-        "message_type_group_map": {MET.ATM: "ADPUPA,AIRCAR,AIRCFT", MET.SFC: "ADPSFC"},
+        MET.message_type_group_map: {MET.ATM: "ADPUPA,AIRCAR,AIRCFT", MET.SFC: "ADPSFC"},
         MET.model: cast(Named, sections[source]).name,
         MET.obs: {MET.field: [field_obs]},
         MET.obs_window: {MET.beg: -900 if surface else -1800, MET.end: 900 if surface else 1800},
@@ -581,15 +581,15 @@ def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
     )
     field_fcst = {S.level: [level_fcst], S.name: name_fcst}
     if datafmt != DataFormat.GRIB:
-        field_fcst["set_attr_level"] = level_obs
+        field_fcst[MET.set_attr_level] = level_obs
     field_obs = {S.level: [level_obs], S.name: varname_truth}
     meta = _meta(c, varname)
     if meta.cat_thresh:
         for x in field_fcst, field_obs:
-            x["cat_thresh"] = meta.cat_thresh
+            x[MET.cat_thresh] = meta.cat_thresh
     if meta.cnt_thresh:
         for x in field_fcst, field_obs:
-            x["cnt_thresh"] = meta.cnt_thresh
+            x[MET.cnt_thresh] = meta.cnt_thresh
     return field_fcst, field_obs
 
 

@@ -372,13 +372,13 @@ class VarMeta:
         assert all(x in LINETYPE for x in self.met_stats)
         for k, v in vars(self).items():
             match k:
-                case "cat_thresh":
+                case MET.cat_thresh:
                     assert v is None or (v and all(isinstance(x, str) for x in v))
-                case "cnt_thresh":
+                case MET.cnt_thresh:
                     assert v is None or (v and all(isinstance(x, str) for x in v))
-                case "nbrhd_shape":
-                    assert v is None or v in ("CIRCLE", MET.SQUARE)
-                case "nbrhd_width":
+                case MET.nbrhd_shape:
+                    assert v is None or v in (MET.CIRCLE, MET.SQUARE)
+                case MET.nbrhd_width:
                     assert v is None or (v and all(isinstance(x, int) for x in v))
 
 
