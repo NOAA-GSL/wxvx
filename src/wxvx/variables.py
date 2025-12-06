@@ -29,7 +29,7 @@ VARMETA = {
         VarMeta(
             description="2m Temperature",
             cf_standard_name="air_temperature",
-            level_type="heightAboveGround",
+            level_type=S.heightAboveGround,
             met_stats=["ME", "RMSE"],
             name="2t",
             units="K",
@@ -49,7 +49,7 @@ VARMETA = {
         VarMeta(
             description="Geopotential Height at {level} mb",
             cf_standard_name="geopotential_height",
-            level_type="isobaricInhPa",
+            level_type=S.isobaricInhPa,
             met_stats=["ME", "RMSE"],
             name="gh",
             units="m",
@@ -57,7 +57,7 @@ VARMETA = {
         VarMeta(
             description="Specific Humidity at {level} mb",
             cf_standard_name="specific_humidity",
-            level_type="isobaricInhPa",
+            level_type=S.isobaricInhPa,
             met_stats=["ME", "RMSE"],
             name="q",
             units="1",
@@ -65,7 +65,7 @@ VARMETA = {
         VarMeta(
             description="Surface Pressure",
             cf_standard_name="surface_air_pressure",
-            level_type="surface",
+            level_type=S.surface,
             met_stats=["ME", "RMSE"],
             name="sp",
             units="Pa",
@@ -73,7 +73,7 @@ VARMETA = {
         VarMeta(
             description="Temperature at {level} mb",
             cf_standard_name="air_temperature",
-            level_type="isobaricInhPa",
+            level_type=S.isobaricInhPa,
             met_stats=["ME", "RMSE"],
             name="t",
             units="K",
@@ -81,7 +81,7 @@ VARMETA = {
         VarMeta(
             description="U-Component of Wind at {level} mb",
             cf_standard_name="eastward_wind",
-            level_type="isobaricInhPa",
+            level_type=S.isobaricInhPa,
             met_stats=["ME", "RMSE"],
             name="u",
             units="m s-1",
@@ -89,7 +89,7 @@ VARMETA = {
         VarMeta(
             description="U-Component of Wind at 10m",
             cf_standard_name="eastward_wind",
-            level_type="heightAboveGround",
+            level_type=S.heightAboveGround,
             met_stats=["ME", "RMSE"],
             name="u_10m",
             units="m s-1",
@@ -97,7 +97,7 @@ VARMETA = {
         VarMeta(
             description="V-Component of Wind at {level} mb",
             cf_standard_name="northward_wind",
-            level_type="isobaricInhPa",
+            level_type=S.isobaricInhPa,
             met_stats=["ME", "RMSE"],
             name="v",
             units="m s-1",
@@ -105,7 +105,7 @@ VARMETA = {
         VarMeta(
             description="V-Component of Wind at 10m",
             cf_standard_name="northward_wind",
-            level_type="heightAboveGround",
+            level_type=S.heightAboveGround,
             met_stats=["ME", "RMSE"],
             name="v_10m",
             units="m s-1",
@@ -113,7 +113,7 @@ VARMETA = {
         VarMeta(
             description="Vertical Velocity at {level} mb",
             cf_standard_name="lagrangian_tendency_of_air_pressure",
-            level_type="isobaricInhPa",
+            level_type=S.isobaricInhPa,
             met_stats=["ME", "RMSE"],
             name="w",
             units="Pa s-1",
@@ -194,17 +194,17 @@ class GFS(Var):
     @staticmethod
     def _canonicalize(name: str, level_type: str) -> str:
         return {
-            ("HGT", "isobaricInhPa"): "gh",
-            ("PRES", "surface"): "sp",
+            ("HGT", S.isobaricInhPa): "gh",
+            ("PRES", S.surface): "sp",
             ("REFC", S.atmosphere): "refc",
-            ("SPFH", "isobaricInhPa"): "q",
-            ("TMP", "heightAboveGround"): "2t",
-            ("TMP", "isobaricInhPa"): "t",
-            ("UGRD", "heightAboveGround"): "u_10m",
-            ("UGRD", "isobaricInhPa"): "u",
-            ("VGRD", "heightAboveGround"): "v_10m",
-            ("VGRD", "isobaricInhPa"): "v",
-            ("VVEL", "isobaricInhPa"): "w",
+            ("SPFH", S.isobaricInhPa): "q",
+            ("TMP", S.heightAboveGround): "2t",
+            ("TMP", S.isobaricInhPa): "t",
+            ("UGRD", S.heightAboveGround): "u_10m",
+            ("UGRD", S.isobaricInhPa): "u",
+            ("VGRD", S.heightAboveGround): "v_10m",
+            ("VGRD", S.isobaricInhPa): "v",
+            ("VVEL", S.isobaricInhPa): "w",
         }.get((name, level_type), UNKNOWN)
 
     @staticmethod
@@ -212,11 +212,11 @@ class GFS(Var):
         if m := re.match(r"^entire atmosphere$", levstr):
             return (S.atmosphere, None)
         if m := re.match(r"^(\d+(\.\d+)?) m above ground$", levstr):
-            return ("heightAboveGround", _levelstr2num(m[1]))
+            return (S.heightAboveGround, _levelstr2num(m[1]))
         if m := re.match(r"^(\d+(\.\d+)?) mb$", levstr):
-            return ("isobaricInhPa", _levelstr2num(m[1]))
+            return (S.isobaricInhPa, _levelstr2num(m[1]))
         if m := re.match(r"^surface$", levstr):
-            return ("surface", None)
+            return (S.surface, None)
         return (UNKNOWN, None)
 
 
@@ -337,9 +337,9 @@ def metlevel(level_type: str, level: float | None) -> str:
     try:
         prefix = {
             S.atmosphere: "L",
-            "heightAboveGround": "Z",
-            "isobaricInhPa": "P",
-            "surface": "Z",
+            S.heightAboveGround: "Z",
+            S.isobaricInhPa: "P",
+            S.surface: "Z",
         }[level_type]
     except KeyError as e:
         raise WXVXError("No MET level defined for level type %s" % level_type) from e

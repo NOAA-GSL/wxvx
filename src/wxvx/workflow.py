@@ -222,7 +222,7 @@ def _config_point_stat(
     yield Asset(path, path.is_file)
     yield None
     field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
-    surface = var.level_type in ("heightAboveGround", "surface")
+    surface = var.level_type in (S.heightAboveGround, S.surface)
     sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast, Source.TRUTH: c.truth}
     config = {
         "fcst": {"field": [field_fcst]},

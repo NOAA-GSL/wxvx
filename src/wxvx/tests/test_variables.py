@@ -25,7 +25,7 @@ def da_flat(da_with_leadtime):
 # Tests
 
 
-@mark.parametrize(S.level_type, [S.atmosphere, "surface"])
+@mark.parametrize(S.level_type, [S.atmosphere, S.surface])
 def test_variables_Var_no_level(level_type):
     var = variables.Var(name="foo", level_type=level_type)
     assert var.name == "foo"
@@ -41,7 +41,7 @@ def test_variables_Var_no_level(level_type):
     assert str(var) == "foo-%s" % level_type
 
 
-@mark.parametrize((S.level_type, S.level), [("heightAboveGround", 2), ("isobaricInhPa", 1000)])
+@mark.parametrize((S.level_type, S.level), [(S.heightAboveGround, 2), (S.isobaricInhPa, 1000)])
 def test_variables_Var_with_level(level, level_type):
     var = variables.Var(name="foo", level_type=level_type, level=level)
     assert var.name == "foo"
@@ -60,12 +60,12 @@ def test_variables_Var_with_level(level, level_type):
 def test_variables_HRRR():
     keys = {S.name, S.level_type, S.firstbyte, S.lastbyte}
     var = variables.HRRR(name="TMP", levstr="900 mb", firstbyte=1, lastbyte=2)
-    assert var.level_type == "isobaricInhPa"
+    assert var.level_type == S.isobaricInhPa
     assert var.level == 900
     assert var.firstbyte == 1
     assert var.lastbyte == 2
     assert var._keys == {*keys, S.level}
-    assert variables.HRRR(name="TMP", levstr="surface", firstbyte=1, lastbyte=2)._keys == keys
+    assert variables.HRRR(name="TMP", levstr=S.surface, firstbyte=1, lastbyte=2)._keys == keys
 
 
 @mark.parametrize((S.name, "expected"), [("t", "TMP"), ("2t", "TMP"), ("foo", variables.UNKNOWN)])
@@ -76,8 +76,8 @@ def test_variables_HRRR_varname(name, expected):
 @mark.parametrize(
     (S.name, S.level_type, "expected"),
     [
-        ("TMP", "isobaricInhPa", "t"),
-        ("TMP", "heightAboveGround", "2t"),
+        ("TMP", S.isobaricInhPa, "t"),
+        ("TMP", S.heightAboveGround, "2t"),
         ("FOO", "suface", variables.UNKNOWN),
     ],
 )
@@ -89,9 +89,9 @@ def test_variables_HRRR__canonicalize(name, level_type, expected):
     ("expected", "levstr"),
     [
         ((S.atmosphere, None), "entire atmosphere"),
-        (("heightAboveGround", 2), "2 m above ground"),
-        (("isobaricInhPa", 900), "900 mb"),
-        (("surface", None), "surface"),
+        ((S.heightAboveGround, 2), "2 m above ground"),
+        ((S.isobaricInhPa, 900), "900 mb"),
+        ((S.surface, None), "surface"),
         ((variables.UNKNOWN, None), "something else"),
     ],
 )
@@ -108,7 +108,7 @@ def test_variables_da_construct(
     time["leadtime"] = leadtime
     time["validtime"] = validtime
     c = gen_config(config_data, fakefs)
-    var = variables.Var(name="gh", level_type="isobaricInhPa", level=900)
+    var = variables.Var(name="gh", level_type=S.isobaricInhPa, level=900)
     selected = variables.da_select(c=c, ds=da.to_dataset(), varname="HGT", tc=tc, var=var)
     new = variables.da_construct(c=c, da=selected)
     assert new.name == da.name
@@ -119,7 +119,7 @@ def test_variables_da_construct(
 
 
 def test_variables_da_select(c, da_with_leadtime, tc):
-    var = variables.Var(name="gh", level_type="isobaricInhPa", level=900)
+    var = variables.Var(name="gh", level_type=S.isobaricInhPa, level=900)
     kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname="HGT", tc=tc, var=var)
     new = variables.da_select(**kwargs)
     # latitude and longitude are unchanged
@@ -136,7 +136,7 @@ def test_variables_da_select__attrs_not_coords(c, da_with_leadtime, tc):
     # where attributes are used by removing optional coordinates. The narrowing code will then not
     # be executed for these values in the function-under-test.
     da = da_with_leadtime.drop_vars(["lead_time", "level", "time"])
-    var = variables.Var(name="gh", level_type="isobaricInhPa", level=900)
+    var = variables.Var(name="gh", level_type=S.isobaricInhPa, level=900)
     kwargs = dict(c=c, ds=da.to_dataset(), varname="HGT", tc=tc, var=var)
     new = variables.da_select(**kwargs)
     # latitude and longitude are unchanged
@@ -145,7 +145,7 @@ def test_variables_da_select__attrs_not_coords(c, da_with_leadtime, tc):
 
 
 def test_variables_da_select__fail_bad_var(c, da_with_leadtime, tc):
-    var = variables.Var(name="foo", level_type="isobaricInhPa", level=900)
+    var = variables.Var(name="foo", level_type=S.isobaricInhPa, level=900)
     kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname="FOO", tc=tc, var=var)
     with raises(WXVXError) as e:
         variables.da_select(**kwargs)
@@ -196,8 +196,8 @@ def test_variables_ds_construct__lcc(c, check_cf_metadata):
     (S.level_type, S.level, "expected"),
     [
         (S.atmosphere, None, "L000"),
-        ("heightAboveGround", "2", "Z002"),
-        ("isobaricInhPa", "900", "P900"),
+        (S.heightAboveGround, "2", "Z002"),
+        (S.isobaricInhPa, "900", "P900"),
     ],
 )
 def test_variables_metlevel(level_type, level, expected):

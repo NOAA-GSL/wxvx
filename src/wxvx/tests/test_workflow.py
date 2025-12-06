@@ -763,7 +763,7 @@ def test_workflow__forecast_grid__missing(c, tc, testvars):
 def test_workflow__meta(c):
     meta = workflow._meta(c=c, varname="HGT")
     assert meta.cf_standard_name == "geopotential_height"
-    assert meta.level_type == "isobaricInhPa"
+    assert meta.level_type == S.isobaricInhPa
 
 
 @mark.parametrize("dictkey", ["foo", "bar", "baz"])
@@ -886,8 +886,8 @@ def test_workflow__vxvars(c, testvars):
     assert workflow._vxvars(c=c) == {
         testvars["2t"]: "T2M",
         testvars["gh"]: "HGT",
-        Var("q", "isobaricInhPa", 1000): "SPFH",
-        Var("q", "isobaricInhPa", 900): "SPFH",
+        Var("q", S.isobaricInhPa, 1000): "SPFH",
+        Var("q", S.isobaricInhPa, 900): "SPFH",
         testvars["refc"]: "REFC",
     }
 
@@ -944,7 +944,7 @@ def obs_info(c):
 @fixture
 def statkit(tc, testvars):
     level = 900
-    level_type = "isobaricInhPa"
+    level_type = S.isobaricInhPa
     return ns(
         level=level,
         level_type=level_type,
@@ -959,10 +959,10 @@ def statkit(tc, testvars):
 @fixture
 def testvars():
     return {
-        "2t": Var("2t", "heightAboveGround", 2),
-        "gh": Var(name="gh", level_type="isobaricInhPa", level=900),
+        "2t": Var("2t", S.heightAboveGround, 2),
+        "gh": Var(name="gh", level_type=S.isobaricInhPa, level=900),
         "refc": Var(name="refc", level_type=S.atmosphere),
-        "t": Var(name="t", level_type="isobaricInhPa", level=900),
+        "t": Var(name="t", level_type=S.isobaricInhPa, level=900),
     }
 
 

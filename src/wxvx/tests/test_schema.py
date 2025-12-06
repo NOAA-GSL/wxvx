@@ -329,10 +329,10 @@ def test_schema_variables(logged, config_data, fs):
     assert not ok({"X": {**one, "foo": "bar"}})
     assert logged("Additional properties are not allowed")
     # The "levels" key is required for some level types, forbidden for others:
-    for level_type in ("heightAboveGround", "isobaricInhPa"):
+    for level_type in (S.heightAboveGround, S.isobaricInhPa):
         assert not ok({"X": {S.name: "foo", S.level_type: level_type}})
         assert logged("'levels' is a required property")
-    for level_type in (S.atmosphere, "surface"):
+    for level_type in (S.atmosphere, S.surface):
         assert not ok({"X": {S.name: "foo", S.level_type: level_type, S.levels: [1000]}})
         assert logged("should not be valid")
     # Some keys have enum values:
