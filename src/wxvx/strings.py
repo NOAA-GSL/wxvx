@@ -25,3 +25,4 @@ class S:
     variables: str = "variables"
     level: str = "level"
     level_type: str = "level_type"
+    levels: str = "levels"

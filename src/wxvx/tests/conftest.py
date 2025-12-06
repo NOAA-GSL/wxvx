@@ -118,22 +118,22 @@ def config_data():
         },
         S.variables: {
             "HGT": {
-                "level_type": "isobaricInhPa",
-                "levels": [900],
+                S.level_type: "isobaricInhPa",
+                S.levels: [900],
                 S.name: "gh",
             },
             "REFC": {
-                "level_type": "atmosphere",
+                S.level_type: "atmosphere",
                 S.name: "refc",
             },
             "SPFH": {
-                "level_type": "isobaricInhPa",
-                "levels": [900, 1000],
+                S.level_type: "isobaricInhPa",
+                S.levels: [900, 1000],
                 S.name: "q",
             },
             "T2M": {
-                "level_type": "heightAboveGround",
-                "levels": [2],
+                S.level_type: "heightAboveGround",
+                S.levels: [2],
                 S.name: "2t",
             },
         },

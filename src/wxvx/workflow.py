@@ -692,7 +692,7 @@ def _varnames_levels(c: Config) -> Iterator[tuple[str, float | None]]:
     return iter(
         (varname, level)
         for varname, attrs in c.variables.items()
-        for level in attrs.get("levels", [None])
+        for level in attrs.get(S.levels, [None])
     )
 
 
@@ -709,7 +709,7 @@ def _vxvars(c: Config) -> dict[Var, str]:
     return {
         Var(attrs[S.name], attrs[S.level_type], level): varname
         for varname, attrs in c.variables.items()
-        for level in attrs.get("levels", [None])
+        for level in attrs.get(S.levels, [None])
     }
 
 

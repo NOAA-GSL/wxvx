@@ -388,11 +388,11 @@ def test_types_VarMeta():
     for k, v in kwargs.items():
         fails(k, type(v)())
     # Must not have None values:
-    for k in ["cf_standard_name", "description", "level_type", "met_stats", S.name, "units"]:
+    for k in ["cf_standard_name", "description", S.level_type, "met_stats", S.name, "units"]:
         fails(k, None)
     # Must not have unrecognized values:
     for k, v in [
-        ("level_type", "intergalactic"),
+        (S.level_type, "intergalactic"),
         ("met_stats", ["XYZ"]),
         ("nbrhd_shape", "TRIANGLE"),
     ]:

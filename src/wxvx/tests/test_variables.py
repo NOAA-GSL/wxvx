@@ -25,13 +25,13 @@ def da_flat(da_with_leadtime):
 # Tests
 
 
-@mark.parametrize("level_type", ["atmosphere", "surface"])
+@mark.parametrize(S.level_type, ["atmosphere", "surface"])
 def test_variables_Var_no_level(level_type):
     var = variables.Var(name="foo", level_type=level_type)
     assert var.name == "foo"
     assert var.level_type == level_type
     assert var.level is None
-    assert var._keys == {S.name, "level_type"}
+    assert var._keys == {S.name, S.level_type}
     assert var == variables.Var("foo", level_type)
     assert var != variables.Var("bar", level_type)
     assert hash(var) == hash(("foo", level_type, None))
@@ -41,13 +41,13 @@ def test_variables_Var_no_level(level_type):
     assert str(var) == "foo-%s" % level_type
 
 
-@mark.parametrize(("level_type", S.level), [("heightAboveGround", 2), ("isobaricInhPa", 1000)])
+@mark.parametrize((S.level_type, S.level), [("heightAboveGround", 2), ("isobaricInhPa", 1000)])
 def test_variables_Var_with_level(level, level_type):
     var = variables.Var(name="foo", level_type=level_type, level=level)
     assert var.name == "foo"
     assert var.level_type == level_type
     assert var.level == level
-    assert var._keys == {S.name, "level_type", S.level}
+    assert var._keys == {S.name, S.level_type, S.level}
     assert var == variables.Var("foo", level_type, level)
     assert var != variables.Var("bar", level_type, level)
     assert hash(var) == hash(("foo", level_type, level))
@@ -58,7 +58,7 @@ def test_variables_Var_with_level(level, level_type):
 
 
 def test_variables_HRRR():
-    keys = {S.name, "level_type", "firstbyte", "lastbyte"}
+    keys = {S.name, S.level_type, "firstbyte", "lastbyte"}
     var = variables.HRRR(name="TMP", levstr="900 mb", firstbyte=1, lastbyte=2)
     assert var.level_type == "isobaricInhPa"
     assert var.level == 900
@@ -74,7 +74,7 @@ def test_variables_HRRR_varname(name, expected):
 
 
 @mark.parametrize(
-    (S.name, "level_type", "expected"),
+    (S.name, S.level_type, "expected"),
     [
         ("TMP", "isobaricInhPa", "t"),
         ("TMP", "heightAboveGround", "2t"),
@@ -193,7 +193,7 @@ def test_variables_ds_construct__lcc(c, check_cf_metadata):
 
 
 @mark.parametrize(
-    ("level_type", S.level, "expected"),
+    (S.level_type, S.level, "expected"),
     [
         ("atmosphere", None, "L000"),
         ("heightAboveGround", "2", "Z002"),
