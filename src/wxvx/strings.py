@@ -4,6 +4,21 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class EC:
+    gh: str = "gh"
+    q: str = "q"
+    refc: str = "refc"
+    sp: str = "sp"
+    t2: str = "2t"
+    t: str = "t"
+    u: str = "u"
+    u_10m: str = "u_10m"
+    v: str = "v"
+    v_10m: str = "v_10m"
+    w: str = "w"
+
+
+@dataclass(frozen=True)
 class MET:
     ATM: str = "ATM"
     BILIN: str = "BILIN"
@@ -64,6 +79,18 @@ class MET:
     type: str = "type"
     vld_thresh: str = "vld_thresh"
     width: str = "width"
+
+
+@dataclass(frozen=True)
+class NCEP:
+    HGT: str = "HGT"
+    PRES: str = "PRES"
+    REFC: str = "REFC"
+    SPFH: str = "SPFH"
+    TMP: str = "TMP"
+    UGRD: str = "UGRD"
+    VGRD: str = "VGRD"
+    VVEL: str = "VVEL"
 
 
 @dataclass(frozen=True)

@@ -19,7 +19,7 @@ from iotaa import Asset, Node, external
 from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
-from wxvx.strings import MET, S
+from wxvx.strings import EC, MET, S
 from wxvx.tests.support import with_del
 from wxvx.times import TimeCoords, gen_validtimes, tcinfo
 from wxvx.types import Config, Source, TruthType
@@ -165,7 +165,7 @@ def test_workflow__config_grid_stat(c, source, fakefs, testvars):
         path=path,
         source=source,
         varname="REFC",
-        var=testvars["refc"],
+        var=testvars[EC.refc],
         prefix="foo",
         datafmt=DataFormat.GRIB,
         polyfile=None,
@@ -242,7 +242,7 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
         path=path,
         source=Source.FORECAST,
         varname="HGT",
-        var=testvars["gh"],
+        var=testvars[EC.gh],
         prefix="atm",
         datafmt=fmt,
     )
@@ -315,7 +315,7 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
         path=path,
         source=Source.FORECAST,
         varname="T2M",
-        var=testvars["2t"],
+        var=testvars[EC.t2],
         prefix="sfc",
         datafmt=fmt,
     )
@@ -387,7 +387,7 @@ def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, testv
         path=path,
         source=Source.FORECAST,
         varname="geopotential",
-        var=testvars["gh"],
+        var=testvars[EC.gh],
         prefix="atm",
         datafmt=DataFormat.NETCDF,
     )
@@ -464,7 +464,7 @@ def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, node
     ):
         ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
         node = workflow._grib_message_in_file(
-            c=c, path=grib_path, tc=tc, var=testvars["gh"], source=Source.TRUTH
+            c=c, path=grib_path, tc=tc, var=testvars[EC.gh], source=Source.TRUTH
         )
         assert node.ready is expected
         if msgs == 2:
@@ -478,7 +478,7 @@ def test_workflow__grid_grib__local(config_data, fakefs, gen_config, node, tc, t
     with patch.object(
         workflow, "_grib_message_in_file", return_value=node
     ) as _grib_message_in_file:
-        assert workflow._grid_grib(c=c, tc=tc, var=testvars["t"], source=Source.TRUTH).ready
+        assert workflow._grid_grib(c=c, tc=tc, var=testvars[EC.t], source=Source.TRUTH).ready
         _grib_message_in_file.assert_called_once()
 
 
@@ -499,14 +499,14 @@ def test_workflow__grid_grib__remote(c, tc, testvars):
         yield Asset(idxdata, ready.is_set)
 
     with patch.object(workflow, "_grib_index_data_wgrib2", wraps=mock) as _grib_index_data_wgrib2:
-        node = workflow._grid_grib(c=c, tc=tc, var=testvars["t"], source=Source.TRUTH)
+        node = workflow._grid_grib(c=c, tc=tc, var=testvars[EC.t], source=Source.TRUTH)
         path = node.ref
         assert not path.exists()
         ready.set()
         with patch.object(workflow, "fetch") as fetch:
             fetch.side_effect = lambda taskname, url, path, headers: path.touch()  # noqa: ARG005
             path.parent.mkdir(parents=True, exist_ok=True)
-            workflow._grid_grib(c=c, tc=tc, var=testvars["t"], source=Source.TRUTH)
+            workflow._grid_grib(c=c, tc=tc, var=testvars[EC.t], source=Source.TRUTH)
         assert path.exists()
     yyyymmdd = tc.yyyymmdd
     hh = tc.hh
@@ -521,7 +521,7 @@ def test_workflow__grid_nc(c_real_fs, check_cf_metadata, da_with_leadtime, tc, t
     path = Path(c_real_fs.paths.grids_forecast, "a.nc")
     da_with_leadtime.to_netcdf(path)
     c_real_fs.forecast._path = str(path)
-    node = workflow._grid_nc(c=c_real_fs, varname="HGT", tc=tc, var=testvars["gh"])
+    node = workflow._grid_nc(c=c_real_fs, varname="HGT", tc=tc, var=testvars[EC.gh])
     assert node.ready
     check_cf_metadata(ds=xr.open_dataset(node.ref, decode_timedelta=True), name="HGT", level=level)
 
@@ -529,7 +529,7 @@ def test_workflow__grid_nc(c_real_fs, check_cf_metadata, da_with_leadtime, tc, t
 def test_workflow__grid_nc__no_paths_grids_forecast(config_data, tc, testvars):
     c = Config(raw=with_del(config_data, S.paths, S.grids, S.forecast))
     with raises(WXVXError) as e:
-        workflow._grid_nc(c=c, varname="HGT", tc=tc, var=testvars["gh"])
+        workflow._grid_nc(c=c, varname="HGT", tc=tc, var=testvars[EC.gh])
     assert str(e.value) == "Specify path.grids.forecast when forecast dataset is netCDF or Zarr"
 
 
@@ -645,7 +645,7 @@ def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars)
         "Stats vs grid for %s 2t-heightAboveGround-0002 at 19700101 00Z 000"
         % str(source).split(".")[1].lower()
     )
-    kwargs = dict(c=c, varname="T2M", tc=tc, var=testvars["2t"], prefix="foo", source=source)
+    kwargs = dict(c=c, varname="T2M", tc=tc, var=testvars[EC.t2], prefix="foo", source=source)
     with patch.object(workflow, "classify_data_format", return_value=datafmt):
         stat = taskfunc(**kwargs, dry_run=True).ref
         cfgfile = stat.with_suffix(".config")
@@ -678,7 +678,7 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, source, tc, testvars):
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
     c.truth = replace(c.truth, name=S.PREPBUFR, type=S.point, url=url)
     rundir = fakefs / S.run / S.stats / "19700101" / "00" / "000"
-    var = testvars["2t"]
+    var = testvars[EC.t2]
     taskname = "Stats vs obs for %s %s at 19700101 00Z 000" % (source.name.lower(), var)
     kwargs = dict(c=c, varname="T2M", tc=tc, var=var, prefix="foo", source=source)
     with patch.object(workflow, "classify_data_format", return_value=datafmt):
@@ -728,7 +728,7 @@ def test_workflow__enforce_point_truth_type(c):
 def test_workflow__forecast_grid(c, fmt, path, tc, testvars):
     with patch.object(workflow, "classify_data_format", return_value=fmt):
         req, datafmt = workflow._forecast_grid(
-            path=path, c=c, varname="foo", tc=tc, var=testvars["2t"]
+            path=path, c=c, varname="foo", tc=tc, var=testvars[EC.t2]
         )
     # For netCDF and Zarr forecast datasets, the grid will be extracted from the dataset and CF-
     # decorated, so the requirement is a _grid_nc task, whose taskname is "Forecast grid ..."
@@ -740,7 +740,7 @@ def test_workflow__forecast_grid__grib(c, tc, testvars):
     path = Path("/path/to/a.grib2")
     with patch.object(workflow, "classify_data_format", return_value=DataFormat.GRIB):
         req, datafmt = workflow._forecast_grid(
-            path=path, c=c, varname="foo", tc=tc, var=testvars["2t"]
+            path=path, c=c, varname="foo", tc=tc, var=testvars[EC.t2]
         )
     # For GRIB forecast datasets, the entire GRIB file will be accessed by MET, so the requirement
     # is an existing local path.
@@ -752,7 +752,7 @@ def test_workflow__forecast_grid__missing(c, tc, testvars):
     path = Path("/path/to/a.grib2")
     with patch.object(workflow, "classify_data_format", return_value=DataFormat.UNKNOWN):
         req, datafmt = workflow._forecast_grid(
-            path=path, c=c, varname="foo", tc=tc, var=testvars["2t"]
+            path=path, c=c, varname="foo", tc=tc, var=testvars[EC.t2]
         )
     # For missing forecast datasets, the requirement is a missing-file external task that blocks
     # further execution.
@@ -862,7 +862,7 @@ def test_workflow__stats_widths(c):
 
 
 def test_workflow__var(c, testvars):
-    assert workflow._var(c=c, varname="HGT", level=900) == testvars["gh"]
+    assert workflow._var(c=c, varname="HGT", level=900) == testvars[EC.gh]
 
 
 def test_workflow__varnames_levels(c):
@@ -884,11 +884,11 @@ def test_workflow__vars_varnames_times(c, ngrids):
 
 def test_workflow__vxvars(c, testvars):
     assert workflow._vxvars(c=c) == {
-        testvars["2t"]: "T2M",
-        testvars["gh"]: "HGT",
-        Var("q", S.isobaricInhPa, 1000): "SPFH",
-        Var("q", S.isobaricInhPa, 900): "SPFH",
-        testvars["refc"]: "REFC",
+        testvars[EC.t2]: "T2M",
+        testvars[EC.gh]: "HGT",
+        Var(EC.q, S.isobaricInhPa, 1000): "SPFH",
+        Var(EC.q, S.isobaricInhPa, 900): "SPFH",
+        testvars[EC.refc]: "REFC",
     }
 
 
@@ -951,7 +951,7 @@ def statkit(tc, testvars):
         prefix=f"forecast_gh_{level_type}_{level:04d}",
         source=Source.FORECAST,
         tc=tc,
-        var=testvars["gh"],
+        var=testvars[EC.gh],
         varname="HGT",
     )
 
@@ -959,10 +959,10 @@ def statkit(tc, testvars):
 @fixture
 def testvars():
     return {
-        "2t": Var("2t", S.heightAboveGround, 2),
-        "gh": Var(name="gh", level_type=S.isobaricInhPa, level=900),
-        "refc": Var(name="refc", level_type=S.atmosphere),
-        "t": Var(name="t", level_type=S.isobaricInhPa, level=900),
+        EC.t2: Var(EC.t2, S.heightAboveGround, 2),
+        EC.gh: Var(name=EC.gh, level_type=S.isobaricInhPa, level=900),
+        EC.refc: Var(name=EC.refc, level_type=S.atmosphere),
+        EC.t: Var(name=EC.t, level_type=S.isobaricInhPa, level=900),
     }
 
 

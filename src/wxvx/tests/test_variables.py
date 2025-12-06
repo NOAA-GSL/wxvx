@@ -7,7 +7,7 @@ import xarray as xr
 from pytest import fixture, mark, raises
 
 from wxvx import variables
-from wxvx.strings import S
+from wxvx.strings import EC, S
 from wxvx.util import WXVXError, render
 
 # Fixtures
@@ -68,7 +68,7 @@ def test_variables_HRRR():
     assert variables.HRRR(name="TMP", levstr=S.surface, firstbyte=1, lastbyte=2)._keys == keys
 
 
-@mark.parametrize((S.name, "expected"), [("t", "TMP"), ("2t", "TMP"), ("foo", variables.UNKNOWN)])
+@mark.parametrize((S.name, "expected"), [(EC.t, "TMP"), (EC.t2, "TMP"), ("foo", variables.UNKNOWN)])
 def test_variables_HRRR_varname(name, expected):
     assert variables.HRRR.varname(name=name) == expected
 
@@ -76,8 +76,8 @@ def test_variables_HRRR_varname(name, expected):
 @mark.parametrize(
     (S.name, S.level_type, "expected"),
     [
-        ("TMP", S.isobaricInhPa, "t"),
-        ("TMP", S.heightAboveGround, "2t"),
+        ("TMP", S.isobaricInhPa, EC.t),
+        ("TMP", S.heightAboveGround, EC.t2),
         ("FOO", "suface", variables.UNKNOWN),
     ],
 )
@@ -108,7 +108,7 @@ def test_variables_da_construct(
     time[S.leadtime] = leadtime
     time[S.validtime] = validtime
     c = gen_config(config_data, fakefs)
-    var = variables.Var(name="gh", level_type=S.isobaricInhPa, level=900)
+    var = variables.Var(name=EC.gh, level_type=S.isobaricInhPa, level=900)
     selected = variables.da_select(c=c, ds=da.to_dataset(), varname="HGT", tc=tc, var=var)
     new = variables.da_construct(c=c, da=selected)
     assert new.name == da.name
@@ -119,7 +119,7 @@ def test_variables_da_construct(
 
 
 def test_variables_da_select(c, da_with_leadtime, tc):
-    var = variables.Var(name="gh", level_type=S.isobaricInhPa, level=900)
+    var = variables.Var(name=EC.gh, level_type=S.isobaricInhPa, level=900)
     kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname="HGT", tc=tc, var=var)
     new = variables.da_select(**kwargs)
     # latitude and longitude are unchanged
@@ -136,7 +136,7 @@ def test_variables_da_select__attrs_not_coords(c, da_with_leadtime, tc):
     # where attributes are used by removing optional coordinates. The narrowing code will then not
     # be executed for these values in the function-under-test.
     da = da_with_leadtime.drop_vars(["lead_time", "level", "time"])
-    var = variables.Var(name="gh", level_type=S.isobaricInhPa, level=900)
+    var = variables.Var(name=EC.gh, level_type=S.isobaricInhPa, level=900)
     kwargs = dict(c=c, ds=da.to_dataset(), varname="HGT", tc=tc, var=var)
     new = variables.da_select(**kwargs)
     # latitude and longitude are unchanged

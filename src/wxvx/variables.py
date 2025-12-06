@@ -11,7 +11,7 @@ import numpy as np
 import xarray as xr
 from pyproj import Proj
 
-from wxvx.strings import MET, S
+from wxvx.strings import EC, MET, S
 from wxvx.types import Coords, VarMeta
 from wxvx.util import WXVXError, render
 
@@ -31,7 +31,7 @@ VARMETA = {
             cf_standard_name="air_temperature",
             level_type=S.heightAboveGround,
             met_stats=[MET.ME, MET.RMSE],
-            name="2t",
+            name=EC.t2,
             units="K",
         ),
         VarMeta(
@@ -41,7 +41,7 @@ VARMETA = {
             cnt_thresh=[">15"],
             level_type=S.atmosphere,
             met_stats=[MET.FSS, MET.PODY],
-            name="refc",
+            name=EC.refc,
             nbrhd_shape=MET.CIRCLE,
             nbrhd_width=[3, 5, 11],
             units="dBZ",
@@ -51,7 +51,7 @@ VARMETA = {
             cf_standard_name="geopotential_height",
             level_type=S.isobaricInhPa,
             met_stats=[MET.ME, MET.RMSE],
-            name="gh",
+            name=EC.gh,
             units="m",
         ),
         VarMeta(
@@ -59,7 +59,7 @@ VARMETA = {
             cf_standard_name="specific_humidity",
             level_type=S.isobaricInhPa,
             met_stats=[MET.ME, MET.RMSE],
-            name="q",
+            name=EC.q,
             units="1",
         ),
         VarMeta(
@@ -67,7 +67,7 @@ VARMETA = {
             cf_standard_name="surface_air_pressure",
             level_type=S.surface,
             met_stats=[MET.ME, MET.RMSE],
-            name="sp",
+            name=EC.sp,
             units="Pa",
         ),
         VarMeta(
@@ -75,7 +75,7 @@ VARMETA = {
             cf_standard_name="air_temperature",
             level_type=S.isobaricInhPa,
             met_stats=[MET.ME, MET.RMSE],
-            name="t",
+            name=EC.t,
             units="K",
         ),
         VarMeta(
@@ -83,7 +83,7 @@ VARMETA = {
             cf_standard_name="eastward_wind",
             level_type=S.isobaricInhPa,
             met_stats=[MET.ME, MET.RMSE],
-            name="u",
+            name=EC.u,
             units="m s-1",
         ),
         VarMeta(
@@ -91,7 +91,7 @@ VARMETA = {
             cf_standard_name="eastward_wind",
             level_type=S.heightAboveGround,
             met_stats=[MET.ME, MET.RMSE],
-            name="u_10m",
+            name=EC.u_10m,
             units="m s-1",
         ),
         VarMeta(
@@ -99,7 +99,7 @@ VARMETA = {
             cf_standard_name="northward_wind",
             level_type=S.isobaricInhPa,
             met_stats=[MET.ME, MET.RMSE],
-            name="v",
+            name=EC.v,
             units="m s-1",
         ),
         VarMeta(
@@ -107,7 +107,7 @@ VARMETA = {
             cf_standard_name="northward_wind",
             level_type=S.heightAboveGround,
             met_stats=[MET.ME, MET.RMSE],
-            name="v_10m",
+            name=EC.v_10m,
             units="m s-1",
         ),
         VarMeta(
@@ -115,7 +115,7 @@ VARMETA = {
             cf_standard_name="lagrangian_tendency_of_air_pressure",
             level_type=S.isobaricInhPa,
             met_stats=[MET.ME, MET.RMSE],
-            name="w",
+            name=EC.w,
             units="Pa s-1",
         ),
     ]
@@ -178,33 +178,33 @@ class GFS(Var):
     @staticmethod
     def varname(name: str) -> str:
         return {
-            "2t": "TMP",
-            "gh": "HGT",
-            "q": "SPFH",
-            "refc": "REFC",
-            "sp": "PRES",
-            "t": "TMP",
-            "u": "UGRD",
-            "u_10m": "UGRD",
-            "v": "VGRD",
-            "v_10m": "VGRD",
-            "w": "VVEL",
+            EC.t2: "TMP",
+            EC.gh: "HGT",
+            EC.q: "SPFH",
+            EC.refc: "REFC",
+            EC.sp: "PRES",
+            EC.t: "TMP",
+            EC.u: "UGRD",
+            EC.u_10m: "UGRD",
+            EC.v: "VGRD",
+            EC.v_10m: "VGRD",
+            EC.w: "VVEL",
         }.get(name, UNKNOWN)
 
     @staticmethod
     def _canonicalize(name: str, level_type: str) -> str:
         return {
-            ("HGT", S.isobaricInhPa): "gh",
-            ("PRES", S.surface): "sp",
-            ("REFC", S.atmosphere): "refc",
-            ("SPFH", S.isobaricInhPa): "q",
-            ("TMP", S.heightAboveGround): "2t",
-            ("TMP", S.isobaricInhPa): "t",
-            ("UGRD", S.heightAboveGround): "u_10m",
-            ("UGRD", S.isobaricInhPa): "u",
-            ("VGRD", S.heightAboveGround): "v_10m",
-            ("VGRD", S.isobaricInhPa): "v",
-            ("VVEL", S.isobaricInhPa): "w",
+            ("HGT", S.isobaricInhPa): EC.gh,
+            ("PRES", S.surface): EC.sp,
+            ("REFC", S.atmosphere): EC.refc,
+            ("SPFH", S.isobaricInhPa): EC.q,
+            ("TMP", S.heightAboveGround): EC.t2,
+            ("TMP", S.isobaricInhPa): EC.t,
+            ("UGRD", S.heightAboveGround): EC.u_10m,
+            ("UGRD", S.isobaricInhPa): EC.u,
+            ("VGRD", S.heightAboveGround): EC.v_10m,
+            ("VGRD", S.isobaricInhPa): EC.v,
+            ("VVEL", S.isobaricInhPa): EC.w,
         }.get((name, level_type), UNKNOWN)
 
     @staticmethod
