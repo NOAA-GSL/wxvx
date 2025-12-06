@@ -20,6 +20,7 @@ import jinja2
 import magic
 import zarr
 
+from wxvx.strings import S
 from wxvx.times import tcinfo
 
 if TYPE_CHECKING:
@@ -32,24 +33,19 @@ _STATE: dict = {}
 
 pkgname = __name__.split(".", maxsplit=1)[0]
 
-DataFormat = Enum(
-    "DataFormat",
-    [
-        ("BUFR", auto()),
-        ("GRIB", auto()),
-        ("NETCDF", auto()),
-        ("ZARR", auto()),
-        ("UNKNOWN", auto()),
-    ],
-)
 
-Proximity = Enum(
-    "Proximity",
-    [
-        ("LOCAL", auto()),
-        ("REMOTE", auto()),
-    ],
-)
+class DataFormat(Enum):
+    BUFR = auto()
+    GRIB = auto()
+    NETCDF = auto()
+    ZARR = auto()
+    UNKNOWN = auto()
+
+
+class Proximity(Enum):
+    LOCAL = auto()
+    REMOTE = auto()
+
 
 LINETYPE = {
     "FSS": "nbrcnt",
@@ -131,9 +127,9 @@ def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> No
     if env:
         kwargs["env"] = env
     with _POOL_LOCK:
-        if "pool" not in _STATE:
+        if S.pool not in _STATE:
             _initpool()
-    _STATE["pool"].apply(run, [cmd], kwargs)
+    _STATE[S.pool].apply(run, [cmd], kwargs)
 
 
 def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:
@@ -142,8 +138,8 @@ def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:
         "yyyymmdd": yyyymmdd,
         "hh": hh,
         "fh": int(leadtime),
-        "cycle": tc.cycle,
-        "leadtime": tc.leadtime,
+        S.cycle: tc.cycle,
+        S.leadtime: tc.leadtime,
     }
     ctx = context or {}
     ctx.update(timevars)
@@ -181,4 +177,4 @@ def version() -> str:
 
 
 def _initpool() -> None:
-    _STATE["pool"] = Pool(initializer=signal, initargs=(SIGINT, SIG_IGN))
+    _STATE[S.pool] = Pool(initializer=signal, initargs=(SIGINT, SIG_IGN))

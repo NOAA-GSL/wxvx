@@ -252,10 +252,10 @@ def da_construct(c: Config, da: xr.DataArray) -> xr.DataArray:
     leadtime = c.forecast.coords.time.leadtime
     validtime = c.forecast.coords.time.validtime
     if leadtime is not None:
-        time = inittime + _da_val(da, leadtime, "leadtime", np.timedelta64)
+        time = inittime + _da_val(da, leadtime, S.leadtime, np.timedelta64)
     else:
         assert validtime is not None
-        time = _da_val(da, validtime, "validtime", np.datetime64)
+        time = _da_val(da, validtime, S.validtime, np.datetime64)
     return xr.DataArray(
         data=da.expand_dims(dim=[S.forecast_reference_time, S.time]),
         coords=dict(

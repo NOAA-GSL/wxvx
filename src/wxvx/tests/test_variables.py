@@ -99,14 +99,14 @@ def test_variables_HRRR__levinfo(expected, levstr):
     assert variables.HRRR._levinfo(levstr) == expected
 
 
-@mark.parametrize(("leadtime", "validtime"), [("lead_time", None), (None, "validtime")])
+@mark.parametrize((S.leadtime, S.validtime), [("lead_time", None), (None, "validtime")])
 def test_variables_da_construct(
     config_data, da_with_leadtime, da_with_validtime, fakefs, gen_config, leadtime, tc, validtime
 ):
     da = da_with_leadtime if leadtime else da_with_validtime
     time = config_data[S.forecast][S.coords][S.time]
-    time["leadtime"] = leadtime
-    time["validtime"] = validtime
+    time[S.leadtime] = leadtime
+    time[S.validtime] = validtime
     c = gen_config(config_data, fakefs)
     var = variables.Var(name="gh", level_type=S.isobaricInhPa, level=900)
     selected = variables.da_select(c=c, ds=da.to_dataset(), varname="HGT", tc=tc, var=var)

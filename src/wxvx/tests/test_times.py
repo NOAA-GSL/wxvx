@@ -13,7 +13,7 @@ from wxvx.types import Cycles, Leadtimes
 # Tests
 
 
-@mark.parametrize("leadtime", [timedelta(hours=1), 1])
+@mark.parametrize(S.leadtime, [timedelta(hours=1), 1])
 def test_times_TimeCoords(leadtime, utc):
     cycle = utc(2025, 1, 28, 12)
     tc = times.TimeCoords(cycle=cycle, leadtime=leadtime)

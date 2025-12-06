@@ -162,7 +162,7 @@ def test_util_mpexec(delpool, env, tmp_path):
     # no other test is modifying the state / pool.
     util._initpool()
     if delpool:
-        del util._STATE["pool"]
+        del util._STATE[S.pool]
     path = tmp_path / "out"
     cmd = 'echo "$PI" >%s' % path
     util.mpexec(cmd=cmd, rundir=tmp_path, taskname="foo", env=env)

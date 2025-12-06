@@ -71,8 +71,8 @@ def config_data():
                 S.level: "level",
                 S.longitude: "longitude",
                 S.time: {
-                    "inittime": "time",
-                    "leadtime": "lead_time",
+                    S.inittime: "time",
+                    S.leadtime: "lead_time",
                 },
             },
             S.mask: [

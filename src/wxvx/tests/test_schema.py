@@ -141,17 +141,17 @@ def test_schema_forecast_coords_time(logged, config_data, fs):
     # Basic correctness of fixture:
     config = config_data[S.forecast][S.coords][S.time]
     assert ok(config)
-    obj = {"inittime": "a", "leadtime": "b", "validtime": "c"}
+    obj = {S.inittime: "a", S.leadtime: "b", S.validtime: "c"}
     # Overspecified (leadtime and validtime are mutually exclusive):
     assert not ok(obj)
     # OK:
-    for key in ("leadtime", "validtime"):
+    for key in (S.leadtime, S.validtime):
         assert ok(with_del(obj, key))
     # All values must be strings:
     for x in [
-        with_set(obj, None, "inittime"),
-        with_set(with_del(obj, "leadtime"), None, "validtime"),
-        with_set(with_del(obj, "validtime"), None, "leadtime"),
+        with_set(obj, None, S.inittime),
+        with_set(with_del(obj, S.leadtime), None, S.validtime),
+        with_set(with_del(obj, S.validtime), None, S.leadtime),
     ]:
         assert not ok(x)
         assert logged("is not valid")

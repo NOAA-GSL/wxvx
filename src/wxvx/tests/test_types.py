@@ -316,7 +316,7 @@ def test_types_Time(config_data, time):
     cfg = config_data[S.forecast][S.coords][S.time]
     other1 = types.Time(**cfg)
     assert obj == other1
-    other2 = types.Time(**{**cfg, "inittime": "foo"})
+    other2 = types.Time(**{**cfg, S.inittime: "foo"})
     assert obj != other2
 
 
