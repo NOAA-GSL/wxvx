@@ -24,3 +24,4 @@ class S:
     type: str = "type"
     variables: str = "variables"
     level: str = "level"
+    level_type: str = "level_type"

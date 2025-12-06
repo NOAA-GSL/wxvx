@@ -707,7 +707,7 @@ def _vars_varnames_times(c: Config) -> Iterator[tuple[Var, str, TimeCoords]]:
 @cache
 def _vxvars(c: Config) -> dict[Var, str]:
     return {
-        Var(attrs[S.name], attrs["level_type"], level): varname
+        Var(attrs[S.name], attrs[S.level_type], level): varname
         for varname, attrs in c.variables.items()
         for level in attrs.get("levels", [None])
     }
