@@ -282,7 +282,7 @@ def test_schema_regrid(logged, config_data, fs):
     assert not ok({})
     assert logged("should be non-empty")
     # "method" must not have an expected value:
-    assert not ok(with_set(config, "UNEXPECTED", "method"))
+    assert not ok(with_set(config, "UNEXPECTED", S.method))
     assert logged("'UNEXPECTED' is not one of")
     # "to" must have an expected value:
     assert ok(with_set(config, "G004", S.to))

@@ -108,7 +108,7 @@ def config_data():
             S.run: "/path/to/run",
         },
         S.regrid: {
-            "method": "NEAREST",
+            S.method: "NEAREST",
             S.to: S.forecast,
         },
         S.truth: {
