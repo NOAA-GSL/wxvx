@@ -14,7 +14,7 @@ from iotaa import Node
 from pytest import fixture
 
 from wxvx import times
-from wxvx.strings import S
+from wxvx.strings import NCEP, S
 from wxvx.types import Config
 
 if TYPE_CHECKING:
@@ -117,21 +117,21 @@ def config_data():
             S.url: "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
         S.variables: {
-            "HGT": {
+            NCEP.HGT: {
                 S.level_type: "isobaricInhPa",
                 S.levels: [900],
                 S.name: "gh",
             },
-            "REFC": {
+            NCEP.REFC: {
                 S.level_type: "atmosphere",
                 S.name: "refc",
             },
-            "SPFH": {
+            NCEP.SPFH: {
                 S.level_type: "isobaricInhPa",
                 S.levels: [900, 1000],
                 S.name: "q",
             },
-            "T2M": {
+            NCEP.T2M: {
                 S.level_type: "heightAboveGround",
                 S.levels: [2],
                 S.name: "2t",
@@ -144,7 +144,7 @@ def config_data():
 def da_with_leadtime() -> xr.DataArray:
     one = np.array([1], dtype="float32")
     return xr.DataArray(
-        name="HGT",
+        name=NCEP.HGT,
         data=one.reshape((1, 1, 1, 1, 1)),
         dims=["latitude", "longitude", "level", "time", "lead_time"],
         coords=dict(
@@ -161,7 +161,7 @@ def da_with_leadtime() -> xr.DataArray:
 def da_with_validtime() -> xr.DataArray:
     one = np.array([1], dtype="float32")
     return xr.DataArray(
-        name="HGT",
+        name=NCEP.HGT,
         data=one.reshape((1, 1, 1, 1, 1)),
         dims=["latitude", "longitude", "level", "time", "validtime"],
         coords=dict(

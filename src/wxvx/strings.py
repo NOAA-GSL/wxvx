@@ -87,6 +87,7 @@ class NCEP:
     PRES: str = "PRES"
     REFC: str = "REFC"
     SPFH: str = "SPFH"
+    T2M: str = "T2M"
     TMP: str = "TMP"
     UGRD: str = "UGRD"
     VGRD: str = "VGRD"

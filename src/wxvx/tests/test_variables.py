@@ -7,7 +7,7 @@ import xarray as xr
 from pytest import fixture, mark, raises
 
 from wxvx import variables
-from wxvx.strings import EC, S
+from wxvx.strings import EC, NCEP, S
 from wxvx.util import WXVXError, render
 
 # Fixtures
@@ -59,16 +59,18 @@ def test_variables_Var_with_level(level, level_type):
 
 def test_variables_HRRR():
     keys = {S.name, S.level_type, S.firstbyte, S.lastbyte}
-    var = variables.HRRR(name="TMP", levstr="900 mb", firstbyte=1, lastbyte=2)
+    var = variables.HRRR(name=NCEP.TMP, levstr="900 mb", firstbyte=1, lastbyte=2)
     assert var.level_type == S.isobaricInhPa
     assert var.level == 900
     assert var.firstbyte == 1
     assert var.lastbyte == 2
     assert var._keys == {*keys, S.level}
-    assert variables.HRRR(name="TMP", levstr=S.surface, firstbyte=1, lastbyte=2)._keys == keys
+    assert variables.HRRR(name=NCEP.TMP, levstr=S.surface, firstbyte=1, lastbyte=2)._keys == keys
 
 
-@mark.parametrize((S.name, "expected"), [(EC.t, "TMP"), (EC.t2, "TMP"), ("foo", variables.UNKNOWN)])
+@mark.parametrize(
+    (S.name, "expected"), [(EC.t, NCEP.TMP), (EC.t2, NCEP.TMP), ("foo", variables.UNKNOWN)]
+)
 def test_variables_HRRR_varname(name, expected):
     assert variables.HRRR.varname(name=name) == expected
 
@@ -76,8 +78,8 @@ def test_variables_HRRR_varname(name, expected):
 @mark.parametrize(
     (S.name, S.level_type, "expected"),
     [
-        ("TMP", S.isobaricInhPa, EC.t),
-        ("TMP", S.heightAboveGround, EC.t2),
+        (NCEP.TMP, S.isobaricInhPa, EC.t),
+        (NCEP.TMP, S.heightAboveGround, EC.t2),
         ("FOO", "suface", variables.UNKNOWN),
     ],
 )
@@ -109,7 +111,7 @@ def test_variables_da_construct(
     time[S.validtime] = validtime
     c = gen_config(config_data, fakefs)
     var = variables.Var(name=EC.gh, level_type=S.isobaricInhPa, level=900)
-    selected = variables.da_select(c=c, ds=da.to_dataset(), varname="HGT", tc=tc, var=var)
+    selected = variables.da_select(c=c, ds=da.to_dataset(), varname=NCEP.HGT, tc=tc, var=var)
     new = variables.da_construct(c=c, da=selected)
     assert new.name == da.name
     assert all(new.latitude == da.latitude)
@@ -120,7 +122,7 @@ def test_variables_da_construct(
 
 def test_variables_da_select(c, da_with_leadtime, tc):
     var = variables.Var(name=EC.gh, level_type=S.isobaricInhPa, level=900)
-    kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname="HGT", tc=tc, var=var)
+    kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname=NCEP.HGT, tc=tc, var=var)
     new = variables.da_select(**kwargs)
     # latitude and longitude are unchanged
     assert all(new.latitude == da_with_leadtime.latitude)
@@ -137,7 +139,7 @@ def test_variables_da_select__attrs_not_coords(c, da_with_leadtime, tc):
     # be executed for these values in the function-under-test.
     da = da_with_leadtime.drop_vars(["lead_time", "level", "time"])
     var = variables.Var(name=EC.gh, level_type=S.isobaricInhPa, level=900)
-    kwargs = dict(c=c, ds=da.to_dataset(), varname="HGT", tc=tc, var=var)
+    kwargs = dict(c=c, ds=da.to_dataset(), varname=NCEP.HGT, tc=tc, var=var)
     new = variables.da_select(**kwargs)
     # latitude and longitude are unchanged
     assert all(new.latitude == da_with_leadtime.latitude)
@@ -157,7 +159,7 @@ def test_variables_da_select__fail_bad_var(c, da_with_leadtime, tc):
 
 def test_variables_ds_construct__latlon(c, check_cf_metadata):
     c.forecast._projection = {S.proj: "longlat"}
-    name = "HGT"
+    name = NCEP.HGT
     one = np.array([1], dtype="float32")
     da = xr.DataArray(
         data=one.reshape((1, 1, 1, 1)),
@@ -175,7 +177,7 @@ def test_variables_ds_construct__latlon(c, check_cf_metadata):
 
 
 def test_variables_ds_construct__lcc(c, check_cf_metadata):
-    name = "HGT"
+    name = NCEP.HGT
     one = np.array([1], dtype="float32")
     da = xr.DataArray(
         data=one.reshape((1, 1, 1, 1)),
