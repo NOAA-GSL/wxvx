@@ -25,7 +25,7 @@ from iotaa import Asset, Node, collection, external, task
 from wxvx import variables
 from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
-from wxvx.strings import S
+from wxvx.strings import MET, S
 from wxvx.times import TimeCoords, gen_validtimes, hh, tcinfo, yyyymmdd
 from wxvx.types import Cycles, Named, Source, TruthType
 from wxvx.util import (
@@ -175,12 +175,15 @@ def _config_grid_stat(
     meta = _meta(c, varname)
     config = {
         "fcst": {"field": [field_fcst]},
-        "mask": {"grid": [] if polyfile else ["FULL"], "poly": [polyfile.ref] if polyfile else []},
+        "mask": {
+            "grid": [] if polyfile else [MET.FULL],
+            "poly": [polyfile.ref] if polyfile else [],
+        },
         "model": c.truth.name if source == Source.TRUTH else c.forecast.name,
         "nc_pairs_flag": "FALSE",
         "obs": {"field": [field_obs]},
         "obtype": c.truth.name,
-        "output_flag": dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), "BOTH"),
+        "output_flag": dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), MET.BOTH),
         "output_prefix": f"{prefix}",
         "regrid": {"method": c.regrid.method, "to_grid": c.regrid.to},
         "tmp_dir": path.parent,
@@ -232,7 +235,7 @@ def _config_point_stat(
         "model": cast(Named, sections[source]).name,
         "obs": {"field": [field_obs]},
         "obs_window": {"beg": -900 if surface else -1800, "end": 900 if surface else 1800},
-        "output_flag": {"cnt": "BOTH"},
+        "output_flag": {MET.cnt: MET.BOTH},
         "output_prefix": f"{prefix}",
         "regrid": {
             "method": c.regrid.method,
@@ -609,9 +612,9 @@ def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd
     linetype = LINETYPE[stat]
     files = [str(x.ref).replace(".stat", f"_{linetype}.txt") for x in reqs]
     columns = ["MODEL", "FCST_LEAD", stat]
-    if linetype in ["cts", "nbrcnt"]:
+    if linetype in [MET.cts, MET.nbrcnt]:
         columns.append("FCST_THRESH")
-    if linetype == "nbrcnt":
+    if linetype == MET.nbrcnt:
         columns.append("INTERP_PNTS")
     plot_rows = [pd.read_csv(file, sep=r"\s+")[columns] for file in files]
     plot_data = pd.concat(plot_rows)
@@ -677,7 +680,7 @@ def _stats_widths(c: Config, varname) -> Iterator[tuple[str, int | None]]:
     meta = _meta(c, varname)
     return chain.from_iterable(
         ((stat, width) for width in (meta.nbrhd_width or []))
-        if LINETYPE[stat] == "nbrcnt"
+        if LINETYPE[stat] == MET.nbrcnt
         else [(stat, None)]
         for stat in meta.met_stats
     )

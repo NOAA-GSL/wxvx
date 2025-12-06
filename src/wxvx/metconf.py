@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, NoReturn
 
+from wxvx.strings import MET
 from wxvx.types import ToGridVal
 
 if TYPE_CHECKING:
@@ -147,7 +148,7 @@ def _obs_window(k: str, v: Any, level: int) -> list[str]:
 def _output_flag(k: str, v: str, level: int) -> list[str]:
     match k:
         # Key-Value Pair: bare.
-        case "cnt" | "cts" | "nbrcnt":
+        case MET.cnt | MET.cts | MET.nbrcnt:
             return _kvpair(k, _bare(v), level)
     return _fail(k)
 

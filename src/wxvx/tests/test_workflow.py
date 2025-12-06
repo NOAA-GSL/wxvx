@@ -19,7 +19,7 @@ from iotaa import Asset, Node, external
 from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
-from wxvx.strings import S
+from wxvx.strings import MET, S
 from wxvx.tests.support import with_del
 from wxvx.times import TimeCoords, gen_validtimes, tcinfo
 from wxvx.types import Config, Source, TruthType
@@ -31,10 +31,10 @@ TESTDATA = {
         "T2M",
         2,
         [
-            pd.DataFrame({"MODEL": "foo", "FCST_LEAD": [60000], "RMSE": [0.5]}),
-            pd.DataFrame({"MODEL": "bar", "FCST_LEAD": [60000], "RMSE": [0.4]}),
+            pd.DataFrame({"MODEL": "foo", "FCST_LEAD": [60000], MET.RMSE: [0.5]}),
+            pd.DataFrame({"MODEL": "bar", "FCST_LEAD": [60000], MET.RMSE: [0.4]}),
         ],
-        "RMSE",
+        MET.RMSE,
         None,
     ),
     "bar": (
@@ -42,13 +42,13 @@ TESTDATA = {
         None,
         [
             pd.DataFrame(
-                {"MODEL": "foo", "FCST_LEAD": [60000], "PODY": [0.5], "FCST_THRESH": ">=20"}
+                {"MODEL": "foo", "FCST_LEAD": [60000], MET.PODY: [0.5], "FCST_THRESH": ">=20"}
             ),
             pd.DataFrame(
-                {"MODEL": "bar", "FCST_LEAD": [60000], "PODY": [0.4], "FCST_THRESH": ">=30"}
+                {"MODEL": "bar", "FCST_LEAD": [60000], MET.PODY: [0.4], "FCST_THRESH": ">=30"}
             ),
         ],
-        "PODY",
+        MET.PODY,
         None,
     ),
     "baz": (
@@ -59,7 +59,7 @@ TESTDATA = {
                 {
                     "MODEL": "foo",
                     "FCST_LEAD": [60000],
-                    "FSS": [0.5],
+                    MET.FSS: [0.5],
                     "FCST_THRESH": ">=20",
                     "INTERP_PNTS": 9,
                 }
@@ -68,13 +68,13 @@ TESTDATA = {
                 {
                     "MODEL": "bar",
                     "FCST_LEAD": [60000],
-                    "FSS": [0.4],
+                    MET.FSS: [0.4],
                     "FCST_THRESH": ">=30",
                     "INTERP_PNTS": 9,
                 }
             ),
         ],
-        "FSS",
+        MET.FSS,
         3,
     ),
 }
@@ -777,10 +777,10 @@ def test_workflow__prepare_plot_data(dictkey):
     assert stat in tdf.columns
     assert "FCST_LEAD" in tdf.columns
     assert all(tdf["FCST_LEAD"] == 6)
-    if stat == "PODY":
+    if stat == MET.PODY:
         assert "FCST_THRESH" in tdf.columns
         assert "LABEL" in tdf.columns
-    if stat == "FSS":
+    if stat == MET.FSS:
         assert width is not None
         assert "INTERP_PNTS" in tdf.columns
         assert tdf["INTERP_PNTS"].eq(width**2).all()
@@ -850,14 +850,14 @@ def test_workflow__stat_reqs(baseline_name, c, statkit, cycle):
 
 def test_workflow__stats_widths(c):
     assert list(workflow._stats_widths(c=c, varname="REFC")) == [
-        ("FSS", 3),
-        ("FSS", 5),
-        ("FSS", 11),
-        ("PODY", None),
+        (MET.FSS, 3),
+        (MET.FSS, 5),
+        (MET.FSS, 11),
+        (MET.PODY, None),
     ]
     assert list(workflow._stats_widths(c=c, varname="SPFH")) == [
-        ("ME", None),
-        ("RMSE", None),
+        (MET.ME, None),
+        (MET.RMSE, None),
     ]
 
 

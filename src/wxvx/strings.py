@@ -4,6 +4,20 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class MET:
+    FSS: str = "FSS"
+    ME: str = "ME"
+    PODY: str = "PODY"
+    RMSE: str = "RMSE"
+    cnt: str = "cnt"
+    cts: str = "cts"
+    nbrcnt: str = "nbrcnt"
+    FULL: str = "FULL"
+    BOTH: str = "BOTH"
+    nbrhd: str = "nbrhd"
+
+
+@dataclass(frozen=True)
 class S:
     GFS: str = "GFS"
     HRRR: str = "HRRR"

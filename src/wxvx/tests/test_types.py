@@ -10,7 +10,7 @@ from pytest import fixture, mark, raises
 from uwtools.api.config import get_yaml_config
 
 from wxvx import types
-from wxvx.strings import S
+from wxvx.strings import MET, S
 from wxvx.util import WXVXError, resource_path
 
 # Fixtures
@@ -375,7 +375,7 @@ def test_types_VarMeta():
         cnt_thresh=[">15"],
         description="Composite Reflectivity",
         level_type=S.atmosphere,
-        met_stats=["FSS", "PODY"],
+        met_stats=[MET.FSS, MET.PODY],
         name="refc",
         nbrhd_shape="CIRCLE",
         nbrhd_width=[3, 5, 11],

@@ -20,7 +20,7 @@ import jinja2
 import magic
 import zarr
 
-from wxvx.strings import S
+from wxvx.strings import MET, S
 from wxvx.times import tcinfo
 
 if TYPE_CHECKING:
@@ -48,10 +48,10 @@ class Proximity(Enum):
 
 
 LINETYPE = {
-    "FSS": "nbrcnt",
-    "ME": "cnt",
-    "PODY": "cts",
-    "RMSE": "cnt",
+    MET.FSS: MET.nbrcnt,
+    MET.ME: MET.cnt,
+    MET.PODY: MET.cts,
+    MET.RMSE: MET.cnt,
 }
 
 
