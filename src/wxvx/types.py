@@ -122,9 +122,9 @@ class Config:
                 )
                 raise WXVXError(msg)
             if self.paths.grids_baseline is not None:
-                logging.warning("Ignoring paths.grids.baseline when baseline.name is 'truth'")
+                logging.warning("Ignoring paths.grids.baseline when baseline.name is '%s'", S.truth)
         elif self.baseline.name is not None and not self.paths.grids_baseline:
-            msg = "Specify paths.grids.baseline when baseline.name is not 'truth'"
+            msg = f"Specify paths.grids.baseline when baseline.name is not '{S.truth}'"
             raise WXVXError(msg)
         if self.regrid.to == S.OBS:
             msg = "Cannot regrid to observations per regrid.to config value"
