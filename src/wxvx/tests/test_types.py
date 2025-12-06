@@ -213,8 +213,8 @@ def test_types_Cycles():
     ts2dt = lambda s: datetime.fromisoformat(s)
     expected = [ts2dt(x) for x in (ts1, ts2, ts3)]
     x1 = types.Cycles(raw=[ts1, ts2, ts3])
-    x2 = types.Cycles(raw={"start": ts1, "step": td, "stop": ts3})
-    x3 = types.Cycles(raw={"start": ts1, "step": int(td), "stop": ts3})
+    x2 = types.Cycles(raw={S.start: ts1, S.step: td, S.stop: ts3})
+    x3 = types.Cycles(raw={S.start: ts1, S.step: int(td), S.stop: ts3})
     assert x1.values == expected
     assert types.Cycles(raw=[ts2, ts3, ts1]).values == expected  # order invariant
     assert types.Cycles(raw=[ts2dt(ts1), ts2dt(ts2), ts2dt(ts3)]).values == expected
@@ -246,7 +246,7 @@ def test_types_Forecast(config_data, forecast):
     other2 = types.Forecast(**{**cfg, S.name: "foo"})
     assert obj != other2
     cfg_no_proj = deepcopy(cfg)
-    del cfg_no_proj["projection"]
+    del cfg_no_proj[S.projection]
     default = types.Forecast(**cfg_no_proj)
     assert default.projection == {"proj": "latlon"}
 
@@ -255,8 +255,8 @@ def test_types_Leadtimes():
     lt1, lt2, lt3, td = "3", "6", "9", "3"
     expected = [timedelta(hours=int(x)) for x in (lt1, lt2, lt3)]
     x1 = types.Leadtimes(raw=[lt1, lt2, lt3])
-    x2 = types.Leadtimes(raw={"start": lt1, "step": td, "stop": lt3})
-    x3 = types.Leadtimes(raw={"start": int(lt1), "step": int(td), "stop": int(lt3)})
+    x2 = types.Leadtimes(raw={S.start: lt1, S.step: td, S.stop: lt3})
+    x3 = types.Leadtimes(raw={S.start: int(lt1), S.step: int(td), S.stop: int(lt3)})
     assert x1.values == expected
     assert types.Leadtimes(raw=[lt2, lt3, lt1]).values == expected  # order invariant
     assert types.Leadtimes(raw=[int(lt1), int(lt2), int(lt3)]).values == expected

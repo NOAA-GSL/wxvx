@@ -29,3 +29,7 @@ class S:
     url: str = "url"
     mask: str = "mask"
     path: str = "path"
+    projection: str = "projection"
+    start: str = "start"
+    stop: str = "stop"
+    step: str = "step"

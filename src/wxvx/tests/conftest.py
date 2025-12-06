@@ -61,9 +61,9 @@ def config_data():
             S.url: "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
         S.cycles: {
-            "start": "2024-12-19T18:00:00",
-            "step": "12:00:00",
-            "stop": "2024-12-20T06:00:00",
+            S.start: "2024-12-19T18:00:00",
+            S.step: "12:00:00",
+            S.stop: "2024-12-20T06:00:00",
         },
         S.forecast: {
             S.coords: {
@@ -83,7 +83,7 @@ def config_data():
             ],
             S.name: "Forecast",
             S.path: "/path/to/forecast-{{ yyyymmdd }}-{{ hh }}-{{ '%03d' % fh }}.nc",
-            "projection": {
+            S.projection: {
                 "a": 6371229,
                 "b": 6371229,
                 "lat_0": 38.5,
@@ -94,9 +94,9 @@ def config_data():
             },
         },
         S.leadtimes: {
-            "start": "00:00:00",
-            "step": "06:00:00",
-            "stop": "12:00:00",
+            S.start: "00:00:00",
+            S.step: "06:00:00",
+            S.stop: "12:00:00",
         },
         S.paths: {
             S.grids: {

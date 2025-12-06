@@ -82,14 +82,14 @@ def test_schema_cycles(logged, config_data, fs, utc):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in ["start", "step", "stop"]:
+    for key in [S.start, S.step, S.stop]:
         assert not ok(with_del(config, key))
         assert logged("is not valid")
     # Additional keys are not allowed:
     assert not ok(with_set(config, 42, "n"))
     assert logged("is not valid")
     # Some keys must match a certain pattern:
-    for key in ["start", "step", "stop"]:
+    for key in [S.start, S.step, S.stop]:
         assert not ok(with_set(config, "foo", key))
         assert logged("is not valid")
     # Alternate short form:
@@ -110,7 +110,7 @@ def test_schema_forecast(logged, config_data, fs):
     assert not ok(with_set(config, 42, "n"))
     assert logged("'n' was unexpected")
     # Some keys have object values:
-    for key in [S.coords, "projection"]:
+    for key in [S.coords, S.projection]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'object'")
     # Some keys have string values:
@@ -166,8 +166,8 @@ def test_schema_forecast_mask(logged, config_data, fs):
 
 
 def test_schema_forecast_projection(logged, config_data, fs):
-    ok = validator(fs, S.properties, S.forecast, S.properties, "projection")
-    config = config_data[S.forecast]["projection"]
+    ok = validator(fs, S.properties, S.forecast, S.properties, S.projection)
+    config = config_data[S.forecast][S.projection]
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
@@ -201,14 +201,14 @@ def test_schema_leadtimes(logged, config_data, fs):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in ["start", "step", "stop"]:
+    for key in [S.start, S.step, S.stop]:
         assert not ok(with_del(config, key))
         assert logged("is not valid")
     # Additional keys are not allowed:
     assert not ok(with_set(config, 42, "n"))
     assert logged("is not valid")
     # Some keys must match a certain pattern:
-    for key in ["start", "step", "stop"]:
+    for key in [S.start, S.step, S.stop]:
         assert not ok(with_set(config, "foo", key))
         assert logged("is not valid")
     # Alternate short form:

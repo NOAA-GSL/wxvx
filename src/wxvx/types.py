@@ -171,9 +171,9 @@ class Cycles:
     def values(self) -> list[datetime]:
         if isinstance(self.raw, dict):
             dt_start, dt_stop = [
-                to_datetime(cast(_DatetimeT, self.raw[x])) for x in ("start", "stop")
+                to_datetime(cast(_DatetimeT, self.raw[x])) for x in (S.start, S.stop)
             ]
-            td_step = to_timedelta(cast(_TimedeltaT, self.raw["step"]))
+            td_step = to_timedelta(cast(_TimedeltaT, self.raw[S.step]))
             return expand(dt_start, td_step, dt_stop)
         return sorted(map(to_datetime, self.raw))
 
@@ -254,7 +254,7 @@ class Leadtimes:
     def values(self) -> list[timedelta]:
         if isinstance(self.raw, dict):
             td_start, td_step, td_stop = [
-                to_timedelta(cast(_TimedeltaT, self.raw[x])) for x in ("start", "step", "stop")
+                to_timedelta(cast(_TimedeltaT, self.raw[x])) for x in (S.start, S.step, S.stop)
             ]
             return expand(td_start, td_step, td_stop)
         return sorted(map(to_timedelta, self.raw))
