@@ -75,14 +75,14 @@ def config_data():
                     "leadtime": "lead_time",
                 },
             },
-            "mask": [
+            S.mask: [
                 [52.61564933, 225.90452027],
                 [52.61564933, 275.0],
                 [21.138123, 275.0],
                 [21.138123, 225.90452027],
             ],
             S.name: "Forecast",
-            "path": "/path/to/forecast-{{ yyyymmdd }}-{{ hh }}-{{ '%03d' % fh }}.nc",
+            S.path: "/path/to/forecast-{{ yyyymmdd }}-{{ hh }}-{{ '%03d' % fh }}.nc",
             "projection": {
                 "a": 6371229,
                 "b": 6371229,

@@ -181,9 +181,9 @@ class Cycles:
 class Forecast:
     KEYS = (
         S.coords,
-        "mask",
+        S.mask,
         S.name,
-        "path",
+        S.path,
         "_projection",  # use '_projection' (not 'projection') to avoid triggering the property.
     )
 

@@ -103,7 +103,7 @@ def test_schema_forecast(logged, config_data, fs):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in [S.name, "path"]:
+    for key in [S.name, S.path]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Additional keys are not allowed:
@@ -114,11 +114,11 @@ def test_schema_forecast(logged, config_data, fs):
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'object'")
     # Some keys have string values:
-    for key in [S.name, "path"]:
+    for key in [S.name, S.path]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
     # Some keys are optional:
-    for key in ["mask"]:
+    for key in [S.mask]:
         assert ok(with_del(config, key))
 
 
@@ -158,8 +158,8 @@ def test_schema_forecast_coords_time(logged, config_data, fs):
 
 
 def test_schema_forecast_mask(logged, config_data, fs):
-    ok = validator(fs, S.properties, S.forecast, S.properties, "mask")
-    config = config_data[S.forecast]["mask"]
+    ok = validator(fs, S.properties, S.forecast, S.properties, S.mask)
+    config = config_data[S.forecast][S.mask]
     assert ok(config)
     assert not ok("string")
     assert logged("'string' is not of type 'array'")

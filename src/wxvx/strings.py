@@ -27,3 +27,5 @@ class S:
     level_type: str = "level_type"
     levels: str = "levels"
     url: str = "url"
+    mask: str = "mask"
+    path: str = "path"
