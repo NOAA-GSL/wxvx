@@ -144,7 +144,7 @@ class Coords:
     longitude: str
     time: Time
 
-    KEYS = ("latitude", "level", "longitude", S.time)
+    KEYS = ("latitude", S.level, "longitude", S.time)
 
     def __hash__(self):
         return _hash(self)

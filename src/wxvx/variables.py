@@ -132,7 +132,7 @@ class Var:
         self.level_type = level_type
         self.level = level
         self._keys = (
-            {S.name, "level_type", "level"} if self.level is not None else {S.name, "level_type"}
+            {S.name, "level_type", S.level} if self.level is not None else {S.name, "level_type"}
         )
 
     def __eq__(self, other):
@@ -170,7 +170,7 @@ class GFS(Var):
         self.firstbyte: int = firstbyte
         self.lastbyte: int | None = lastbyte if lastbyte > -1 else None
         self._keys = (
-            {S.name, "level_type", "level", "firstbyte", "lastbyte"}
+            {S.name, "level_type", S.level, "firstbyte", "lastbyte"}
             if self.level is not None
             else {S.name, "level_type", "firstbyte", "lastbyte"}
         )

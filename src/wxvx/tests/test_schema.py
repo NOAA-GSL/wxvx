@@ -127,11 +127,11 @@ def test_schema_forecast_coords(logged, config_data, fs):
     config = config_data[S.forecast][S.coords]
     assert ok(config)
     # All keys are required:
-    for key in ["latitude", "level", "longitude", S.time]:
+    for key in ["latitude", S.level, "longitude", S.time]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Some keys must have string values:
-    for key in ["latitude", "level", "longitude"]:
+    for key in ["latitude", S.level, "longitude"]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
 

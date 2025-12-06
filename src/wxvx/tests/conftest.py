@@ -27,7 +27,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 def check_cf_metadata() -> Callable:
     def check(ds: xr.DataArray, name: str, level: float | None = None):
         assert ds.attrs["Conventions"] == "CF-1.8"
-        level_actual = ds.attrs["level"]
+        level_actual = ds.attrs[S.level]
         if level:
             assert level_actual == level
         else:
@@ -68,7 +68,7 @@ def config_data():
         S.forecast: {
             S.coords: {
                 "latitude": "latitude",
-                "level": "level",
+                S.level: "level",
                 "longitude": "longitude",
                 S.time: {
                     "inittime": "time",
@@ -146,7 +146,7 @@ def da_with_leadtime() -> xr.DataArray:
     return xr.DataArray(
         name="HGT",
         data=one.reshape((1, 1, 1, 1, 1)),
-        dims=["latitude", "longitude", "level", S.time, "lead_time"],
+        dims=["latitude", "longitude", "level", "time", "lead_time"],
         coords=dict(
             latitude=(["latitude", "longitude"], one.reshape((1, 1))),
             longitude=(["latitude", "longitude"], one.reshape((1, 1))),
@@ -163,7 +163,7 @@ def da_with_validtime() -> xr.DataArray:
     return xr.DataArray(
         name="HGT",
         data=one.reshape((1, 1, 1, 1, 1)),
-        dims=["latitude", "longitude", "level", S.time, "validtime"],
+        dims=["latitude", "longitude", "level", "time", "validtime"],
         coords=dict(
             latitude=(["latitude", "longitude"], one.reshape((1, 1))),
             longitude=(["latitude", "longitude"], one.reshape((1, 1))),

@@ -41,13 +41,13 @@ def test_variables_Var_no_level(level_type):
     assert str(var) == "foo-%s" % level_type
 
 
-@mark.parametrize(("level_type", "level"), [("heightAboveGround", 2), ("isobaricInhPa", 1000)])
+@mark.parametrize(("level_type", S.level), [("heightAboveGround", 2), ("isobaricInhPa", 1000)])
 def test_variables_Var_with_level(level, level_type):
     var = variables.Var(name="foo", level_type=level_type, level=level)
     assert var.name == "foo"
     assert var.level_type == level_type
     assert var.level == level
-    assert var._keys == {S.name, "level_type", "level"}
+    assert var._keys == {S.name, "level_type", S.level}
     assert var == variables.Var("foo", level_type, level)
     assert var != variables.Var("bar", level_type, level)
     assert hash(var) == hash(("foo", level_type, level))
@@ -64,7 +64,7 @@ def test_variables_HRRR():
     assert var.level == 900
     assert var.firstbyte == 1
     assert var.lastbyte == 2
-    assert var._keys == {*keys, "level"}
+    assert var._keys == {*keys, S.level}
     assert variables.HRRR(name="TMP", levstr="surface", firstbyte=1, lastbyte=2)._keys == keys
 
 
@@ -193,7 +193,7 @@ def test_variables_ds_construct__lcc(c, check_cf_metadata):
 
 
 @mark.parametrize(
-    ("level_type", "level", "expected"),
+    ("level_type", S.level, "expected"),
     [
         ("atmosphere", None, "L000"),
         ("heightAboveGround", "2", "Z002"),

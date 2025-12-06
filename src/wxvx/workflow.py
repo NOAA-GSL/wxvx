@@ -301,7 +301,7 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source:
     yield taskname
     yield Asset(path, path.is_file)
     yield _existing(grib_path)
-    grib_index_keys = ["shortName", "typeOfLevel", "level"]
+    grib_index_keys = ["shortName", "typeOfLevel", S.level]
     idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
     with atomic(path) as tmp:
         ec.codes_index_write(idx, str(tmp))
@@ -570,10 +570,10 @@ def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
     level_fcst, name_fcst = (
         (level_obs, varname_truth) if datafmt == DataFormat.GRIB else ("(0,0,*,*)", varname)
     )
-    field_fcst = {"level": [level_fcst], S.name: name_fcst}
+    field_fcst = {S.level: [level_fcst], S.name: name_fcst}
     if datafmt != DataFormat.GRIB:
         field_fcst["set_attr_level"] = level_obs
-    field_obs = {"level": [level_obs], S.name: varname_truth}
+    field_obs = {S.level: [level_obs], S.name: varname_truth}
     meta = _meta(c, varname)
     if meta.cat_thresh:
         for x in field_fcst, field_obs:
