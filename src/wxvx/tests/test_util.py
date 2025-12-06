@@ -154,7 +154,7 @@ def test_util_fail(caplog):
     assert e.value.code == 1
 
 
-@mark.parametrize("env", [{"PI": "3.14"}, None])
+@mark.parametrize(S.env, [{"PI": "3.14"}, None])
 @mark.parametrize("delpool", [True, False])
 def test_util_mpexec(delpool, env, tmp_path):
     # This is safe because pytest-xdist parallelizes across *processes*, and each process has its

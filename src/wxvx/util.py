@@ -125,7 +125,7 @@ def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> No
     rundir.mkdir(parents=True, exist_ok=True)
     kwargs = {"check": False, "cwd": rundir, "shell": True}
     if env:
-        kwargs["env"] = env
+        kwargs[S.env] = env
     with _POOL_LOCK:
         if S.pool not in _STATE:
             _initpool()
@@ -135,16 +135,16 @@ def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> No
 def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:
     yyyymmdd, hh, leadtime = tcinfo(tc)
     timevars = {
-        "yyyymmdd": yyyymmdd,
-        "hh": hh,
-        "fh": int(leadtime),
+        S.yyyymmdd: yyyymmdd,
+        S.hh: hh,
+        S.fh: int(leadtime),
         S.cycle: tc.cycle,
         S.leadtime: tc.leadtime,
     }
     ctx = context or {}
     ctx.update(timevars)
     env = jinja2.Environment(autoescape=True)
-    env.filters.update({"env": lambda x: os.environ[x]})
+    env.filters.update({S.env: lambda x: os.environ[x]})
     return env.from_string(template).render(**ctx)
 
 
