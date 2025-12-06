@@ -204,7 +204,7 @@ def test_types_Coords(config_data, coords):
     cfg = config_data[S.forecast][S.coords]
     other1 = types.Coords(**{**cfg, S.time: types.Time(inittime="time", leadtime="lead_time")})
     assert obj == other1
-    other2 = types.Coords(**{**cfg, "latitude": "lat"})
+    other2 = types.Coords(**{**cfg, S.latitude: "lat"})
     assert obj != other2
 
 

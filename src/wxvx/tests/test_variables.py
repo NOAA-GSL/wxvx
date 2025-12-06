@@ -58,7 +58,7 @@ def test_variables_Var_with_level(level, level_type):
 
 
 def test_variables_HRRR():
-    keys = {S.name, S.level_type, "firstbyte", "lastbyte"}
+    keys = {S.name, S.level_type, S.firstbyte, S.lastbyte}
     var = variables.HRRR(name="TMP", levstr="900 mb", firstbyte=1, lastbyte=2)
     assert var.level_type == "isobaricInhPa"
     assert var.level == 900
@@ -167,7 +167,7 @@ def test_variables_ds_construct__latlon(c, check_cf_metadata):
             latitude=[1],
             longitude=[1],
         ),
-        dims=("forecast_reference_time", S.time, "latitude", "longitude"),
+        dims=("forecast_reference_time", S.time, S.latitude, S.longitude),
         name=name,
     )
     ds = variables.ds_construct(c=c, da=da, level=None, taskname="test")
@@ -182,10 +182,10 @@ def test_variables_ds_construct__lcc(c, check_cf_metadata):
         coords=dict(
             forecast_reference_time=np.array([0], dtype="datetime64[ns]"),
             time=np.array([1], dtype="timedelta64[ns]"),
-            latitude=(["latitude", "longitude"], one.reshape((1, 1))),
-            longitude=(["latitude", "longitude"], one.reshape((1, 1))),
+            latitude=([S.latitude, S.longitude], one.reshape((1, 1))),
+            longitude=([S.latitude, S.longitude], one.reshape((1, 1))),
         ),
-        dims=("forecast_reference_time", S.time, "latitude", "longitude"),
+        dims=("forecast_reference_time", S.time, S.latitude, S.longitude),
         name=name,
     )
     ds = variables.ds_construct(c=c, da=da, level=None, taskname="test")

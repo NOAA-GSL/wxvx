@@ -33,3 +33,7 @@ class S:
     start: str = "start"
     stop: str = "stop"
     step: str = "step"
+    firstbyte: str = "firstbyte"
+    lastbyte: str = "lastbyte"
+    latitude: str = "latitude"
+    longitude: str = "longitude"

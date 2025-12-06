@@ -170,9 +170,9 @@ class GFS(Var):
         self.firstbyte: int = firstbyte
         self.lastbyte: int | None = lastbyte if lastbyte > -1 else None
         self._keys = (
-            {S.name, S.level_type, S.level, "firstbyte", "lastbyte"}
+            {S.name, S.level_type, S.level, S.firstbyte, S.lastbyte}
             if self.level is not None
-            else {S.name, S.level_type, "firstbyte", "lastbyte"}
+            else {S.name, S.level_type, S.firstbyte, S.lastbyte}
         )
 
     @staticmethod
@@ -264,7 +264,7 @@ def da_construct(c: Config, da: xr.DataArray) -> xr.DataArray:
             latitude=da[c.forecast.coords.latitude],
             longitude=da[c.forecast.coords.longitude],
         ),
-        dims=("forecast_reference_time", S.time, "latitude", "longitude"),
+        dims=("forecast_reference_time", S.time, S.latitude, S.longitude),
         name=da.name,
     )
 
@@ -299,16 +299,16 @@ def da_select(c: Config, ds: xr.Dataset, varname: str, tc: TimeCoords, var: Var)
 
 def ds_construct(c: Config, da: xr.DataArray, taskname: str, level: float | None) -> xr.Dataset:
     logging.info("%s: Creating CF-compliant %s dataset", taskname, da.name)
-    coord_names = ("forecast_reference_time", S.time, "latitude", "longitude")
+    coord_names = ("forecast_reference_time", S.time, S.latitude, S.longitude)
     assert len(da.shape) == len(coord_names)
     proj = Proj(c.forecast.projection)
     latlon = proj.name == "longlat"  # yes, "longlat"
     dims = ["forecast_reference_time", S.time]
-    dims.extend(["latitude", "longitude"] if latlon else ["y", "x"])
+    dims.extend([S.latitude, S.longitude] if latlon else ["y", "x"])
     crs = "CRS"
     meta = VARMETA[c.variables[da.name][S.name]]
     attrs = dict(grid_mapping=crs, standard_name=meta.cf_standard_name, units=meta.units)
-    dims_lat, dims_lon = ([k] if latlon else ["y", "x"] for k in ["latitude", "longitude"])
+    dims_lat, dims_lon = ([k] if latlon else ["y", "x"] for k in [S.latitude, S.longitude])
     coords = dict(
         zip(
             coord_names,
@@ -387,10 +387,10 @@ def _da_crs(proj: Proj) -> xr.DataArray:
 def _da_grid_coords(
     da: xr.DataArray, proj: Proj, k: Literal["latitude", "longitude"]
 ) -> np.ndarray:
-    ks = ("latitude", "longitude")
+    ks = (S.latitude, S.longitude)
     assert k in ks
     lats, lons = [da[k].values for k in ks]
-    i1, i2 = {"latitude": (lambda n: (n, 0), 1), "longitude": (lambda n: (0, n), 0)}[k]
+    i1, i2 = {S.latitude: (lambda n: (n, 0), 1), S.longitude: (lambda n: (0, n), 0)}[k]
     return np.array([proj(lons[i1(n)], lats[i1(n)])[i2] for n in range(da.latitude.sizes[k])])
 
 
@@ -410,7 +410,7 @@ def _da_to_latitude(da: xr.DataArray, dims: list[str]) -> xr.DataArray:
         data=var.values,
         dims=dims,
         name=var.name,
-        attrs=dict(standard_name="latitude", units="degrees_north"),
+        attrs=dict(standard_name=S.latitude, units="degrees_north"),
     )
 
 
@@ -420,7 +420,7 @@ def _da_to_longitude(da: xr.DataArray, dims=list[str]) -> xr.DataArray:
         data=var.values,
         dims=dims,
         name=var.name,
-        attrs=dict(standard_name="longitude", units="degrees_east"),
+        attrs=dict(standard_name=S.longitude, units="degrees_east"),
     )
 
 

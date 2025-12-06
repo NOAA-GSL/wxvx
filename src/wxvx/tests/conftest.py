@@ -35,7 +35,7 @@ def check_cf_metadata() -> Callable:
         da = ds[name]
         for k, v in [("standard_name", "geopotential_height"), ("units", "m")]:
             assert da.attrs[k] == v
-        for k, v in [("standard_name", "latitude"), ("units", "degrees_north")]:
+        for k, v in [("standard_name", S.latitude), ("units", "degrees_north")]:
             assert da.latitude.attrs[k] == v
         assert da.forecast_reference_time.attrs["standard_name"] == "forecast_reference_time"
         assert da.time.attrs["standard_name"] == S.time
@@ -67,9 +67,9 @@ def config_data():
         },
         S.forecast: {
             S.coords: {
-                "latitude": "latitude",
+                S.latitude: "latitude",
                 S.level: "level",
-                "longitude": "longitude",
+                S.longitude: "longitude",
                 S.time: {
                     "inittime": "time",
                     "leadtime": "lead_time",
