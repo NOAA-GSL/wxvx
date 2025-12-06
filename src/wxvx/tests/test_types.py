@@ -93,7 +93,7 @@ def test_types_Baseline(baseline, config_data):
     cfg = config_data[S.baseline]
     assert obj == types.Baseline(**cfg)
     assert obj != types.Baseline(**{**cfg, S.name: S.GFS})
-    assert obj != types.Baseline(**{**cfg, "url": "bar"})
+    assert obj != types.Baseline(**{**cfg, S.url: "bar"})
     assert types.Baseline(name=S.truth)
     with raises(AssertionError):
         types.Baseline(name=S.truth, url="should-not-be-defined")
@@ -126,7 +126,7 @@ def test_types_Config(baseline, config_data, cycles, forecast, leadtimes, paths,
 
 
 def test_types_Config__bad_baseline_name_vs_truth_type(config_data):
-    del config_data[S.baseline]["url"]
+    del config_data[S.baseline][S.url]
     config_data[S.baseline][S.name] = S.truth
     config_data[S.truth][S.type] = types.TruthType.POINT
     config_data[S.truth][S.name] = S.PREPBUFR
@@ -183,7 +183,7 @@ def test_types_Config__bad_duplicate_names(baseline, config_data, forecast, trut
 @mark.parametrize("ignore", [True, False])
 def test_types_Config__paths_grids_baseline_ignored(config_data, ignore, logged):
     config_data[S.baseline][S.name] = S.truth
-    del config_data[S.baseline]["url"]
+    del config_data[S.baseline][S.url]
     if ignore:
         config_data[S.paths][S.grids][S.baseline] = "/some/path"
     else:

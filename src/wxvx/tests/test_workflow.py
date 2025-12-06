@@ -473,7 +473,7 @@ def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, node
 
 @mark.parametrize("template", ["{root}/foo", "file://{root}/foo"])
 def test_workflow__grid_grib__local(config_data, fakefs, gen_config, node, tc, template, testvars):
-    config_data[S.truth]["url"] = template.format(root=fakefs)
+    config_data[S.truth][S.url] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
     with patch.object(
         workflow, "_grib_message_in_file", return_value=node

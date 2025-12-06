@@ -58,7 +58,7 @@ def config_data():
     return {
         S.baseline: {
             S.name: S.HRRR,
-            "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
+            S.url: "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
         S.cycles: {
             "start": "2024-12-19T18:00:00",
@@ -114,7 +114,7 @@ def config_data():
         S.truth: {
             S.name: S.GFS,
             S.type: "grid",
-            "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
+            S.url: "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
         S.variables: {
             "HGT": {

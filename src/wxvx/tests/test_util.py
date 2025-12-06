@@ -12,6 +12,7 @@ from unittest.mock import patch
 from pytest import mark, raises
 
 from wxvx import util
+from wxvx.strings import S
 from wxvx.times import TimeCoords
 
 # Tests
@@ -92,7 +93,7 @@ def test_util_classify_data_format__zarr_missing(fakefs, logged):
 
 
 @mark.parametrize(
-    ("url", "expected_scheme"),
+    (S.url, "expected_scheme"),
     [
         ("http://example.com/path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.REMOTE),
         ("file:///path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),

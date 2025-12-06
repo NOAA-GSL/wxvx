@@ -70,9 +70,9 @@ def test_schema_baseline(logged, config_data, fs):
     assert ok(config)
     # The "name" property's value can be "truth", in which case "url" must not be set:
     assert not ok(with_set(config, S.truth, S.name))
-    assert ok(with_del(with_set(config, S.truth, S.name), "url"))
+    assert ok(with_del(with_set(config, S.truth, S.name), S.url))
     # If name is not "truth", URL must be specified:
-    assert not ok(with_del(with_set(config, S.GFS, S.name), "url"))
+    assert not ok(with_del(with_set(config, S.GFS, S.name), S.url))
     assert logged("'url' is a required property")
 
 
@@ -296,14 +296,14 @@ def test_schema_truth(logged, config_data, fs):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in [S.name, S.type, "url"]:
+    for key in [S.name, S.type, S.url]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Additional keys are not allowed:
     assert not ok(with_set(config, 42, "n"))
     assert logged("'n' was unexpected")
     # Some keys have string values:
-    for key in [S.name, "url"]:
+    for key in [S.name, S.url]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
     # Some keys have enum values:
