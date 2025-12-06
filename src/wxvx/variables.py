@@ -39,7 +39,7 @@ VARMETA = {
             cat_thresh=[">=20", ">=30", ">=40"],
             cf_standard_name="unknown",
             cnt_thresh=[">15"],
-            level_type="atmosphere",
+            level_type=S.atmosphere,
             met_stats=["FSS", "PODY"],
             name="refc",
             nbrhd_shape="CIRCLE",
@@ -196,7 +196,7 @@ class GFS(Var):
         return {
             ("HGT", "isobaricInhPa"): "gh",
             ("PRES", "surface"): "sp",
-            ("REFC", "atmosphere"): "refc",
+            ("REFC", S.atmosphere): "refc",
             ("SPFH", "isobaricInhPa"): "q",
             ("TMP", "heightAboveGround"): "2t",
             ("TMP", "isobaricInhPa"): "t",
@@ -210,7 +210,7 @@ class GFS(Var):
     @staticmethod
     def _levinfo(levstr: str) -> tuple[str, float | int | None]:
         if m := re.match(r"^entire atmosphere$", levstr):
-            return ("atmosphere", None)
+            return (S.atmosphere, None)
         if m := re.match(r"^(\d+(\.\d+)?) m above ground$", levstr):
             return ("heightAboveGround", _levelstr2num(m[1]))
         if m := re.match(r"^(\d+(\.\d+)?) mb$", levstr):
@@ -336,7 +336,7 @@ def ds_construct(c: Config, da: xr.DataArray, taskname: str, level: float | None
 def metlevel(level_type: str, level: float | None) -> str:
     try:
         prefix = {
-            "atmosphere": "L",
+            S.atmosphere: "L",
             "heightAboveGround": "Z",
             "isobaricInhPa": "P",
             "surface": "Z",

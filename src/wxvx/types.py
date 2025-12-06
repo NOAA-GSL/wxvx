@@ -365,7 +365,7 @@ class VarMeta:
     def __post_init__(self):
         assert self.cf_standard_name
         assert self.description
-        assert self.level_type in ("atmosphere", "heightAboveGround", "isobaricInhPa", "surface")
+        assert self.level_type in (S.atmosphere, "heightAboveGround", "isobaricInhPa", "surface")
         assert self.met_stats
         assert self.name
         assert self.units

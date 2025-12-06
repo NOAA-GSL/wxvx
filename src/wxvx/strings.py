@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+# ruff: noqa: N815
+
 
 @dataclass(frozen=True)
 class S:
@@ -45,3 +47,7 @@ class S:
     type: str = "type"
     url: str = "url"
     variables: str = "variables"
+    atmosphere: str = "atmosphere"
+    heightAboveGround: str = "heightAboveGround"
+    isobaricInhPa: str = "isobaricInhPa"
+    surface: str = "surface"

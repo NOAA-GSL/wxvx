@@ -374,7 +374,7 @@ def test_types_VarMeta():
         cf_standard_name="unknown",
         cnt_thresh=[">15"],
         description="Composite Reflectivity",
-        level_type="atmosphere",
+        level_type=S.atmosphere,
         met_stats=["FSS", "PODY"],
         name="refc",
         nbrhd_shape="CIRCLE",

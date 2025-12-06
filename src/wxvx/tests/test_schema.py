@@ -332,7 +332,7 @@ def test_schema_variables(logged, config_data, fs):
     for level_type in ("heightAboveGround", "isobaricInhPa"):
         assert not ok({"X": {S.name: "foo", S.level_type: level_type}})
         assert logged("'levels' is a required property")
-    for level_type in ("atmosphere", "surface"):
+    for level_type in (S.atmosphere, "surface"):
         assert not ok({"X": {S.name: "foo", S.level_type: level_type, S.levels: [1000]}})
         assert logged("should not be valid")
     # Some keys have enum values:

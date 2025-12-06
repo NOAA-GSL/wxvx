@@ -25,7 +25,7 @@ def da_flat(da_with_leadtime):
 # Tests
 
 
-@mark.parametrize(S.level_type, ["atmosphere", "surface"])
+@mark.parametrize(S.level_type, [S.atmosphere, "surface"])
 def test_variables_Var_no_level(level_type):
     var = variables.Var(name="foo", level_type=level_type)
     assert var.name == "foo"
@@ -88,7 +88,7 @@ def test_variables_HRRR__canonicalize(name, level_type, expected):
 @mark.parametrize(
     ("expected", "levstr"),
     [
-        (("atmosphere", None), "entire atmosphere"),
+        ((S.atmosphere, None), "entire atmosphere"),
         (("heightAboveGround", 2), "2 m above ground"),
         (("isobaricInhPa", 900), "900 mb"),
         (("surface", None), "surface"),
@@ -195,7 +195,7 @@ def test_variables_ds_construct__lcc(c, check_cf_metadata):
 @mark.parametrize(
     (S.level_type, S.level, "expected"),
     [
-        ("atmosphere", None, "L000"),
+        (S.atmosphere, None, "L000"),
         ("heightAboveGround", "2", "Z002"),
         ("isobaricInhPa", "900", "P900"),
     ],

@@ -961,7 +961,7 @@ def testvars():
     return {
         "2t": Var("2t", "heightAboveGround", 2),
         "gh": Var(name="gh", level_type="isobaricInhPa", level=900),
-        "refc": Var(name="refc", level_type="atmosphere"),
+        "refc": Var(name="refc", level_type=S.atmosphere),
         "t": Var(name="t", level_type="isobaricInhPa", level=900),
     }
 

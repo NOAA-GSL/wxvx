@@ -57,7 +57,7 @@ def c_real_fs(config_data, gen_config, tmp_path):
 def config_data():
     return {
         S.baseline: {
-            S.name: S.HRRR,
+            S.name: "HRRR",
             S.url: "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
         S.cycles: {
@@ -109,10 +109,10 @@ def config_data():
         },
         S.regrid: {
             S.method: "NEAREST",
-            S.to: S.forecast,
+            S.to: "forecast",
         },
         S.truth: {
-            S.name: S.GFS,
+            S.name: "GFS",
             S.type: "grid",
             S.url: "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
