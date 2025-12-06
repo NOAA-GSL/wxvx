@@ -144,14 +144,14 @@ class Coords:
     longitude: str
     time: Time
 
-    KEYS = ("latitude", "level", "longitude", "time")
+    KEYS = ("latitude", "level", "longitude", S.time)
 
     def __hash__(self):
         return _hash(self)
 
     def __post_init__(self):
         if isinstance(self.time, dict):
-            _force(self, "time", Time(**self.time))
+            _force(self, S.time, Time(**self.time))
 
 
 class Cycles:
@@ -180,7 +180,7 @@ class Cycles:
 
 class Forecast:
     KEYS = (
-        "coords",
+        S.coords,
         "mask",
         S.name,
         "path",

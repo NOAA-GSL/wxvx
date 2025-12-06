@@ -38,7 +38,7 @@ def check_cf_metadata() -> Callable:
         for k, v in [("standard_name", "latitude"), ("units", "degrees_north")]:
             assert da.latitude.attrs[k] == v
         assert da.forecast_reference_time.attrs["standard_name"] == "forecast_reference_time"
-        assert da.time.attrs["standard_name"] == "time"
+        assert da.time.attrs["standard_name"] == S.time
 
     return check
 
@@ -66,11 +66,11 @@ def config_data():
             "stop": "2024-12-20T06:00:00",
         },
         S.forecast: {
-            "coords": {
+            S.coords: {
                 "latitude": "latitude",
                 "level": "level",
                 "longitude": "longitude",
-                "time": {
+                S.time: {
                     "inittime": "time",
                     "leadtime": "lead_time",
                 },
@@ -146,7 +146,7 @@ def da_with_leadtime() -> xr.DataArray:
     return xr.DataArray(
         name="HGT",
         data=one.reshape((1, 1, 1, 1, 1)),
-        dims=["latitude", "longitude", "level", "time", "lead_time"],
+        dims=["latitude", "longitude", "level", S.time, "lead_time"],
         coords=dict(
             latitude=(["latitude", "longitude"], one.reshape((1, 1))),
             longitude=(["latitude", "longitude"], one.reshape((1, 1))),
@@ -163,7 +163,7 @@ def da_with_validtime() -> xr.DataArray:
     return xr.DataArray(
         name="HGT",
         data=one.reshape((1, 1, 1, 1, 1)),
-        dims=["latitude", "longitude", "level", "time", "validtime"],
+        dims=["latitude", "longitude", "level", S.time, "validtime"],
         coords=dict(
             latitude=(["latitude", "longitude"], one.reshape((1, 1))),
             longitude=(["latitude", "longitude"], one.reshape((1, 1))),

@@ -110,7 +110,7 @@ def test_schema_forecast(logged, config_data, fs):
     assert not ok(with_set(config, 42, "n"))
     assert logged("'n' was unexpected")
     # Some keys have object values:
-    for key in ["coords", "projection"]:
+    for key in [S.coords, "projection"]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'object'")
     # Some keys have string values:
@@ -123,11 +123,11 @@ def test_schema_forecast(logged, config_data, fs):
 
 
 def test_schema_forecast_coords(logged, config_data, fs):
-    ok = validator(fs, S.properties, S.forecast, S.properties, "coords")
-    config = config_data[S.forecast]["coords"]
+    ok = validator(fs, S.properties, S.forecast, S.properties, S.coords)
+    config = config_data[S.forecast][S.coords]
     assert ok(config)
     # All keys are required:
-    for key in ["latitude", "level", "longitude", "time"]:
+    for key in ["latitude", "level", "longitude", S.time]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Some keys must have string values:
@@ -137,9 +137,9 @@ def test_schema_forecast_coords(logged, config_data, fs):
 
 
 def test_schema_forecast_coords_time(logged, config_data, fs):
-    ok = validator(fs, S.properties, S.forecast, S.properties, "coords", S.properties, "time")
+    ok = validator(fs, S.properties, S.forecast, S.properties, S.coords, S.properties, S.time)
     # Basic correctness of fixture:
-    config = config_data[S.forecast]["coords"]["time"]
+    config = config_data[S.forecast][S.coords][S.time]
     assert ok(config)
     obj = {"inittime": "a", "leadtime": "b", "validtime": "c"}
     # Overspecified (leadtime and validtime are mutually exclusive):

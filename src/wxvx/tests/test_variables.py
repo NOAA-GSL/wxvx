@@ -104,7 +104,7 @@ def test_variables_da_construct(
     config_data, da_with_leadtime, da_with_validtime, fakefs, gen_config, leadtime, tc, validtime
 ):
     da = da_with_leadtime if leadtime else da_with_validtime
-    time = config_data[S.forecast]["coords"]["time"]
+    time = config_data[S.forecast][S.coords][S.time]
     time["leadtime"] = leadtime
     time["validtime"] = validtime
     c = gen_config(config_data, fakefs)
@@ -167,7 +167,7 @@ def test_variables_ds_construct__latlon(c, check_cf_metadata):
             latitude=[1],
             longitude=[1],
         ),
-        dims=("forecast_reference_time", "time", "latitude", "longitude"),
+        dims=("forecast_reference_time", S.time, "latitude", "longitude"),
         name=name,
     )
     ds = variables.ds_construct(c=c, da=da, level=None, taskname="test")
@@ -185,7 +185,7 @@ def test_variables_ds_construct__lcc(c, check_cf_metadata):
             latitude=(["latitude", "longitude"], one.reshape((1, 1))),
             longitude=(["latitude", "longitude"], one.reshape((1, 1))),
         ),
-        dims=("forecast_reference_time", "time", "latitude", "longitude"),
+        dims=("forecast_reference_time", S.time, "latitude", "longitude"),
         name=name,
     )
     ds = variables.ds_construct(c=c, da=da, level=None, taskname="test")
@@ -261,7 +261,7 @@ def test_variables__da_val__pass_attr_must_parse(da_flat):
 
 
 def test_variables__da_val__pass_coord(da_flat):
-    actual = variables._da_val(da=da_flat, key="time", desc="init time", t=np.datetime64)
+    actual = variables._da_val(da=da_flat, key=S.time, desc="init time", t=np.datetime64)
     assert actual == np.datetime64(0, "s")
 
 

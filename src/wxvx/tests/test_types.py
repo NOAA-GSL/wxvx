@@ -23,7 +23,7 @@ def baseline(config_data):
 
 @fixture
 def coords(config_data):
-    return types.Coords(**config_data[S.forecast]["coords"])
+    return types.Coords(**config_data[S.forecast][S.coords])
 
 
 @fixture
@@ -59,7 +59,7 @@ def regrid(config_data):
 
 @fixture
 def time(config_data):
-    return types.Time(**config_data[S.forecast]["coords"]["time"])
+    return types.Time(**config_data[S.forecast][S.coords][S.time])
 
 
 @fixture
@@ -201,8 +201,8 @@ def test_types_Coords(config_data, coords):
     assert obj.longitude == "longitude"
     assert obj.time.inittime == "time"
     assert obj.time.leadtime == "lead_time"
-    cfg = config_data[S.forecast]["coords"]
-    other1 = types.Coords(**{**cfg, "time": types.Time(inittime="time", leadtime="lead_time")})
+    cfg = config_data[S.forecast][S.coords]
+    other1 = types.Coords(**{**cfg, S.time: types.Time(inittime="time", leadtime="lead_time")})
     assert obj == other1
     other2 = types.Coords(**{**cfg, "latitude": "lat"})
     assert obj != other2
@@ -313,7 +313,7 @@ def test_types_Time(config_data, time):
     assert hash(obj)
     assert obj.inittime == "time"
     assert obj.leadtime == "lead_time"
-    cfg = config_data[S.forecast]["coords"]["time"]
+    cfg = config_data[S.forecast][S.coords][S.time]
     other1 = types.Time(**cfg)
     assert obj == other1
     other2 = types.Time(**{**cfg, "inittime": "foo"})

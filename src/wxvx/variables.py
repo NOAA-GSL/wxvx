@@ -257,14 +257,14 @@ def da_construct(c: Config, da: xr.DataArray) -> xr.DataArray:
         assert validtime is not None
         time = _da_val(da, validtime, "validtime", np.datetime64)
     return xr.DataArray(
-        data=da.expand_dims(dim=["forecast_reference_time", "time"]),
+        data=da.expand_dims(dim=["forecast_reference_time", S.time]),
         coords=dict(
             forecast_reference_time=[inittime + np.timedelta64(0, "s")],
             time=[time],
             latitude=da[c.forecast.coords.latitude],
             longitude=da[c.forecast.coords.longitude],
         ),
-        dims=("forecast_reference_time", "time", "latitude", "longitude"),
+        dims=("forecast_reference_time", S.time, "latitude", "longitude"),
         name=da.name,
     )
 
@@ -299,11 +299,11 @@ def da_select(c: Config, ds: xr.Dataset, varname: str, tc: TimeCoords, var: Var)
 
 def ds_construct(c: Config, da: xr.DataArray, taskname: str, level: float | None) -> xr.Dataset:
     logging.info("%s: Creating CF-compliant %s dataset", taskname, da.name)
-    coord_names = ("forecast_reference_time", "time", "latitude", "longitude")
+    coord_names = ("forecast_reference_time", S.time, "latitude", "longitude")
     assert len(da.shape) == len(coord_names)
     proj = Proj(c.forecast.projection)
     latlon = proj.name == "longlat"  # yes, "longlat"
-    dims = ["forecast_reference_time", "time"]
+    dims = ["forecast_reference_time", S.time]
     dims.extend(["latitude", "longitude"] if latlon else ["y", "x"])
     crs = "CRS"
     meta = VARMETA[c.variables[da.name][S.name]]
@@ -427,7 +427,7 @@ def _da_to_longitude(da: xr.DataArray, dims=list[str]) -> xr.DataArray:
 def _da_to_time(da: xr.DataArray) -> xr.DataArray:
     var = da.time
     return xr.DataArray(
-        data=var.values, dims=["time"], name=var.name, attrs=dict(standard_name="time")
+        data=var.values, dims=[S.time], name=var.name, attrs=dict(standard_name=S.time)
     )
 
 
