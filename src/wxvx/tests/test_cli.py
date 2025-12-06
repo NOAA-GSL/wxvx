@@ -29,7 +29,7 @@ def test_cli_main(config_data, fs, logged, switch_c, switch_n, switch_t, threads
     fs.add_real_file(resource_path("info.json"))
     with patch.multiple(cli, workflow=D, sys=D, use_uwtools_logger=D) as mocks:
         cf = fs.create_file("/path/to/config.yaml", contents=yaml.safe_dump(config_data))
-        argv = [pkgname, switch_c, cf.path, switch_n, str(threads), switch_t, "plots"]
+        argv = [pkgname, switch_c, cf.path, switch_n, str(threads), switch_t, S.plots]
         mocks["sys"].argv = argv
         with patch.object(cli, "_parse_args", wraps=cli._parse_args) as _parse_args:
             cli.main()

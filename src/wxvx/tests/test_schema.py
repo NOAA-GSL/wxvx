@@ -182,7 +182,7 @@ def test_schema_forecast_projection(logged, config_data, fs):
         assert not ok(with_set(config, "foo", key))
         assert logged(r"'foo' is not one of \['latlon', 'lcc'\]")
     # For proj latlon:
-    config_latlon = {S.proj: "latlon"}
+    config_latlon = {S.proj: S.latlon}
     assert ok(config_latlon)
     assert not ok(with_set(config_latlon, 42, "foo"))
     assert logged("'foo' was unexpected")

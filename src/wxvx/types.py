@@ -233,7 +233,7 @@ class Forecast:
     def projection(self) -> dict:
         if self._projection is None:
             logging.info("No forecast projection specified, defaulting to latlon")
-            self._projection = {S.proj: "latlon"}
+            self._projection = {S.proj: S.latlon}
         return self._projection
 
 

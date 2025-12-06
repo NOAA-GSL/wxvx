@@ -248,7 +248,7 @@ def test_types_Forecast(config_data, forecast):
     cfg_no_proj = deepcopy(cfg)
     del cfg_no_proj[S.projection]
     default = types.Forecast(**cfg_no_proj)
-    assert default.projection == {S.proj: "latlon"}
+    assert default.projection == {S.proj: S.latlon}
 
 
 def test_types_Leadtimes():

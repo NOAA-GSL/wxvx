@@ -31,8 +31,8 @@ TESTDATA = {
         "T2M",
         2,
         [
-            pd.DataFrame({"MODEL": "foo", "FCST_LEAD": [60000], MET.RMSE: [0.5]}),
-            pd.DataFrame({"MODEL": "bar", "FCST_LEAD": [60000], MET.RMSE: [0.4]}),
+            pd.DataFrame({MET.MODEL: "foo", MET.FCST_LEAD: [60000], MET.RMSE: [0.5]}),
+            pd.DataFrame({MET.MODEL: "bar", MET.FCST_LEAD: [60000], MET.RMSE: [0.4]}),
         ],
         MET.RMSE,
         None,
@@ -42,10 +42,10 @@ TESTDATA = {
         None,
         [
             pd.DataFrame(
-                {"MODEL": "foo", "FCST_LEAD": [60000], MET.PODY: [0.5], "FCST_THRESH": ">=20"}
+                {MET.MODEL: "foo", MET.FCST_LEAD: [60000], MET.PODY: [0.5], MET.FCST_THRESH: ">=20"}
             ),
             pd.DataFrame(
-                {"MODEL": "bar", "FCST_LEAD": [60000], MET.PODY: [0.4], "FCST_THRESH": ">=30"}
+                {MET.MODEL: "bar", MET.FCST_LEAD: [60000], MET.PODY: [0.4], MET.FCST_THRESH: ">=30"}
             ),
         ],
         MET.PODY,
@@ -57,20 +57,20 @@ TESTDATA = {
         [
             pd.DataFrame(
                 {
-                    "MODEL": "foo",
-                    "FCST_LEAD": [60000],
+                    MET.MODEL: "foo",
+                    MET.FCST_LEAD: [60000],
                     MET.FSS: [0.5],
-                    "FCST_THRESH": ">=20",
-                    "INTERP_PNTS": 9,
+                    MET.FCST_THRESH: ">=20",
+                    MET.INTERP_PNTS: 9,
                 }
             ),
             pd.DataFrame(
                 {
-                    "MODEL": "bar",
-                    "FCST_LEAD": [60000],
+                    MET.MODEL: "bar",
+                    MET.FCST_LEAD: [60000],
                     MET.FSS: [0.4],
-                    "FCST_THRESH": ">=30",
-                    "INTERP_PNTS": 9,
+                    MET.FCST_THRESH: ">=30",
+                    MET.INTERP_PNTS: 9,
                 }
             ),
         ],
@@ -640,7 +640,7 @@ def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars)
         yield Asset(Path("/some/file"), lambda: True)
 
     taskfunc = workflow._stats_vs_grid
-    rundir = fakefs / S.run / "stats" / "19700101" / "00" / "000"
+    rundir = fakefs / S.run / S.stats / "19700101" / "00" / "000"
     taskname = (
         "Stats vs grid for %s 2t-heightAboveGround-0002 at 19700101 00Z 000"
         % str(source).split(".")[1].lower()
@@ -677,7 +677,7 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, source, tc, testvars):
 
     url = "https://bucket.amazonaws.com/gdas.{{ yyyymmdd }}.t{{ hh }}z.prepbufr.nr"
     c.truth = replace(c.truth, name=S.PREPBUFR, type=S.point, url=url)
-    rundir = fakefs / S.run / "stats" / "19700101" / "00" / "000"
+    rundir = fakefs / S.run / S.stats / "19700101" / "00" / "000"
     var = testvars["2t"]
     taskname = "Stats vs obs for %s %s at 19700101 00Z 000" % (source.name.lower(), var)
     kwargs = dict(c=c, varname="T2M", tc=tc, var=var, prefix="foo", source=source)
@@ -775,15 +775,15 @@ def test_workflow__prepare_plot_data(dictkey):
         tdf = workflow._prepare_plot_data(reqs=reqs, stat=stat, width=width)
     assert isinstance(tdf, pd.DataFrame)
     assert stat in tdf.columns
-    assert "FCST_LEAD" in tdf.columns
-    assert all(tdf["FCST_LEAD"] == 6)
+    assert MET.FCST_LEAD in tdf.columns
+    assert all(tdf[MET.FCST_LEAD] == 6)
     if stat == MET.PODY:
-        assert "FCST_THRESH" in tdf.columns
-        assert "LABEL" in tdf.columns
+        assert MET.FCST_THRESH in tdf.columns
+        assert MET.LABEL in tdf.columns
     if stat == MET.FSS:
         assert width is not None
-        assert "INTERP_PNTS" in tdf.columns
-        assert tdf["INTERP_PNTS"].eq(width**2).all()
+        assert MET.INTERP_PNTS in tdf.columns
+        assert tdf[MET.INTERP_PNTS].eq(width**2).all()
 
 
 def test_workflow__prepbufr(fakefs):

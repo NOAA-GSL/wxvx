@@ -310,7 +310,7 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source:
     yield taskname
     yield Asset(path, path.is_file)
     yield _existing(grib_path)
-    grib_index_keys = ["shortName", "typeOfLevel", S.level]
+    grib_index_keys = [S.shortName, S.typeOfLevel, S.level]
     idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
     with atomic(path) as tmp:
         ec.codes_index_write(idx, str(tmp))
@@ -327,9 +327,9 @@ def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var, sourc
     yield idx
     idx = ec.codes_index_read(str(idx.ref))
     for k, v in [
-        ("shortName", var.name),
-        ("typeOfLevel", var.level_type),
-        ("level", int(var.level) if var.level else 0),
+        (S.shortName, var.name),
+        (S.typeOfLevel, var.level_type),
+        (S.level, int(var.level) if var.level else 0),
     ]:
         ec.codes_index_select(idx, k, v)
     count = 0
@@ -446,20 +446,20 @@ def _plot(
     cyclestr = f"{yyyymmdd(cycle)} {hh(cycle)}Z"
     taskname = f"Plot {desc}{' width ' + str(width) if width else ''} {stat} at {cyclestr}"
     yield taskname
-    rundir = c.paths.run / "plots" / yyyymmdd(cycle) / hh(cycle)
+    rundir = c.paths.run / S.plots / yyyymmdd(cycle) / hh(cycle)
     path = rundir / f"{var}-{stat}{'-width-' + str(width) if width else ''}-plot.png"
     yield Asset(path, path.is_file)
     reqs = _stat_reqs(c, varname, level, cycle)
     yield reqs
     leadtimes = ["%03d" % (td.total_seconds() // 3600) for td in c.leadtimes.values]  # noqa: PD011
     plot_data = _prepare_plot_data(reqs, stat, width)
-    hue = "LABEL" if "LABEL" in plot_data.columns else "MODEL"
+    hue = MET.LABEL if MET.LABEL in plot_data.columns else MET.MODEL
     w = f"(width={width}) " if width else ""
     with _PLOT_LOCK, catch_warnings():
         simplefilter("ignore")
         sns.set(style="darkgrid")
         plt.figure(figsize=(10, 6), constrained_layout=True)
-        sns.lineplot(data=plot_data, x="FCST_LEAD", y=stat, hue=hue, marker="o", linewidth=2)
+        sns.lineplot(data=plot_data, x=MET.FCST_LEAD, y=stat, hue=hue, marker="o", linewidth=2)
         plt.title(
             "%s %s %s%s vs %s at %s" % (desc, stat, w, c.forecast.name, c.truth.name, cyclestr)
         )
@@ -490,7 +490,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     taskname = "Stats vs grid for %s %s %s" % (source.name.lower(), var, _at_validtime(tc))
     yield taskname
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    rundir = c.paths.run / "stats" / yyyymmdd / hh / leadtime
+    rundir = c.paths.run / S.stats / yyyymmdd / hh / leadtime
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
     template = "grid_stat_%s_%02d0000L_%s_%s0000V.stat"
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
@@ -505,7 +505,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     reqs = [fcst, obs]
     polyfile = None
     if mask := c.forecast.mask:
-        polyfile = _polyfile(c.paths.run / "stats" / "mask.poly", mask)
+        polyfile = _polyfile(c.paths.run / S.stats / "mask.poly", mask)
         reqs.append(polyfile)
     path_config = path.with_suffix(".config")
     config = _config_grid_stat(c, path_config, source, varname, var, prefix, datafmt, polyfile)
@@ -532,7 +532,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     taskname = "Stats vs obs for %s %s %s" % (source.name.lower(), var, _at_validtime(tc))
     yield taskname
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    rundir = c.paths.run / "stats" / yyyymmdd / hh / leadtime
+    rundir = c.paths.run / S.stats / yyyymmdd / hh / leadtime
     template = "point_stat_%s_%02d0000L_%s_%s0000V.stat"
     yyyymmdd_valid, hh_valid, _ = tcinfo(TimeCoords(tc.validtime))
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
@@ -617,20 +617,20 @@ def _meta(c: Config, varname: str) -> VarMeta:
 def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd.DataFrame:
     linetype = LINETYPE[stat]
     files = [str(x.ref).replace(".stat", f"_{linetype}.txt") for x in reqs]
-    columns = ["MODEL", "FCST_LEAD", stat]
+    columns = [MET.MODEL, MET.FCST_LEAD, stat]
     if linetype in [MET.cts, MET.nbrcnt]:
-        columns.append("FCST_THRESH")
+        columns.append(MET.FCST_THRESH)
     if linetype == MET.nbrcnt:
-        columns.append("INTERP_PNTS")
+        columns.append(MET.INTERP_PNTS)
     plot_rows = [pd.read_csv(file, sep=r"\s+")[columns] for file in files]
     plot_data = pd.concat(plot_rows)
-    plot_data["FCST_LEAD"] = plot_data["FCST_LEAD"] // 10000
-    if "FCST_THRESH" in columns:
-        plot_data["LABEL"] = plot_data.apply(
+    plot_data[MET.FCST_LEAD] = plot_data[MET.FCST_LEAD] // 10000
+    if MET.FCST_THRESH in columns:
+        plot_data[MET.LABEL] = plot_data.apply(
             lambda row: f"{row['MODEL']}, threshold: {row['FCST_THRESH']}", axis=1
         )
-    if "INTERP_PNTS" in columns and width is not None:
-        plot_data = plot_data[plot_data["INTERP_PNTS"] == width**2]
+    if MET.INTERP_PNTS in columns and width is not None:
+        plot_data = plot_data[plot_data[MET.INTERP_PNTS] == width**2]
     return plot_data
 
 

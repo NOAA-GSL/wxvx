@@ -61,7 +61,7 @@ def _field_mapping_kvpairs(k: str, v: Any, level: int) -> list[str]:
         case MET.cat_thresh | MET.cnt_thresh:
             return _sequence(k, v, _bare, level)
         # Sequence: quoted.
-        case "level":
+        case MET.level:
             return _sequence(k, v, _quoted, level)
     return _fail(k)
 
