@@ -296,7 +296,7 @@ def test_schema_truth(logged, config_data, fs):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in [S.name, "type", "url"]:
+    for key in [S.name, S.type, "url"]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Additional keys are not allowed:
@@ -307,7 +307,7 @@ def test_schema_truth(logged, config_data, fs):
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
     # Some keys have enum values:
-    for key in ["type"]:
+    for key in [S.type]:
         assert not ok(with_set(config, "foo", key))
         assert logged(r"'foo' is not one of \['grid', 'point'\]")
 

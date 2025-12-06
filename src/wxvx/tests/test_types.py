@@ -78,7 +78,7 @@ def test_types_validated_config(config_data, fs):
 
 def test_types_validated_config__fail_json_schema(config_data, fs, logged):
     fs.add_real_file(resource_path("config.jsonschema"))
-    config_data[S.truth]["type"] = "foo"
+    config_data[S.truth][S.type] = "foo"
     yc = get_yaml_config(config_data)
     with raises(WXVXError) as e:
         types.validated_config(yc=yc)
@@ -128,7 +128,7 @@ def test_types_Config(baseline, config_data, cycles, forecast, leadtimes, paths,
 def test_types_Config__bad_baseline_name_vs_truth_type(config_data):
     del config_data[S.baseline]["url"]
     config_data[S.baseline][S.name] = S.truth
-    config_data[S.truth]["type"] = types.TruthType.POINT
+    config_data[S.truth][S.type] = types.TruthType.POINT
     config_data[S.truth][S.name] = S.PREPBUFR
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
@@ -144,7 +144,7 @@ def test_types_Config__bad_paths_grids_baseline(config_data):
 
 
 def test_types_Config__bad_paths_grids_truth(config_data):
-    config_data[S.truth]["type"] = "grid"
+    config_data[S.truth][S.type] = "grid"
     del config_data[S.paths][S.grids][S.truth]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
@@ -152,7 +152,7 @@ def test_types_Config__bad_paths_grids_truth(config_data):
 
 
 def test_types_Config__bad_paths_obs(config_data):
-    config_data[S.truth]["type"] = "point"
+    config_data[S.truth][S.type] = "point"
     config_data[S.truth][S.name] = S.PREPBUFR
     del config_data[S.paths][S.obs]
     with raises(WXVXError) as e:
@@ -337,7 +337,7 @@ def test_types_Truth(config_data, truth, truth_type):
     assert obj.name == S.GFS
     assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
     cfg = config_data[S.truth]
-    cfg["type"] = truth_type
+    cfg[S.type] = truth_type
     other1 = types.Truth(**cfg)
     assert obj == other1
     other2 = types.Truth(**{**cfg, S.name: S.HRRR})

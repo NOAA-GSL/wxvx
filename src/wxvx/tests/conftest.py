@@ -113,7 +113,7 @@ def config_data():
         },
         S.truth: {
             S.name: S.GFS,
-            "type": "grid",
+            S.type: "grid",
             "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
         S.variables: {

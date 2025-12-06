@@ -332,7 +332,7 @@ class Truth:
         )
         if isinstance(self.type, str):
             assert self.type in types
-        _force(self, "type", types.get(str(self.type), self.type))
+        _force(self, S.type, types.get(str(self.type), self.type))
         # Handle 'name':
         if self.name not in _TRUTH_NAMES:
             raise WXVXError("Set truth.name to one of: %s" % ", ".join(_TRUTH_NAMES))

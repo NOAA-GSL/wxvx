@@ -53,7 +53,7 @@ def test_metconf_render(tidy):
             ],
         },
         "nc_pairs_flag": "FALSE",
-        S.obs: {
+        "obs": {
             "field": [
                 {
                     "cat_thresh": [
