@@ -41,3 +41,6 @@ class S:
     proj: str = "proj"
     regrid: str = "regrid"
     to: str = "to"
+    grids_baseline: str = "grids_baseline"
+    grids_forecast: str = "grids_forecast"
+    grids_truth: str = "grids_truth"

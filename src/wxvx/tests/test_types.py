@@ -283,9 +283,9 @@ def test_types_Paths(paths, config_data):
     assert obj.grids_truth == Path(config_data[S.paths][S.grids][S.truth])
     assert obj.run == Path(config_data[S.paths][S.run])
     cfg = {
-        "grids_baseline": Path(config_data[S.paths][S.grids][S.baseline]),
-        "grids_forecast": Path(config_data[S.paths][S.grids][S.forecast]),
-        "grids_truth": Path(config_data[S.paths][S.grids][S.truth]),
+        S.grids_baseline: Path(config_data[S.paths][S.grids][S.baseline]),
+        S.grids_forecast: Path(config_data[S.paths][S.grids][S.forecast]),
+        S.grids_truth: Path(config_data[S.paths][S.grids][S.truth]),
         S.obs: Path(config_data[S.paths][S.obs]),
         S.run: Path(config_data[S.paths][S.run]),
     }

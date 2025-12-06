@@ -269,7 +269,7 @@ class Paths:
     run: Path
 
     def __post_init__(self):
-        for key in ["grids_baseline", "grids_forecast", "grids_truth", S.obs, S.run]:
+        for key in [S.grids_baseline, S.grids_forecast, S.grids_truth, S.obs, S.run]:
             if val := getattr(self, key):
                 _force(self, key, Path(val))
 

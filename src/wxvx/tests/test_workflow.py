@@ -95,9 +95,9 @@ def test_workflow_grids(baseline_name, c, noop, truth_type):
     if truth_type is TruthType.GRID:
         expected += 1
     with (
-        patch.object(workflow, "grids_baseline", noop),
-        patch.object(workflow, "grids_forecast", noop),
-        patch.object(workflow, "grids_truth", noop),
+        patch.object(workflow, S.grids_baseline, noop),
+        patch.object(workflow, S.grids_forecast, noop),
+        patch.object(workflow, S.grids_truth, noop),
     ):
         assert len(workflow.grids(c=c).ref) == expected
 
