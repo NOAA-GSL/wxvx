@@ -298,7 +298,7 @@ def test_types_Paths(paths, config_data):
 
 def test_types_Regrid(regrid, config_data):
     obj = regrid
-    assert obj.method == "NEAREST"
+    assert obj.method == MET.NEAREST
     assert str(obj.to) == types.ToGridVal.FCST.name
     cfg = config_data[S.regrid]
     other1 = types.Regrid(**cfg)

@@ -795,9 +795,9 @@ def test_workflow__prepbufr(fakefs):
 
 
 def test_workflow__regrid_width(c):
-    c.regrid = replace(c.regrid, method="BILIN")
+    c.regrid = replace(c.regrid, method=MET.BILIN)
     assert workflow._regrid_width(c=c) == 2
-    c.regrid = replace(c.regrid, method="NEAREST")
+    c.regrid = replace(c.regrid, method=MET.NEAREST)
     assert workflow._regrid_width(c=c) == 1
     c.regrid = replace(c.regrid, method="FOO")
     with raises(WXVXError) as e:

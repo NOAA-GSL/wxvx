@@ -25,29 +25,29 @@ def test_metconf_render(tidy):
                 }
             ]
         },
-        "interp": {
-            "shape": "SQUARE",
-            "type": {
+        MET.interp: {
+            MET.shape: "SQUARE",
+            MET.type: {
                 MET.method: "BILIN",
-                "width": 2,
+                MET.width: 2,
             },
-            "vld_thresh": 1.0,
+            MET.vld_thresh: 1.0,
         },
         MET.mask: {
             MET.poly: [
                 "a.nc",
             ],
         },
-        "message_type": [
+        MET.message_type: [
             "AIRUPA",
         ],
         "message_type_group_map": {
             "AIRUPA": "ADPUPA,AIRCAR,AIRCFT",
         },
         MET.model: "GraphHRRR",
-        "nbrhd": {
-            "shape": "CIRCLE",
-            "width": [
+        MET.nbrhd: {
+            MET.shape: "CIRCLE",
+            MET.width: [
                 3,
                 5,
             ],
@@ -67,13 +67,13 @@ def test_metconf_render(tidy):
                 },
             ]
         },
-        "obs_bufr_var": [
+        MET.obs_bufr_var: [
             "D_RH",
             "QOB",
         ],
-        "obs_window": {
-            "beg": -1800,
-            "end": 1800,
+        MET.obs_window: {
+            MET.beg: -1800,
+            MET.end: 1800,
         },
         MET.obtype: "HRRR",
         MET.output_flag: {
@@ -83,14 +83,14 @@ def test_metconf_render(tidy):
         MET.regrid: {
             MET.to_grid: ToGridVal.FCST.name,
         },
-        "time_summary": {
-            "obs_var": [],
-            "step": 3600,
-            "type": [
+        MET.time_summary: {
+            MET.obs_var: [],
+            MET.step: 3600,
+            MET.type: [
                 "min",
                 "max",
             ],
-            "width": 3600,
+            MET.width: 3600,
         },
         MET.tmp_dir: "/path/to/dir",
     }
@@ -279,7 +279,7 @@ def test_metconf__interp__fail():
     _fail(metconf._interp)
 
 
-@mark.parametrize(("k", "v"), [("shape", "SQUARE"), ("vld_thresh", 1.0)])
+@mark.parametrize(("k", "v"), [(MET.shape, MET.SQUARE), (MET.vld_thresh, 1.0)])
 def test_metconf__interp__kvpair(k, v):
     assert metconf._interp(k=k, v=v, level=1) == [f"  {k} = {v};"]
 
@@ -292,7 +292,7 @@ def test_metconf__interp__type(tidy):
     }
     """
     expected = tidy(text).split("\n")
-    assert metconf._interp(k="type", v={MET.method: "BILIN", "width": 2}, level=0) == expected
+    assert metconf._interp(k=MET.type, v={MET.method: MET.BILIN, MET.width: 2}, level=0) == expected
 
 
 def test_metconf__key_val_map_list(tidy):
@@ -345,7 +345,7 @@ def test_metconf__nbrhd():
         metconf._nbrhd(k="foo", v=None, level=0)
 
 
-@mark.parametrize(("k", "v"), [("beg", -1800), ("end", 1800)])
+@mark.parametrize(("k", "v"), [(MET.beg, -1800), (MET.end, 1800)])
 def test_metconf__obs_window(k, v):
     assert metconf._obs_window(k=k, v=v, level=1) == [f"  {k} = {v};"]
 
@@ -389,12 +389,12 @@ def test_metconf__time_summary__fail():
     _fail(metconf._time_summary)
 
 
-@mark.parametrize(("k", "v"), [("step", 3600), ("width", 2)])
+@mark.parametrize(("k", "v"), [(MET.step, 3600), (MET.width, 2)])
 def test_metconf__time_summary__scalar(k, v):
     assert metconf._time_summary(k=k, v=v, level=1) == [f"  {k} = {v};"]
 
 
-@mark.parametrize(("k", "v"), [("obs_var", ["foo", "bar"]), ("type", ["min", "max"])])
+@mark.parametrize(("k", "v"), [(MET.obs_var, ["foo", "bar"]), (MET.type, ["min", "max"])])
 def test_metconf__time_summary__sequence(k, tidy, v):
     text = f'''
     {k} = [
@@ -411,7 +411,7 @@ def test_metconf__top():
         metconf._top(k="foo", v=None, level=0)
 
 
-@mark.parametrize(("k", "v"), [(MET.method, "BILIN"), ("width", 2)])
+@mark.parametrize(("k", "v"), [(MET.method, MET.BILIN), (MET.width, 2)])
 def test_metconf__type(k, v):
     assert metconf._type(k=k, v=v, level=1) == [f"  {k} = {v};"]
 

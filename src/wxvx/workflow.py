@@ -207,11 +207,11 @@ def _config_pb2nc(c: Config, path: Path):
     _type = ["min", "max", "range", "mean", "stdev", "median", "p80"]
     config: dict = {
         MET.mask: {MET.grid: c.regrid.to if re.match(r"^G\d{3}$", str(c.regrid.to)) else ""},
-        "message_type": ["ADPSFC", "ADPUPA", "AIRCAR", "AIRCFT"],
-        "obs_bufr_var": ["POB", "QOB", "TOB", "UOB", "VOB", "ZOB"],
-        "obs_window": {"beg": -1800, "end": 1800},
-        "quality_mark_thresh": 9,
-        "time_summary": {"step": 3600, MET.width: 3600, "obs_var": [], "type": _type},
+        MET.message_type: ["ADPSFC", "ADPUPA", "AIRCAR", "AIRCFT"],
+        MET.obs_bufr_var: ["POB", "QOB", "TOB", "UOB", "VOB", "ZOB"],
+        MET.obs_window: {MET.beg: -1800, MET.end: 1800},
+        MET.quality_mark_thresh: 9,
+        MET.time_summary: {MET.step: 3600, MET.width: 3600, MET.obs_var: [], MET.type: _type},
         MET.tmp_dir: path.parent,
     }
     with atomic(path) as tmp:
@@ -231,16 +231,16 @@ def _config_point_stat(
     sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast, Source.TRUTH: c.truth}
     config = {
         MET.fcst: {MET.field: [field_fcst]},
-        "interp": {
-            MET.shape: "SQUARE",
-            "type": {MET.method: "BILIN", MET.width: 2},
-            "vld_thresh": 1.0,
+        MET.interp: {
+            MET.shape: MET.SQUARE,
+            MET.type: {MET.method: MET.BILIN, MET.width: 2},
+            MET.vld_thresh: 1.0,
         },
-        "message_type": ["SFC" if surface else "ATM"],
-        "message_type_group_map": {"ATM": "ADPUPA,AIRCAR,AIRCFT", "SFC": "ADPSFC"},
+        MET.message_type: [MET.SFC if surface else MET.ATM],
+        "message_type_group_map": {MET.ATM: "ADPUPA,AIRCAR,AIRCFT", MET.SFC: "ADPSFC"},
         MET.model: cast(Named, sections[source]).name,
         MET.obs: {MET.field: [field_obs]},
-        "obs_window": {"beg": -900 if surface else -1800, "end": 900 if surface else 1800},
+        MET.obs_window: {MET.beg: -900 if surface else -1800, MET.end: 900 if surface else 1800},
         MET.output_flag: {MET.cnt: MET.BOTH},
         MET.output_prefix: f"{prefix}",
         MET.regrid: {
@@ -643,7 +643,7 @@ def _prepbufr(url: str, outdir: Path) -> Node:
 
 def _regrid_width(c: Config) -> int:
     try:
-        return {"BILIN": 2, "NEAREST": 1}[c.regrid.method]
+        return {MET.BILIN: 2, MET.NEAREST: 1}[c.regrid.method]
     except KeyError as e:
         msg = "Could not determine 'width' value for regrid method '%s'" % c.regrid.method
         raise WXVXError(msg) from e

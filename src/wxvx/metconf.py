@@ -78,10 +78,10 @@ def _indent(v: str, level: int) -> str:
 def _interp(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Key-Value Pair: bare.
-        case "shape" | "vld_thresh":
+        case MET.shape | MET.vld_thresh:
             return _kvpair(k, _bare(v), level)
         # Mapping: custom.
-        case "type":
+        case MET.type:
             return _mapping(k, _collect(_type, v, level + 1), level)
     return _fail(k)
 
@@ -129,10 +129,10 @@ def _mask(k: str, v: list[str] | str, level: int) -> list[str]:
 def _nbrhd(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Key-Value Pair: bare.
-        case "shape":
+        case MET.shape:
             return _kvpair(k, _bare(v), level)
         # Sequence: bare.
-        case "width":
+        case MET.width:
             return _sequence(k, v, _bare, level)
     return _fail(k)
 
@@ -140,7 +140,7 @@ def _nbrhd(k: str, v: Any, level: int) -> list[str]:
 def _obs_window(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Key-Value Pair: bare.
-        case "beg" | "end":
+        case MET.beg | MET.end:
             return _kvpair(k, _bare(v), level)
     return _fail(k)
 
@@ -160,7 +160,7 @@ def _quoted(v: str) -> str:
 def _regrid(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Scalar: bare.
-        case MET.method | "width":
+        case MET.method | MET.width:
             return _kvpair(k, _bare(v), level)
         # Scalar: custom.
         case MET.to_grid:
@@ -182,10 +182,10 @@ def _sequence(k: str, v: list, handler: Callable, level: int) -> list[str]:
 def _time_summary(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Scalar: bare.
-        case "step" | "width":
+        case MET.step | MET.width:
             return _kvpair(k, _bare(v), level)
         # Sequence: quoted.
-        case "obs_var" | "type":
+        case MET.obs_var | MET.type:
             return _sequence(k, v, _quoted, level)
     return _fail(k)
 
@@ -195,30 +195,30 @@ def _top(k: str, v: Any, level: int) -> list[str]:
         # Mapping: custom.
         case MET.fcst:
             return _mapping(k, _collect(_dataset, v, level + 1), level)
-        case "interp":
+        case MET.interp:
             return _mapping(k, _collect(_interp, v, level + 1), level)
         case MET.mask:
             return _mapping(k, _collect(_mask, v, level + 1), level)
-        case "nbrhd":
+        case MET.nbrhd:
             return _mapping(k, _collect(_nbrhd, v, level + 1), level)
         case MET.obs:
             return _mapping(k, _collect(_dataset, v, level + 1), level)
-        case "obs_window":
+        case MET.obs_window:
             return _mapping(k, _collect(_obs_window, v, level + 1), level)
         case MET.output_flag:
             return _mapping(k, _collect(_output_flag, v, level + 1), level)
         case MET.regrid:
             return _mapping(k, _collect(_regrid, v, level + 1), level)
-        case "time_summary":
+        case MET.time_summary:
             return _mapping(k, _collect(_time_summary, v, level + 1), level)
         # Scalar: bare.
-        case MET.nc_pairs_flag | "quality_mark_thresh":
+        case MET.nc_pairs_flag | MET.quality_mark_thresh:
             return _kvpair(k, _bare(v), level)
         # Scalar: quoted.
         case MET.model | MET.obtype | MET.output_prefix | MET.tmp_dir:
             return _kvpair(k, _quoted(v), level)
         # Sequence: quoted.
-        case "message_type" | "obs_bufr_var":
+        case MET.message_type | MET.obs_bufr_var:
             return _sequence(k, v, _quoted, level)
         # Sequence: list of single key-val dictionaries.
         case "message_type_group_map" | "obs_bufr_map":
@@ -229,6 +229,6 @@ def _top(k: str, v: Any, level: int) -> list[str]:
 def _type(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Key-Value Pair: bare.
-        case MET.method | "width":
+        case MET.method | MET.width:
             return _kvpair(k, _bare(v), level)
     return _fail(k)

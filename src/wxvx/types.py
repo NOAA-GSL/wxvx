@@ -11,7 +11,7 @@ from typing import Any, Protocol, cast
 
 from uwtools.api.config import YAMLConfig, validate
 
-from wxvx.strings import S
+from wxvx.strings import MET, S
 from wxvx.util import LINETYPE, WXVXError, expand, resource_path, to_datetime, to_timedelta
 
 _TRUTH_NAMES_GRID = (S.GFS, S.HRRR)
@@ -279,7 +279,7 @@ class Regrid:
     # See https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/appendixB.html#grids
     # for information on the "GNNN" grid names accepted as regrid-to values.
 
-    method: str = "NEAREST"
+    method: str = MET.NEAREST
     to: ToGrid | None = None
 
     def __post_init__(self):
@@ -377,7 +377,7 @@ class VarMeta:
                 case "cnt_thresh":
                     assert v is None or (v and all(isinstance(x, str) for x in v))
                 case "nbrhd_shape":
-                    assert v is None or v in ("CIRCLE", "SQUARE")
+                    assert v is None or v in ("CIRCLE", MET.SQUARE)
                 case "nbrhd_width":
                     assert v is None or (v and all(isinstance(x, int) for x in v))
 
