@@ -37,7 +37,7 @@ def check_cf_metadata() -> Callable:
             assert da.attrs[k] == v
         for k, v in [("standard_name", S.latitude), ("units", "degrees_north")]:
             assert da.latitude.attrs[k] == v
-        assert da.forecast_reference_time.attrs["standard_name"] == "forecast_reference_time"
+        assert da.forecast_reference_time.attrs["standard_name"] == S.forecast_reference_time
         assert da.time.attrs["standard_name"] == S.time
 
     return check

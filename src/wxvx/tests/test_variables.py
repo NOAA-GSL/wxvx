@@ -167,7 +167,7 @@ def test_variables_ds_construct__latlon(c, check_cf_metadata):
             latitude=[1],
             longitude=[1],
         ),
-        dims=("forecast_reference_time", S.time, S.latitude, S.longitude),
+        dims=(S.forecast_reference_time, S.time, S.latitude, S.longitude),
         name=name,
     )
     ds = variables.ds_construct(c=c, da=da, level=None, taskname="test")
@@ -185,7 +185,7 @@ def test_variables_ds_construct__lcc(c, check_cf_metadata):
             latitude=([S.latitude, S.longitude], one.reshape((1, 1))),
             longitude=([S.latitude, S.longitude], one.reshape((1, 1))),
         ),
-        dims=("forecast_reference_time", S.time, S.latitude, S.longitude),
+        dims=(S.forecast_reference_time, S.time, S.latitude, S.longitude),
         name=name,
     )
     ds = variables.ds_construct(c=c, da=da, level=None, taskname="test")

@@ -37,3 +37,4 @@ class S:
     lastbyte: str = "lastbyte"
     latitude: str = "latitude"
     longitude: str = "longitude"
+    forecast_reference_time: str = "forecast_reference_time"
