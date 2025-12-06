@@ -144,7 +144,7 @@ def test_types_Config__bad_paths_grids_baseline(config_data):
 
 
 def test_types_Config__bad_paths_grids_truth(config_data):
-    config_data[S.truth][S.type] = "grid"
+    config_data[S.truth][S.type] = S.grid
     del config_data[S.paths][S.grids][S.truth]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
@@ -152,7 +152,7 @@ def test_types_Config__bad_paths_grids_truth(config_data):
 
 
 def test_types_Config__bad_paths_obs(config_data):
-    config_data[S.truth][S.type] = "point"
+    config_data[S.truth][S.type] = S.point
     config_data[S.truth][S.name] = S.PREPBUFR
     del config_data[S.paths][S.obs]
     with raises(WXVXError) as e:
@@ -331,7 +331,7 @@ def test_types_ToGrid():
     assert types.ToGrid(val=S.forecast) != types.ToGrid(val=S.truth)
 
 
-@mark.parametrize("truth_type", ["grid", types.TruthType.GRID])
+@mark.parametrize("truth_type", [S.grid, types.TruthType.GRID])
 def test_types_Truth(config_data, truth, truth_type):
     obj = truth
     assert obj.name == S.GFS
@@ -347,8 +347,8 @@ def test_types_Truth(config_data, truth, truth_type):
 @mark.parametrize(
     ("truth_name", "truth_type"),
     [
-        *[(S.GFS, x) for x in (types.TruthType.POINT, "point")],
-        *[(S.PREPBUFR, x) for x in (types.TruthType.GRID, "grid")],
+        *[(S.GFS, x) for x in (types.TruthType.POINT, S.point)],
+        *[(S.PREPBUFR, x) for x in (types.TruthType.GRID, S.grid)],
         ("foo", types.TruthType.GRID),
     ],
 )

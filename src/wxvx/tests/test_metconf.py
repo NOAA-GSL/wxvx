@@ -11,8 +11,8 @@ from wxvx.types import ToGridVal
 
 def test_metconf_render(tidy):
     config = {
-        "fcst": {
-            "field": [
+        MET.fcst: {
+            MET.field: [
                 {
                     "cat_thresh": [
                         ">=20",
@@ -33,7 +33,7 @@ def test_metconf_render(tidy):
             },
             "vld_thresh": 1.0,
         },
-        "mask": {
+        MET.mask: {
             "poly": [
                 "a.nc",
             ],
@@ -54,7 +54,7 @@ def test_metconf_render(tidy):
         },
         "nc_pairs_flag": "FALSE",
         "obs": {
-            "field": [
+            MET.field: [
                 {
                     "cat_thresh": [
                         ">=20",
@@ -268,7 +268,7 @@ def test_metconf__field_sequence(tidy):
     expected = tidy(text).split("\n")
     d1 = {"name": "foo", "cnt_thresh": [1, 2], "level": ["(0,0,*,*)"]}
     d2 = {"name": "bar", "cat_thresh": [3, 4], "level": ["P1000"]}
-    assert metconf._field_sequence(k="field", v=[d1, d2], level=0) == expected
+    assert metconf._field_sequence(k=MET.field, v=[d1, d2], level=0) == expected
 
 
 def test_metconf__indent():
@@ -333,11 +333,11 @@ def test_metconf__mask__grid_list(tidy):
     ];
     """
     expected = tidy(text).split("\n")
-    assert metconf._mask(k="grid", v=["G104"], level=0) == expected
+    assert metconf._mask(k=MET.grid, v=["G104"], level=0) == expected
 
 
 def test_metconf__mask__grid_str():
-    assert metconf._mask(k="grid", v="G104", level=1) == ['  grid = "G104";']
+    assert metconf._mask(k=MET.grid, v="G104", level=1) == ['  grid = "G104";']
 
 
 def test_metconf__nbrhd():

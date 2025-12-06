@@ -56,7 +56,7 @@ def test_cli_main__bad_config(fakefs, fs):
 
 
 @mark.parametrize("switch", ["-k", "--check"])
-@mark.parametrize("truthtype", ["grid", "point"])
+@mark.parametrize("truthtype", [S.grid, S.point])
 def test_cli_main__check_config(fs, switch, truthtype):
     fn = "config-%s.yaml" % truthtype
     fs.add_real_file(resource_path("config.jsonschema"))

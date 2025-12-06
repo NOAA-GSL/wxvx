@@ -174,14 +174,14 @@ def _config_grid_stat(
     field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
     meta = _meta(c, varname)
     config = {
-        "fcst": {"field": [field_fcst]},
-        "mask": {
-            "grid": [] if polyfile else [MET.FULL],
+        MET.fcst: {MET.field: [field_fcst]},
+        MET.mask: {
+            MET.grid: [] if polyfile else [MET.FULL],
             "poly": [polyfile.ref] if polyfile else [],
         },
         "model": c.truth.name if source == Source.TRUTH else c.forecast.name,
         "nc_pairs_flag": "FALSE",
-        "obs": {"field": [field_obs]},
+        "obs": {MET.field: [field_obs]},
         "obtype": c.truth.name,
         "output_flag": dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), MET.BOTH),
         "output_prefix": f"{prefix}",
@@ -204,7 +204,7 @@ def _config_pb2nc(c: Config, path: Path):
     # selection of obs from the netCDF file created by pb2nc.
     _type = ["min", "max", "range", "mean", "stdev", "median", "p80"]
     config: dict = {
-        "mask": {"grid": c.regrid.to if re.match(r"^G\d{3}$", str(c.regrid.to)) else ""},
+        MET.mask: {MET.grid: c.regrid.to if re.match(r"^G\d{3}$", str(c.regrid.to)) else ""},
         "message_type": ["ADPSFC", "ADPUPA", "AIRCAR", "AIRCFT"],
         "obs_bufr_var": ["POB", "QOB", "TOB", "UOB", "VOB", "ZOB"],
         "obs_window": {"beg": -1800, "end": 1800},
@@ -228,12 +228,12 @@ def _config_point_stat(
     surface = var.level_type in (S.heightAboveGround, S.surface)
     sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast, Source.TRUTH: c.truth}
     config = {
-        "fcst": {"field": [field_fcst]},
+        MET.fcst: {MET.field: [field_fcst]},
         "interp": {"shape": "SQUARE", "type": {"method": "BILIN", "width": 2}, "vld_thresh": 1.0},
         "message_type": ["SFC" if surface else "ATM"],
         "message_type_group_map": {"ATM": "ADPUPA,AIRCAR,AIRCFT", "SFC": "ADPSFC"},
         "model": cast(Named, sections[source]).name,
-        "obs": {"field": [field_obs]},
+        "obs": {MET.field: [field_obs]},
         "obs_window": {"beg": -900 if surface else -1800, "end": 900 if surface else 1800},
         "output_flag": {MET.cnt: MET.BOTH},
         "output_prefix": f"{prefix}",

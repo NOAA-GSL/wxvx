@@ -33,7 +33,7 @@ def _collect(f: Callable, d: dict, level: int) -> list[str]:
 def _dataset(k: str, v: list[dict], level: int) -> list[str]:
     match k:
         # Sequence: custom.
-        case "field":
+        case MET.field:
             return _field_sequence(k, v, level)
     return _fail(k)
 
@@ -117,7 +117,7 @@ def _mask(k: str, v: list[str] | str, level: int) -> list[str]:
     #   mask = { grid = [""]; poly = [""]; }
     # with 'grid' and 'poly' as string sequences.
     match k:
-        case "grid" | "poly":
+        case MET.grid | "poly":
             if isinstance(v, list):
                 # Sequence: quoted.
                 return _sequence(k, v, _quoted, level)
@@ -193,11 +193,11 @@ def _time_summary(k: str, v: Any, level: int) -> list[str]:
 def _top(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Mapping: custom.
-        case "fcst":
+        case MET.fcst:
             return _mapping(k, _collect(_dataset, v, level + 1), level)
         case "interp":
             return _mapping(k, _collect(_interp, v, level + 1), level)
-        case "mask":
+        case MET.mask:
             return _mapping(k, _collect(_mask, v, level + 1), level)
         case "nbrhd":
             return _mapping(k, _collect(_nbrhd, v, level + 1), level)
