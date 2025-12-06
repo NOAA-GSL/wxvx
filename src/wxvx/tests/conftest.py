@@ -57,7 +57,7 @@ def c_real_fs(config_data, gen_config, tmp_path):
 def config_data():
     return {
         S.baseline: {
-            "name": S.HRRR,
+            S.name: S.HRRR,
             "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
         S.cycles: {
@@ -81,7 +81,7 @@ def config_data():
                 [21.138123, 275.0],
                 [21.138123, 225.90452027],
             ],
-            "name": "Forecast",
+            S.name: "Forecast",
             "path": "/path/to/forecast-{{ yyyymmdd }}-{{ hh }}-{{ '%03d' % fh }}.nc",
             "projection": {
                 "a": 6371229,
@@ -112,7 +112,7 @@ def config_data():
             "to": S.forecast,
         },
         S.truth: {
-            "name": S.GFS,
+            S.name: S.GFS,
             "type": "grid",
             "url": "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
         },
@@ -120,21 +120,21 @@ def config_data():
             "HGT": {
                 "level_type": "isobaricInhPa",
                 "levels": [900],
-                "name": "gh",
+                S.name: "gh",
             },
             "REFC": {
                 "level_type": "atmosphere",
-                "name": "refc",
+                S.name: "refc",
             },
             "SPFH": {
                 "level_type": "isobaricInhPa",
                 "levels": [900, 1000],
-                "name": "q",
+                S.name: "q",
             },
             "T2M": {
                 "level_type": "heightAboveGround",
                 "levels": [2],
-                "name": "2t",
+                S.name: "2t",
             },
         },
     }

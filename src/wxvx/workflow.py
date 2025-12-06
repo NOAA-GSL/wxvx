@@ -570,10 +570,10 @@ def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
     level_fcst, name_fcst = (
         (level_obs, varname_truth) if datafmt == DataFormat.GRIB else ("(0,0,*,*)", varname)
     )
-    field_fcst = {"level": [level_fcst], "name": name_fcst}
+    field_fcst = {"level": [level_fcst], S.name: name_fcst}
     if datafmt != DataFormat.GRIB:
         field_fcst["set_attr_level"] = level_obs
-    field_obs = {"level": [level_obs], "name": varname_truth}
+    field_obs = {"level": [level_obs], S.name: varname_truth}
     meta = _meta(c, varname)
     if meta.cat_thresh:
         for x in field_fcst, field_obs:
@@ -602,7 +602,7 @@ def _forecast_grid(
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
-    return VARMETA[c.variables[varname]["name"]]
+    return VARMETA[c.variables[varname][S.name]]
 
 
 def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd.DataFrame:
@@ -707,7 +707,7 @@ def _vars_varnames_times(c: Config) -> Iterator[tuple[Var, str, TimeCoords]]:
 @cache
 def _vxvars(c: Config) -> dict[Var, str]:
     return {
-        Var(attrs["name"], attrs["level_type"], level): varname
+        Var(attrs[S.name], attrs["level_type"], level): varname
         for varname, attrs in c.variables.items()
         for level in attrs.get("levels", [None])
     }

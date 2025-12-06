@@ -31,7 +31,7 @@ def test_variables_Var_no_level(level_type):
     assert var.name == "foo"
     assert var.level_type == level_type
     assert var.level is None
-    assert var._keys == {"name", "level_type"}
+    assert var._keys == {S.name, "level_type"}
     assert var == variables.Var("foo", level_type)
     assert var != variables.Var("bar", level_type)
     assert hash(var) == hash(("foo", level_type, None))
@@ -47,7 +47,7 @@ def test_variables_Var_with_level(level, level_type):
     assert var.name == "foo"
     assert var.level_type == level_type
     assert var.level == level
-    assert var._keys == {"name", "level_type", "level"}
+    assert var._keys == {S.name, "level_type", "level"}
     assert var == variables.Var("foo", level_type, level)
     assert var != variables.Var("bar", level_type, level)
     assert hash(var) == hash(("foo", level_type, level))
@@ -58,7 +58,7 @@ def test_variables_Var_with_level(level, level_type):
 
 
 def test_variables_HRRR():
-    keys = {"name", "level_type", "firstbyte", "lastbyte"}
+    keys = {S.name, "level_type", "firstbyte", "lastbyte"}
     var = variables.HRRR(name="TMP", levstr="900 mb", firstbyte=1, lastbyte=2)
     assert var.level_type == "isobaricInhPa"
     assert var.level == 900
@@ -68,13 +68,13 @@ def test_variables_HRRR():
     assert variables.HRRR(name="TMP", levstr="surface", firstbyte=1, lastbyte=2)._keys == keys
 
 
-@mark.parametrize(("name", "expected"), [("t", "TMP"), ("2t", "TMP"), ("foo", variables.UNKNOWN)])
+@mark.parametrize((S.name, "expected"), [("t", "TMP"), ("2t", "TMP"), ("foo", variables.UNKNOWN)])
 def test_variables_HRRR_varname(name, expected):
     assert variables.HRRR.varname(name=name) == expected
 
 
 @mark.parametrize(
-    ("name", "level_type", "expected"),
+    (S.name, "level_type", "expected"),
     [
         ("TMP", "isobaricInhPa", "t"),
         ("TMP", "heightAboveGround", "2t"),

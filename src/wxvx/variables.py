@@ -11,6 +11,7 @@ import numpy as np
 import xarray as xr
 from pyproj import Proj
 
+from wxvx.strings import S
 from wxvx.types import Coords, VarMeta
 from wxvx.util import WXVXError, render
 
@@ -131,7 +132,7 @@ class Var:
         self.level_type = level_type
         self.level = level
         self._keys = (
-            {"name", "level_type", "level"} if self.level is not None else {"name", "level_type"}
+            {S.name, "level_type", "level"} if self.level is not None else {S.name, "level_type"}
         )
 
     def __eq__(self, other):
@@ -169,9 +170,9 @@ class GFS(Var):
         self.firstbyte: int = firstbyte
         self.lastbyte: int | None = lastbyte if lastbyte > -1 else None
         self._keys = (
-            {"name", "level_type", "level", "firstbyte", "lastbyte"}
+            {S.name, "level_type", "level", "firstbyte", "lastbyte"}
             if self.level is not None
-            else {"name", "level_type", "firstbyte", "lastbyte"}
+            else {S.name, "level_type", "firstbyte", "lastbyte"}
         )
 
     @staticmethod
@@ -305,7 +306,7 @@ def ds_construct(c: Config, da: xr.DataArray, taskname: str, level: float | None
     dims = ["forecast_reference_time", "time"]
     dims.extend(["latitude", "longitude"] if latlon else ["y", "x"])
     crs = "CRS"
-    meta = VARMETA[c.variables[da.name]["name"]]
+    meta = VARMETA[c.variables[da.name][S.name]]
     attrs = dict(grid_mapping=crs, standard_name=meta.cf_standard_name, units=meta.units)
     dims_lat, dims_lon = ([k] if latlon else ["y", "x"] for k in ["latitude", "longitude"])
     coords = dict(

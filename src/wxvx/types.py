@@ -73,7 +73,7 @@ class Baseline:
 
 class Config:
     def __init__(self, raw: dict):
-        baseline = raw.get(S.baseline, {"name": None})
+        baseline = raw.get(S.baseline, {S.name: None})
         paths = raw[S.paths]
         grids = paths[S.grids]
         self.baseline = Baseline(**baseline)
@@ -182,7 +182,7 @@ class Forecast:
     KEYS = (
         "coords",
         "mask",
-        "name",
+        S.name,
         "path",
         "_projection",  # use '_projection' (not 'projection') to avoid triggering the property.
     )

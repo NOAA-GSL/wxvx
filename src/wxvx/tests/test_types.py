@@ -92,7 +92,7 @@ def test_types_Baseline(baseline, config_data):
     assert obj.url == "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2"
     cfg = config_data[S.baseline]
     assert obj == types.Baseline(**cfg)
-    assert obj != types.Baseline(**{**cfg, "name": S.GFS})
+    assert obj != types.Baseline(**{**cfg, S.name: S.GFS})
     assert obj != types.Baseline(**{**cfg, "url": "bar"})
     assert types.Baseline(name=S.truth)
     with raises(AssertionError):
@@ -127,16 +127,16 @@ def test_types_Config(baseline, config_data, cycles, forecast, leadtimes, paths,
 
 def test_types_Config__bad_baseline_name_vs_truth_type(config_data):
     del config_data[S.baseline]["url"]
-    config_data[S.baseline]["name"] = S.truth
+    config_data[S.baseline][S.name] = S.truth
     config_data[S.truth]["type"] = types.TruthType.POINT
-    config_data[S.truth]["name"] = S.PREPBUFR
+    config_data[S.truth][S.name] = S.PREPBUFR
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
     assert str(e.value) == "Settings baseline.name 'truth' and truth.type 'point' are incompatible"
 
 
 def test_types_Config__bad_paths_grids_baseline(config_data):
-    config_data[S.baseline]["name"] = S.HRRR
+    config_data[S.baseline][S.name] = S.HRRR
     del config_data[S.paths][S.grids][S.baseline]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
@@ -153,7 +153,7 @@ def test_types_Config__bad_paths_grids_truth(config_data):
 
 def test_types_Config__bad_paths_obs(config_data):
     config_data[S.truth]["type"] = "point"
-    config_data[S.truth]["name"] = S.PREPBUFR
+    config_data[S.truth][S.name] = S.PREPBUFR
     del config_data[S.paths][S.obs]
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
@@ -172,9 +172,9 @@ def test_types_Config__bad_regrid_to(config_data):
     [(S.GFS, S.GFS, S.HRRR), (S.GFS, S.HRRR, S.GFS), (S.HRRR, S.GFS, S.GFS)],
 )
 def test_types_Config__bad_duplicate_names(baseline, config_data, forecast, truth):
-    config_data[S.baseline]["name"] = baseline
-    config_data[S.forecast]["name"] = forecast
-    config_data[S.truth]["name"] = truth
+    config_data[S.baseline][S.name] = baseline
+    config_data[S.forecast][S.name] = forecast
+    config_data[S.truth][S.name] = truth
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
     assert str(e.value) == "Distinct baseline.name (if set), forecast.name, and truth.name required"
@@ -182,7 +182,7 @@ def test_types_Config__bad_duplicate_names(baseline, config_data, forecast, trut
 
 @mark.parametrize("ignore", [True, False])
 def test_types_Config__paths_grids_baseline_ignored(config_data, ignore, logged):
-    config_data[S.baseline]["name"] = S.truth
+    config_data[S.baseline][S.name] = S.truth
     del config_data[S.baseline]["url"]
     if ignore:
         config_data[S.paths][S.grids][S.baseline] = "/some/path"
@@ -243,7 +243,7 @@ def test_types_Forecast(config_data, forecast):
     cfg = config_data[S.forecast]
     other1 = types.Forecast(**cfg)
     assert obj == other1
-    other2 = types.Forecast(**{**cfg, "name": "foo"})
+    other2 = types.Forecast(**{**cfg, S.name: "foo"})
     assert obj != other2
     cfg_no_proj = deepcopy(cfg)
     del cfg_no_proj["projection"]
@@ -340,7 +340,7 @@ def test_types_Truth(config_data, truth, truth_type):
     cfg["type"] = truth_type
     other1 = types.Truth(**cfg)
     assert obj == other1
-    other2 = types.Truth(**{**cfg, "name": S.HRRR})
+    other2 = types.Truth(**{**cfg, S.name: S.HRRR})
     assert obj != other2
 
 
@@ -388,7 +388,7 @@ def test_types_VarMeta():
     for k, v in kwargs.items():
         fails(k, type(v)())
     # Must not have None values:
-    for k in ["cf_standard_name", "description", "level_type", "met_stats", "name", "units"]:
+    for k in ["cf_standard_name", "description", "level_type", "met_stats", S.name, "units"]:
         fails(k, None)
     # Must not have unrecognized values:
     for k, v in [

@@ -19,7 +19,7 @@ class S:
     session: str = "session"
     truth: str = "truth"
     variables: str = "variables"
-    # names
-    # types
-    # coords
-    # tim
+    name: str = "name"
+    type: str = "type"
+    coords: str = "coords"
+    time: str = "time"

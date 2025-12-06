@@ -69,10 +69,10 @@ def test_schema_baseline(logged, config_data, fs):
     # Basic correctness:
     assert ok(config)
     # The "name" property's value can be "truth", in which case "url" must not be set:
-    assert not ok(with_set(config, S.truth, "name"))
-    assert ok(with_del(with_set(config, S.truth, "name"), "url"))
+    assert not ok(with_set(config, S.truth, S.name))
+    assert ok(with_del(with_set(config, S.truth, S.name), "url"))
     # If name is not "truth", URL must be specified:
-    assert not ok(with_del(with_set(config, S.GFS, "name"), "url"))
+    assert not ok(with_del(with_set(config, S.GFS, S.name), "url"))
     assert logged("'url' is a required property")
 
 
@@ -103,7 +103,7 @@ def test_schema_forecast(logged, config_data, fs):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in ["name", "path"]:
+    for key in [S.name, "path"]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Additional keys are not allowed:
@@ -114,7 +114,7 @@ def test_schema_forecast(logged, config_data, fs):
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'object'")
     # Some keys have string values:
-    for key in ["name", "path"]:
+    for key in [S.name, "path"]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
     # Some keys are optional:
@@ -296,14 +296,14 @@ def test_schema_truth(logged, config_data, fs):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in ["name", "type", "url"]:
+    for key in [S.name, "type", "url"]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Additional keys are not allowed:
     assert not ok(with_set(config, 42, "n"))
     assert logged("'n' was unexpected")
     # Some keys have string values:
-    for key in ["name", "url"]:
+    for key in [S.name, "url"]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
     # Some keys have enum values:
@@ -322,7 +322,7 @@ def test_schema_variables(logged, config_data, fs):
     assert not ok([])
     assert logged("is not of type 'object'")
     # Array entries must have the correct keys:
-    for key in ("level_type", "levels", "name"):
+    for key in ("level_type", "levels", S.name):
         assert not ok(with_del({"X": one}, "X", key))
         assert logged(f"'{key}' is a required property")
     # Additional keys in entries are not allowed:
@@ -330,17 +330,17 @@ def test_schema_variables(logged, config_data, fs):
     assert logged("Additional properties are not allowed")
     # The "levels" key is required for some level types, forbidden for others:
     for level_type in ("heightAboveGround", "isobaricInhPa"):
-        assert not ok({"X": {"name": "foo", "level_type": level_type}})
+        assert not ok({"X": {S.name: "foo", "level_type": level_type}})
         assert logged("'levels' is a required property")
     for level_type in ("atmosphere", "surface"):
-        assert not ok({"X": {"name": "foo", "level_type": level_type, "levels": [1000]}})
+        assert not ok({"X": {S.name: "foo", "level_type": level_type, "levels": [1000]}})
         assert logged("should not be valid")
     # Some keys have enum values:
     for key in ["level_type"]:
         assert not ok({"X": {**one, key: None}})
         assert logged("None is not one of")
     # Some keys have string values:
-    for key in ["name"]:
+    for key in [S.name]:
         assert not ok({"X": {**one, key: None}})
         assert logged("None is not of type 'string'")
 
