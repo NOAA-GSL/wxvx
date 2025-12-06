@@ -54,7 +54,7 @@ def paths(config_data):
 
 @fixture
 def regrid(config_data):
-    return types.Regrid(**config_data["regrid"])
+    return types.Regrid(**config_data[S.regrid])
 
 
 @fixture
@@ -161,7 +161,7 @@ def test_types_Config__bad_paths_obs(config_data):
 
 
 def test_types_Config__bad_regrid_to(config_data):
-    config_data["regrid"]["to"] = S.truth
+    config_data[S.regrid][S.to] = S.truth
     with raises(WXVXError) as e:
         types.Config(raw=config_data)
     assert str(e.value) == "Cannot regrid to observations per regrid.to config value"
@@ -248,7 +248,7 @@ def test_types_Forecast(config_data, forecast):
     cfg_no_proj = deepcopy(cfg)
     del cfg_no_proj[S.projection]
     default = types.Forecast(**cfg_no_proj)
-    assert default.projection == {"proj": "latlon"}
+    assert default.projection == {S.proj: "latlon"}
 
 
 def test_types_Leadtimes():
@@ -300,10 +300,10 @@ def test_types_Regrid(regrid, config_data):
     obj = regrid
     assert obj.method == "NEAREST"
     assert str(obj.to) == types.ToGridVal.FCST.name
-    cfg = config_data["regrid"]
+    cfg = config_data[S.regrid]
     other1 = types.Regrid(**cfg)
     assert obj == other1
-    other2 = types.Regrid(**{**cfg, "to": S.truth})
+    other2 = types.Regrid(**{**cfg, S.to: S.truth})
     assert obj != other2
     assert str(other2.to) == types.ToGridVal.OBS.name
 

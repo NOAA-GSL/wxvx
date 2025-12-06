@@ -171,23 +171,23 @@ def test_schema_forecast_projection(logged, config_data, fs):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in ["proj"]:
+    for key in [S.proj]:
         assert not ok(with_del(config, key))
         assert logged("'proj' is a required property")
     # Additional keys are not allowed:
     assert not ok(with_set(config, 42, "foo"))
     assert logged("'foo' was unexpected")
     # Some keys have enum values:
-    for key in ["proj"]:
+    for key in [S.proj]:
         assert not ok(with_set(config, "foo", key))
         assert logged(r"'foo' is not one of \['latlon', 'lcc'\]")
     # For proj latlon:
-    config_latlon = {"proj": "latlon"}
+    config_latlon = {S.proj: "latlon"}
     assert ok(config_latlon)
     assert not ok(with_set(config_latlon, 42, "foo"))
     assert logged("'foo' was unexpected")
     # For proj lcc (default in fixture):
-    assert config["proj"] == "lcc"
+    assert config[S.proj] == "lcc"
     for key in ["a", "b", "lat_0", "lat_1", "lat_2", "lon_0"]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
@@ -271,8 +271,8 @@ def test_schema_paths_grids(config_data, fs, logged):
 
 
 def test_schema_regrid(logged, config_data, fs):
-    ok = validator(fs, S.properties, "regrid")
-    config = config_data["regrid"]
+    ok = validator(fs, S.properties, S.regrid)
+    config = config_data[S.regrid]
     # Basic correctness:
     assert ok(config)
     # Must be an object:
@@ -285,8 +285,8 @@ def test_schema_regrid(logged, config_data, fs):
     assert not ok(with_set(config, "UNEXPECTED", "method"))
     assert logged("'UNEXPECTED' is not one of")
     # "to" must have an expected value:
-    assert ok(with_set(config, "G004", "to"))
-    assert not ok(with_set(config, "UNEXPECTED", "to"))
+    assert ok(with_set(config, "G004", S.to))
+    assert not ok(with_set(config, "UNEXPECTED", S.to))
     assert logged("'UNEXPECTED' does not match")
 
 

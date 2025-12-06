@@ -219,7 +219,7 @@ def test_workflow__config_pb2nc(c, fakefs, tidy):
     assert tidy(expected) == path.read_text().strip()
 
 
-@mark.parametrize("to", ["G104", None])
+@mark.parametrize(S.to, ["G104", None])
 def test_workflow__config_pb2nc__alt_masks(c, fakefs, tidy, to):
     path = fakefs / "pb2nc.config"
     assert not path.is_file()

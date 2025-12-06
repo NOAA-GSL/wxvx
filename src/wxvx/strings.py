@@ -38,3 +38,6 @@ class S:
     latitude: str = "latitude"
     longitude: str = "longitude"
     forecast_reference_time: str = "forecast_reference_time"
+    proj: str = "proj"
+    regrid: str = "regrid"
+    to: str = "to"

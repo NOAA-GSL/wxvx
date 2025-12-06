@@ -90,7 +90,7 @@ def config_data():
                 "lat_1": 38.5,
                 "lat_2": 38.5,
                 "lon_0": 262.5,
-                "proj": "lcc",
+                S.proj: "lcc",
             },
         },
         S.leadtimes: {
@@ -107,9 +107,9 @@ def config_data():
             S.obs: "/path/to/obs",
             S.run: "/path/to/run",
         },
-        "regrid": {
+        S.regrid: {
             "method": "NEAREST",
-            "to": S.forecast,
+            S.to: S.forecast,
         },
         S.truth: {
             S.name: S.GFS,

@@ -88,7 +88,7 @@ class Config:
             paths[S.run],
         )
         self.raw = raw
-        self.regrid = Regrid(**raw.get("regrid", {}))
+        self.regrid = Regrid(**raw.get(S.regrid, {}))
         self.truth = Truth(**raw[S.truth])
         self.variables = raw[S.variables]
         self._validate()
@@ -233,7 +233,7 @@ class Forecast:
     def projection(self) -> dict:
         if self._projection is None:
             logging.info("No forecast projection specified, defaulting to latlon")
-            self._projection = {"proj": "latlon"}
+            self._projection = {S.proj: "latlon"}
         return self._projection
 
 
@@ -283,7 +283,7 @@ class Regrid:
     to: ToGrid | None = None
 
     def __post_init__(self):
-        _force(self, "to", ToGrid(S.forecast if self.to is None else str(self.to)))
+        _force(self, S.to, ToGrid(S.forecast if self.to is None else str(self.to)))
         assert self.to is not None
 
 

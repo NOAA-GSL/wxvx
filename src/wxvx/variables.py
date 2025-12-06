@@ -233,7 +233,7 @@ class HRRR(GFS):
             "lat_1": 38.5,
             "lat_2": 38.5,
             "lon_0": 262.5,
-            "proj": "lcc",
+            S.proj: "lcc",
         }
     )
 

@@ -156,7 +156,7 @@ def test_variables_da_select__fail_bad_var(c, da_with_leadtime, tc):
 
 
 def test_variables_ds_construct__latlon(c, check_cf_metadata):
-    c.forecast._projection = {"proj": "longlat"}
+    c.forecast._projection = {S.proj: "longlat"}
     name = "HGT"
     one = np.array([1], dtype="float32")
     da = xr.DataArray(
