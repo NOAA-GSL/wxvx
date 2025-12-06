@@ -177,19 +177,21 @@ def _config_grid_stat(
         MET.fcst: {MET.field: [field_fcst]},
         MET.mask: {
             MET.grid: [] if polyfile else [MET.FULL],
-            "poly": [polyfile.ref] if polyfile else [],
+            MET.poly: [polyfile.ref] if polyfile else [],
         },
-        "model": c.truth.name if source == Source.TRUTH else c.forecast.name,
-        "nc_pairs_flag": "FALSE",
-        "obs": {MET.field: [field_obs]},
-        "obtype": c.truth.name,
-        "output_flag": dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), MET.BOTH),
-        "output_prefix": f"{prefix}",
-        "regrid": {"method": c.regrid.method, "to_grid": c.regrid.to},
-        "tmp_dir": path.parent,
+        MET.model: c.truth.name if source == Source.TRUTH else c.forecast.name,
+        MET.nc_pairs_flag: MET.FALSE,
+        MET.obs: {MET.field: [field_obs]},
+        MET.obtype: c.truth.name,
+        MET.output_flag: dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), MET.BOTH),
+        MET.output_prefix: f"{prefix}",
+        MET.regrid: {MET.method: c.regrid.method, MET.to_grid: c.regrid.to},
+        MET.tmp_dir: path.parent,
     }
-    if nbrhd := {k: v for k, v in [("shape", meta.nbrhd_shape), ("width", meta.nbrhd_width)] if v}:
-        config["nbrhd"] = nbrhd
+    if nbrhd := {
+        k: v for k, v in [(MET.shape, meta.nbrhd_shape), (MET.width, meta.nbrhd_width)] if v
+    }:
+        config[MET.nbrhd] = nbrhd
     with atomic(path) as tmp:
         tmp.write_text("%s\n" % render_metconf(config))
 
@@ -209,8 +211,8 @@ def _config_pb2nc(c: Config, path: Path):
         "obs_bufr_var": ["POB", "QOB", "TOB", "UOB", "VOB", "ZOB"],
         "obs_window": {"beg": -1800, "end": 1800},
         "quality_mark_thresh": 9,
-        "time_summary": {"step": 3600, "width": 3600, "obs_var": [], "type": _type},
-        "tmp_dir": path.parent,
+        "time_summary": {"step": 3600, MET.width: 3600, "obs_var": [], "type": _type},
+        MET.tmp_dir: path.parent,
     }
     with atomic(path) as tmp:
         tmp.write_text("%s\n" % render_metconf(config))
@@ -229,20 +231,24 @@ def _config_point_stat(
     sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast, Source.TRUTH: c.truth}
     config = {
         MET.fcst: {MET.field: [field_fcst]},
-        "interp": {"shape": "SQUARE", "type": {"method": "BILIN", "width": 2}, "vld_thresh": 1.0},
+        "interp": {
+            MET.shape: "SQUARE",
+            "type": {MET.method: "BILIN", MET.width: 2},
+            "vld_thresh": 1.0,
+        },
         "message_type": ["SFC" if surface else "ATM"],
         "message_type_group_map": {"ATM": "ADPUPA,AIRCAR,AIRCFT", "SFC": "ADPSFC"},
-        "model": cast(Named, sections[source]).name,
-        "obs": {MET.field: [field_obs]},
+        MET.model: cast(Named, sections[source]).name,
+        MET.obs: {MET.field: [field_obs]},
         "obs_window": {"beg": -900 if surface else -1800, "end": 900 if surface else 1800},
-        "output_flag": {MET.cnt: MET.BOTH},
-        "output_prefix": f"{prefix}",
-        "regrid": {
-            "method": c.regrid.method,
-            "to_grid": c.regrid.to,
-            "width": _regrid_width(c),
+        MET.output_flag: {MET.cnt: MET.BOTH},
+        MET.output_prefix: f"{prefix}",
+        MET.regrid: {
+            MET.method: c.regrid.method,
+            MET.to_grid: c.regrid.to,
+            MET.width: _regrid_width(c),
         },
-        "tmp_dir": path.parent,
+        MET.tmp_dir: path.parent,
     }
     with atomic(path) as tmp:
         tmp.write_text("%s\n" % render_metconf(config))

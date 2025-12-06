@@ -117,7 +117,7 @@ def _mask(k: str, v: list[str] | str, level: int) -> list[str]:
     #   mask = { grid = [""]; poly = [""]; }
     # with 'grid' and 'poly' as string sequences.
     match k:
-        case MET.grid | "poly":
+        case MET.grid | MET.poly:
             if isinstance(v, list):
                 # Sequence: quoted.
                 return _sequence(k, v, _quoted, level)
@@ -160,10 +160,10 @@ def _quoted(v: str) -> str:
 def _regrid(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Scalar: bare.
-        case "method" | "width":
+        case MET.method | "width":
             return _kvpair(k, _bare(v), level)
         # Scalar: custom.
-        case "to_grid":
+        case MET.to_grid:
             f = _bare if v in [x.name for x in ToGridVal] else _quoted
             return _kvpair(k, f(v), level)
     return _fail(k)
@@ -201,21 +201,21 @@ def _top(k: str, v: Any, level: int) -> list[str]:
             return _mapping(k, _collect(_mask, v, level + 1), level)
         case "nbrhd":
             return _mapping(k, _collect(_nbrhd, v, level + 1), level)
-        case "obs":
+        case MET.obs:
             return _mapping(k, _collect(_dataset, v, level + 1), level)
         case "obs_window":
             return _mapping(k, _collect(_obs_window, v, level + 1), level)
-        case "output_flag":
+        case MET.output_flag:
             return _mapping(k, _collect(_output_flag, v, level + 1), level)
-        case "regrid":
+        case MET.regrid:
             return _mapping(k, _collect(_regrid, v, level + 1), level)
         case "time_summary":
             return _mapping(k, _collect(_time_summary, v, level + 1), level)
         # Scalar: bare.
-        case "nc_pairs_flag" | "quality_mark_thresh":
+        case MET.nc_pairs_flag | "quality_mark_thresh":
             return _kvpair(k, _bare(v), level)
         # Scalar: quoted.
-        case "model" | "obtype" | "output_prefix" | "tmp_dir":
+        case MET.model | MET.obtype | MET.output_prefix | MET.tmp_dir:
             return _kvpair(k, _quoted(v), level)
         # Sequence: quoted.
         case "message_type" | "obs_bufr_var":
@@ -229,6 +229,6 @@ def _top(k: str, v: Any, level: int) -> list[str]:
 def _type(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Key-Value Pair: bare.
-        case "method" | "width":
+        case MET.method | "width":
             return _kvpair(k, _bare(v), level)
     return _fail(k)

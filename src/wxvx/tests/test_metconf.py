@@ -28,13 +28,13 @@ def test_metconf_render(tidy):
         "interp": {
             "shape": "SQUARE",
             "type": {
-                "method": "BILIN",
+                MET.method: "BILIN",
                 "width": 2,
             },
             "vld_thresh": 1.0,
         },
         MET.mask: {
-            "poly": [
+            MET.poly: [
                 "a.nc",
             ],
         },
@@ -44,7 +44,7 @@ def test_metconf_render(tidy):
         "message_type_group_map": {
             "AIRUPA": "ADPUPA,AIRCAR,AIRCFT",
         },
-        "model": "GraphHRRR",
+        MET.model: "GraphHRRR",
         "nbrhd": {
             "shape": "CIRCLE",
             "width": [
@@ -52,8 +52,8 @@ def test_metconf_render(tidy):
                 5,
             ],
         },
-        "nc_pairs_flag": "FALSE",
-        "obs": {
+        MET.nc_pairs_flag: "FALSE",
+        MET.obs: {
             MET.field: [
                 {
                     "cat_thresh": [
@@ -75,13 +75,13 @@ def test_metconf_render(tidy):
             "beg": -1800,
             "end": 1800,
         },
-        "obtype": "HRRR",
-        "output_flag": {
+        MET.obtype: "HRRR",
+        MET.output_flag: {
             MET.cnt: "BOTH",
         },
-        "output_prefix": "foo_bar",
-        "regrid": {
-            "to_grid": ToGridVal.FCST.name,
+        MET.output_prefix: "foo_bar",
+        MET.regrid: {
+            MET.to_grid: ToGridVal.FCST.name,
         },
         "time_summary": {
             "obs_var": [],
@@ -92,7 +92,7 @@ def test_metconf_render(tidy):
             ],
             "width": 3600,
         },
-        "tmp_dir": "/path/to/dir",
+        MET.tmp_dir: "/path/to/dir",
     }
     text = """
     fcst = {
@@ -292,7 +292,7 @@ def test_metconf__interp__type(tidy):
     }
     """
     expected = tidy(text).split("\n")
-    assert metconf._interp(k="type", v={"method": "BILIN", "width": 2}, level=0) == expected
+    assert metconf._interp(k="type", v={MET.method: "BILIN", "width": 2}, level=0) == expected
 
 
 def test_metconf__key_val_map_list(tidy):
@@ -411,7 +411,7 @@ def test_metconf__top():
         metconf._top(k="foo", v=None, level=0)
 
 
-@mark.parametrize(("k", "v"), [("method", "BILIN"), ("width", 2)])
+@mark.parametrize(("k", "v"), [(MET.method, "BILIN"), ("width", 2)])
 def test_metconf__type(k, v):
     assert metconf._type(k=k, v=v, level=1) == [f"  {k} = {v};"]
 
