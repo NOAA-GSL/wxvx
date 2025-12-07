@@ -2,159 +2,181 @@ from dataclasses import dataclass
 
 # ruff: noqa: N815
 
+_ = ""
+
+
+class _X:
+    def __post_init__(self):
+        fields = getattr(self, "__dataclass_fields__").values()  # noqa: B009
+        for field in fields:
+            if not getattr(self, field.name):
+                object.__setattr__(self, field.name, field.name)
+
 
 @dataclass(frozen=True)
-class EC:
-    gh: str = "gh"
-    q: str = "q"
-    refc: str = "refc"
-    sp: str = "sp"
+class _EC(_X):
+    gh: str = _
+    q: str = _
+    refc: str = _
+    sp: str = _
     t2: str = "2t"
-    t: str = "t"
-    u: str = "u"
-    u_10m: str = "u_10m"
-    v: str = "v"
-    v_10m: str = "v_10m"
-    w: str = "w"
+    t: str = _
+    u: str = _
+    u_10m: str = _
+    v: str = _
+    v_10m: str = _
+    w: str = _
+
+
+EC = _EC()
 
 
 @dataclass(frozen=True)
-class MET:
-    ATM: str = "ATM"
-    BILIN: str = "BILIN"
-    BOTH: str = "BOTH"
-    CIRCLE: str = "CIRCLE"
-    FALSE: str = "FALSE"
-    FCST_LEAD: str = "FCST_LEAD"
-    FCST_THRESH: str = "FCST_THRESH"
-    FSS: str = "FSS"
-    FULL: str = "FULL"
-    INTERP_PNTS: str = "INTERP_PNTS"
-    LABEL: str = "LABEL"
-    ME: str = "ME"
-    MODEL: str = "MODEL"
-    NEAREST: str = "NEAREST"
-    PODY: str = "PODY"
-    RMSE: str = "RMSE"
-    SFC: str = "SFC"
-    SQUARE: str = "SQUARE"
-    beg: str = "beg"
-    cat_thresh: str = "cat_thresh"
-    cnt: str = "cnt"
-    cnt_thresh: str = "cnt_thresh"
-    cts: str = "cts"
-    end: str = "end"
-    fcst: str = "fcst"
-    field: str = "field"
-    grid: str = "grid"
-    interp: str = "interp"
-    level: str = "level"
-    mask: str = "mask"
-    message_type: str = "message_type"
-    message_type_group_map: str = "message_type_group_map"
-    method: str = "method"
-    model: str = "model"
-    name: str = "name"
-    nbrcnt: str = "nbrcnt"
-    nbrhd: str = "nbrhd"
-    nbrhd_shape: str = "nbrhd_shape"
-    nbrhd_width: str = "nbrhd_width"
-    nc_pairs_flag: str = "nc_pairs_flag"
-    obs: str = "obs"
-    obs_bufr_var: str = "obs_bufr_var"
-    obs_var: str = "obs_var"
-    obs_window: str = "obs_window"
-    obtype: str = "obtype"
-    output_flag: str = "output_flag"
-    output_prefix: str = "output_prefix"
-    poly: str = "poly"
-    quality_mark_thresh: str = "quality_mark_thresh"
-    regrid: str = "regrid"
-    set_attr_level: str = "set_attr_level"
-    shape: str = "shape"
-    step: str = "step"
-    time_summary: str = "time_summary"
-    tmp_dir: str = "tmp_dir"
-    to_grid: str = "to_grid"
-    type: str = "type"
-    vld_thresh: str = "vld_thresh"
-    width: str = "width"
+class _MET(_X):
+    ATM: str = _
+    BILIN: str = _
+    BOTH: str = _
+    CIRCLE: str = _
+    FALSE: str = _
+    FCST_LEAD: str = _
+    FCST_THRESH: str = _
+    FSS: str = _
+    FULL: str = _
+    INTERP_PNTS: str = _
+    LABEL: str = _
+    ME: str = _
+    MODEL: str = _
+    NEAREST: str = _
+    PODY: str = _
+    RMSE: str = _
+    SFC: str = _
+    SQUARE: str = _
+    beg: str = _
+    cat_thresh: str = _
+    cnt: str = _
+    cnt_thresh: str = _
+    cts: str = _
+    end: str = _
+    fcst: str = _
+    field: str = _
+    grid: str = _
+    interp: str = _
+    level: str = _
+    mask: str = _
+    message_type: str = _
+    message_type_group_map: str = _
+    method: str = _
+    model: str = _
+    name: str = _
+    nbrcnt: str = _
+    nbrhd: str = _
+    nbrhd_shape: str = _
+    nbrhd_width: str = _
+    nc_pairs_flag: str = _
+    obs: str = _
+    obs_bufr_var: str = _
+    obs_var: str = _
+    obs_window: str = _
+    obtype: str = _
+    output_flag: str = _
+    output_prefix: str = _
+    poly: str = _
+    quality_mark_thresh: str = _
+    regrid: str = _
+    set_attr_level: str = _
+    shape: str = _
+    step: str = _
+    time_summary: str = _
+    tmp_dir: str = _
+    to_grid: str = _
+    type: str = _
+    vld_thresh: str = _
+    width: str = _
+
+
+MET = _MET()
 
 
 @dataclass(frozen=True)
-class NCEP:
-    HGT: str = "HGT"
-    PRES: str = "PRES"
-    REFC: str = "REFC"
-    SPFH: str = "SPFH"
-    T2M: str = "T2M"
-    TMP: str = "TMP"
-    UGRD: str = "UGRD"
-    VGRD: str = "VGRD"
-    VVEL: str = "VVEL"
+class _NCEP(_X):
+    HGT: str = _
+    PRES: str = _
+    REFC: str = _
+    SPFH: str = _
+    T2M: str = _
+    TMP: str = _
+    UGRD: str = _
+    VGRD: str = _
+    VVEL: str = _
+
+
+NCEP = _NCEP()
 
 
 @dataclass(frozen=True)
-class S:
-    GFS: str = "GFS"
-    HRRR: str = "HRRR"
-    OBS: str = "OBS"
-    PREPBUFR: str = "PREPBUFR"
-    atmosphere: str = "atmosphere"
-    baseline: str = "baseline"
-    coords: str = "coords"
-    cycle: str = "cycle"
-    cycles: str = "cycles"
-    env: str = "env"
-    fh: str = "fh"
-    firstbyte: str = "firstbyte"
-    forecast: str = "forecast"
-    forecast_reference_time: str = "forecast_reference_time"
-    grid: str = "grid"
-    grids: str = "grids"
-    grids_baseline: str = "grids_baseline"
-    grids_forecast: str = "grids_forecast"
-    grids_truth: str = "grids_truth"
-    heightAboveGround: str = "heightAboveGround"
-    hh: str = "hh"
-    inittime: str = "inittime"
-    isobaricInhPa: str = "isobaricInhPa"
-    lastbyte: str = "lastbyte"
-    latitude: str = "latitude"
-    latlon: str = "latlon"
-    leadtime: str = "leadtime"
-    leadtimes: str = "leadtimes"
-    level: str = "level"
-    level_type: str = "level_type"
-    levels: str = "levels"
-    longitude: str = "longitude"
-    mask: str = "mask"
-    method: str = "method"
-    name: str = "name"
-    obs: str = "obs"
-    path: str = "path"
-    paths: str = "paths"
-    plots: str = "plots"
-    point: str = "point"
-    pool: str = "pool"
-    proj: str = "proj"
-    projection: str = "projection"
-    properties: str = "properties"
-    regrid: str = "regrid"
-    run: str = "run"
-    session: str = "session"
-    shortName: str = "shortName"
-    start: str = "start"
-    stats: str = "stats"
-    step: str = "step"
-    stop: str = "stop"
-    surface: str = "surface"
-    time: str = "time"
-    to: str = "to"
-    truth: str = "truth"
-    type: str = "type"
-    typeOfLevel: str = "typeOfLevel"
-    url: str = "url"
-    validtime: str = "validtime"
-    variables: str = "variables"
-    yyyymmdd: str = "yyyymmdd"
+class _S(_X):
+    GFS: str = _
+    HRRR: str = _
+    OBS: str = _
+    PREPBUFR: str = _
+    atmosphere: str = _
+    baseline: str = _
+    coords: str = _
+    cycle: str = _
+    cycles: str = _
+    env: str = _
+    fh: str = _
+    firstbyte: str = _
+    forecast: str = _
+    forecast_reference_time: str = _
+    grid: str = _
+    grids: str = _
+    grids_baseline: str = _
+    grids_forecast: str = _
+    grids_truth: str = _
+    heightAboveGround: str = _
+    hh: str = _
+    inittime: str = _
+    isobaricInhPa: str = _
+    lastbyte: str = _
+    latitude: str = _
+    latlon: str = _
+    leadtime: str = _
+    leadtimes: str = _
+    level: str = _
+    level_type: str = _
+    levels: str = _
+    longitude: str = _
+    mask: str = _
+    method: str = _
+    name: str = _
+    obs: str = _
+    path: str = _
+    paths: str = _
+    plots: str = _
+    point: str = _
+    pool: str = _
+    proj: str = _
+    projection: str = _
+    properties: str = _
+    regrid: str = _
+    run: str = _
+    session: str = _
+    shortName: str = _
+    start: str = _
+    stats: str = _
+    step: str = _
+    stop: str = _
+    surface: str = _
+    time: str = _
+    to: str = _
+    truth: str = _
+    type: str = _
+    typeOfLevel: str = _
+    url: str = _
+    validtime: str = _
+    variables: str = _
+    yyyymmdd: str = _
+
+
+S = _S()
