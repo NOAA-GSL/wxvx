@@ -182,7 +182,13 @@ def fakefs(fs):
 @fixture
 def gen_config():
     def gen_config(config_data, rootpath) -> Config:
-        dirs = ("grids/baseline", "grids/forecast", "grids/truth", S.obs, S.run)
+        dirs = (
+            f"{S.grids}/{S.baseline}",
+            f"{S.grids}/{S.forecast}",
+            f"{S.grids}/{S.truth}",
+            S.obs,
+            S.run,
+        )
         grids_baseline, grids_forecast, grids_truth, obs, run = [str(rootpath / x) for x in dirs]
         for x in grids_truth, grids_forecast, obs, run:
             Path(x).mkdir(parents=True)
