@@ -1,5 +1,10 @@
 from dataclasses import dataclass
 
+# This module provides containers for string literals used throughout the codebase, organized by
+# the source of their definition. Most values are dynamically set to match the key, but explicit
+# values can also be provided when the key and value should not be the same. This mechanism reduces
+# the risk of typos in string literals, and exposes references to the type checker for validation.
+
 # ruff: noqa: N815
 
 # Private
@@ -17,6 +22,10 @@ class _ValsMatchKeys:
 
 @dataclass(frozen=True)
 class _EC(_ValsMatchKeys):
+    """
+    Strings defined by ECMWF / ecCodes.
+    """
+
     gh: str = _
     q: str = _
     refc: str = _
@@ -32,6 +41,10 @@ class _EC(_ValsMatchKeys):
 
 @dataclass(frozen=True)
 class _MET(_ValsMatchKeys):
+    """
+    Strings defined by MET.
+    """
+
     ATM: str = _
     BILIN: str = _
     BOTH: str = _
@@ -95,6 +108,10 @@ class _MET(_ValsMatchKeys):
 
 @dataclass(frozen=True)
 class _NCEP(_ValsMatchKeys):
+    """
+    Strings defined by NOAA.
+    """
+
     HGT: str = _
     PRES: str = _
     REFC: str = _
@@ -108,6 +125,10 @@ class _NCEP(_ValsMatchKeys):
 
 @dataclass(frozen=True)
 class _S(_ValsMatchKeys):
+    """
+    Strings defined by wxvx, plus strings from various other sources.
+    """
+
     GFS: str = _
     HRRR: str = _
     OBS: str = _
