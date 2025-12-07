@@ -5,7 +5,7 @@ from dataclasses import dataclass
 _ = ""
 
 
-class _X:
+class _ValsMatchKeys:
     def __post_init__(self):
         fields = getattr(self, "__dataclass_fields__").values()  # noqa: B009
         for field in fields:
@@ -14,7 +14,7 @@ class _X:
 
 
 @dataclass(frozen=True)
-class _EC(_X):
+class _EC(_ValsMatchKeys):
     gh: str = _
     q: str = _
     refc: str = _
@@ -32,7 +32,7 @@ EC = _EC()
 
 
 @dataclass(frozen=True)
-class _MET(_X):
+class _MET(_ValsMatchKeys):
     ATM: str = _
     BILIN: str = _
     BOTH: str = _
@@ -98,7 +98,7 @@ MET = _MET()
 
 
 @dataclass(frozen=True)
-class _NCEP(_X):
+class _NCEP(_ValsMatchKeys):
     HGT: str = _
     PRES: str = _
     REFC: str = _
@@ -114,7 +114,7 @@ NCEP = _NCEP()
 
 
 @dataclass(frozen=True)
-class _S(_X):
+class _S(_ValsMatchKeys):
     GFS: str = _
     HRRR: str = _
     OBS: str = _
