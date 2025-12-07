@@ -14,7 +14,8 @@ _ = ""
 
 class _ValsMatchKeys:
     def __post_init__(self):
-        fields = getattr(self, "__dataclass_fields__").values()  # noqa: B009
+        attr = "__dataclass_fields__"
+        fields = getattr(self, attr).values()
         for field in fields:
             if not getattr(self, field.name):
                 object.__setattr__(self, field.name, field.name)
