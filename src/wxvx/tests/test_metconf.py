@@ -6,7 +6,7 @@ from wxvx import metconf
 from wxvx.strings import MET
 from wxvx.types import ToGridVal
 
-# Public:
+# Public
 
 
 def test_metconf_render(tidy):
@@ -189,7 +189,7 @@ def test_metconf_render__fail():
     _fail(metconf.render, config={"foo": "bar"})
 
 
-# Private:
+# Private
 
 
 @mark.parametrize("v", ["foo", 42])

@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 # ruff: noqa: N815
 
+# Private
+
 _ = ""
 
 
@@ -26,9 +28,6 @@ class _EC(_ValsMatchKeys):
     v: str = _
     v_10m: str = _
     w: str = _
-
-
-EC = _EC()
 
 
 @dataclass(frozen=True)
@@ -94,9 +93,6 @@ class _MET(_ValsMatchKeys):
     width: str = _
 
 
-MET = _MET()
-
-
 @dataclass(frozen=True)
 class _NCEP(_ValsMatchKeys):
     HGT: str = _
@@ -108,9 +104,6 @@ class _NCEP(_ValsMatchKeys):
     UGRD: str = _
     VGRD: str = _
     VVEL: str = _
-
-
-NCEP = _NCEP()
 
 
 @dataclass(frozen=True)
@@ -179,4 +172,9 @@ class _S(_ValsMatchKeys):
     yyyymmdd: str = _
 
 
+# Public
+
+EC = _EC()
+MET = _MET()
+NCEP = _NCEP()
 S = _S()

@@ -9,14 +9,14 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-# Public:
+# Public
 
 
 def render(config: dict) -> str:
     return "\n".join(_collect(_top, config, 0))
 
 
-# Private:
+# Private
 
 
 def _bare(v: Any) -> str:
