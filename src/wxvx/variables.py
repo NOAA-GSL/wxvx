@@ -11,7 +11,7 @@ import numpy as np
 import xarray as xr
 from pyproj import Proj
 
-from wxvx.strings import EC, MET, NCEP, S
+from wxvx.strings import EC, MET, NOAA, S
 from wxvx.types import Coords, VarMeta
 from wxvx.util import WXVXError, render
 
@@ -178,33 +178,33 @@ class GFS(Var):
     @staticmethod
     def varname(name: str) -> str:
         return {
-            EC.t2: NCEP.TMP,
-            EC.gh: NCEP.HGT,
-            EC.q: NCEP.SPFH,
-            EC.refc: NCEP.REFC,
-            EC.sp: NCEP.PRES,
-            EC.t: NCEP.TMP,
-            EC.u: NCEP.UGRD,
-            EC.u_10m: NCEP.UGRD,
-            EC.v: NCEP.VGRD,
-            EC.v_10m: NCEP.VGRD,
-            EC.w: NCEP.VVEL,
+            EC.t2: NOAA.TMP,
+            EC.gh: NOAA.HGT,
+            EC.q: NOAA.SPFH,
+            EC.refc: NOAA.REFC,
+            EC.sp: NOAA.PRES,
+            EC.t: NOAA.TMP,
+            EC.u: NOAA.UGRD,
+            EC.u_10m: NOAA.UGRD,
+            EC.v: NOAA.VGRD,
+            EC.v_10m: NOAA.VGRD,
+            EC.w: NOAA.VVEL,
         }.get(name, UNKNOWN)
 
     @staticmethod
     def _canonicalize(name: str, level_type: str) -> str:
         return {
-            (NCEP.HGT, S.isobaricInhPa): EC.gh,
-            (NCEP.PRES, S.surface): EC.sp,
-            (NCEP.REFC, S.atmosphere): EC.refc,
-            (NCEP.SPFH, S.isobaricInhPa): EC.q,
-            (NCEP.TMP, S.heightAboveGround): EC.t2,
-            (NCEP.TMP, S.isobaricInhPa): EC.t,
-            (NCEP.UGRD, S.heightAboveGround): EC.u_10m,
-            (NCEP.UGRD, S.isobaricInhPa): EC.u,
-            (NCEP.VGRD, S.heightAboveGround): EC.v_10m,
-            (NCEP.VGRD, S.isobaricInhPa): EC.v,
-            (NCEP.VVEL, S.isobaricInhPa): EC.w,
+            (NOAA.HGT, S.isobaricInhPa): EC.gh,
+            (NOAA.PRES, S.surface): EC.sp,
+            (NOAA.REFC, S.atmosphere): EC.refc,
+            (NOAA.SPFH, S.isobaricInhPa): EC.q,
+            (NOAA.TMP, S.heightAboveGround): EC.t2,
+            (NOAA.TMP, S.isobaricInhPa): EC.t,
+            (NOAA.UGRD, S.heightAboveGround): EC.u_10m,
+            (NOAA.UGRD, S.isobaricInhPa): EC.u,
+            (NOAA.VGRD, S.heightAboveGround): EC.v_10m,
+            (NOAA.VGRD, S.isobaricInhPa): EC.v,
+            (NOAA.VVEL, S.isobaricInhPa): EC.w,
         }.get((name, level_type), UNKNOWN)
 
     @staticmethod

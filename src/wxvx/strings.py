@@ -107,7 +107,7 @@ class _MET(_ValsMatchKeys):
 
 
 @dataclass(frozen=True)
-class _NCEP(_ValsMatchKeys):
+class _NOAA(_ValsMatchKeys):
     """
     Strings defined by NOAA.
     """
@@ -197,5 +197,5 @@ class _S(_ValsMatchKeys):
 
 EC = _EC()
 MET = _MET()
-NCEP = _NCEP()
+NOAA = _NOAA()
 S = _S()

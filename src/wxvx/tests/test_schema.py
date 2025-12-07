@@ -9,7 +9,7 @@ from typing import Any
 from pyfakefs.fake_filesystem import FakeFilesystem
 from uwtools.api.config import validate
 
-from wxvx.strings import NCEP, S
+from wxvx.strings import NOAA, S
 from wxvx.tests.support import with_del, with_set
 from wxvx.util import resource_path
 
@@ -315,7 +315,7 @@ def test_schema_truth(logged, config_data, fs):
 def test_schema_variables(logged, config_data, fs):
     ok = validator(fs, S.properties, S.variables)
     config = config_data[S.variables]
-    one = config[NCEP.T2M]
+    one = config[NOAA.T2M]
     # Basic correctness:
     assert ok(config)
     # Must be an object:

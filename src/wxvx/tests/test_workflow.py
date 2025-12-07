@@ -19,7 +19,7 @@ from iotaa import Asset, Node, external
 from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
-from wxvx.strings import EC, MET, NCEP, S
+from wxvx.strings import EC, MET, NOAA, S
 from wxvx.tests.support import with_del
 from wxvx.times import TimeCoords, gen_validtimes, tcinfo
 from wxvx.types import Config, Source, TruthType
@@ -28,7 +28,7 @@ from wxvx.variables import Var
 
 TESTDATA = {
     "foo": (
-        NCEP.T2M,
+        NOAA.T2M,
         2,
         [
             pd.DataFrame({MET.MODEL: "foo", MET.FCST_LEAD: [60000], MET.RMSE: [0.5]}),
@@ -38,7 +38,7 @@ TESTDATA = {
         None,
     ),
     "bar": (
-        NCEP.REFC,
+        NOAA.REFC,
         None,
         [
             pd.DataFrame(
@@ -52,7 +52,7 @@ TESTDATA = {
         None,
     ),
     "baz": (
-        NCEP.REFC,
+        NOAA.REFC,
         None,
         [
             pd.DataFrame(
@@ -164,7 +164,7 @@ def test_workflow__config_grid_stat(c, source, fakefs, testvars):
         c=c,
         path=path,
         source=source,
-        varname=NCEP.REFC,
+        varname=NOAA.REFC,
         var=testvars[EC.refc],
         prefix="foo",
         datafmt=DataFormat.GRIB,
@@ -241,7 +241,7 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
         c=c,
         path=path,
         source=Source.FORECAST,
-        varname=NCEP.HGT,
+        varname=NOAA.HGT,
         var=testvars[EC.gh],
         prefix="atm",
         datafmt=fmt,
@@ -314,7 +314,7 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
         c=c,
         path=path,
         source=Source.FORECAST,
-        varname=NCEP.T2M,
+        varname=NOAA.T2M,
         var=testvars[EC.t2],
         prefix="sfc",
         datafmt=fmt,
@@ -432,7 +432,7 @@ def test_workflow__grib_index_data_wgrib2(c, tc, tidy):
         )
     assert node.ref == {
         "gh-isobaricInhPa-0900": variables.HRRR(
-            name=NCEP.HGT, levstr="900 mb", firstbyte=0, lastbyte=0
+            name=NOAA.HGT, levstr="900 mb", firstbyte=0, lastbyte=0
         )
     }
 
@@ -485,10 +485,10 @@ def test_workflow__grid_grib__local(config_data, fakefs, gen_config, node, tc, t
 def test_workflow__grid_grib__remote(c, tc, testvars):
     idxdata = {
         "gh-isobaricInhPa-0900": variables.HRRR(
-            name=NCEP.HGT, levstr="900 mb", firstbyte=0, lastbyte=0
+            name=NOAA.HGT, levstr="900 mb", firstbyte=0, lastbyte=0
         ),
         "t-isobaricInhPa-0900": variables.HRRR(
-            name=NCEP.TMP, levstr="900 mb", firstbyte=2, lastbyte=2
+            name=NOAA.TMP, levstr="900 mb", firstbyte=2, lastbyte=2
         ),
     }
     ready = Event()
@@ -521,17 +521,17 @@ def test_workflow__grid_nc(c_real_fs, check_cf_metadata, da_with_leadtime, tc, t
     path = Path(c_real_fs.paths.grids_forecast, "a.nc")
     da_with_leadtime.to_netcdf(path)
     c_real_fs.forecast._path = str(path)
-    node = workflow._grid_nc(c=c_real_fs, varname=NCEP.HGT, tc=tc, var=testvars[EC.gh])
+    node = workflow._grid_nc(c=c_real_fs, varname=NOAA.HGT, tc=tc, var=testvars[EC.gh])
     assert node.ready
     check_cf_metadata(
-        ds=xr.open_dataset(node.ref, decode_timedelta=True), name=NCEP.HGT, level=level
+        ds=xr.open_dataset(node.ref, decode_timedelta=True), name=NOAA.HGT, level=level
     )
 
 
 def test_workflow__grid_nc__no_paths_grids_forecast(config_data, tc, testvars):
     c = Config(raw=with_del(config_data, S.paths, S.grids, S.forecast))
     with raises(WXVXError) as e:
-        workflow._grid_nc(c=c, varname=NCEP.HGT, tc=tc, var=testvars[EC.gh])
+        workflow._grid_nc(c=c, varname=NOAA.HGT, tc=tc, var=testvars[EC.gh])
     assert str(e.value) == "Specify path.grids.forecast when forecast dataset is netCDF or Zarr"
 
 
@@ -647,7 +647,7 @@ def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars)
         "Stats vs grid for %s 2t-heightAboveGround-0002 at 19700101 00Z 000"
         % str(source).split(".")[1].lower()
     )
-    kwargs = dict(c=c, varname=NCEP.T2M, tc=tc, var=testvars[EC.t2], prefix="foo", source=source)
+    kwargs = dict(c=c, varname=NOAA.T2M, tc=tc, var=testvars[EC.t2], prefix="foo", source=source)
     with patch.object(workflow, "classify_data_format", return_value=datafmt):
         stat = taskfunc(**kwargs, dry_run=True).ref
         cfgfile = stat.with_suffix(".config")
@@ -682,7 +682,7 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, source, tc, testvars):
     rundir = fakefs / S.run / S.stats / "19700101" / "00" / "000"
     var = testvars[EC.t2]
     taskname = "Stats vs obs for %s %s at 19700101 00Z 000" % (source.name.lower(), var)
-    kwargs = dict(c=c, varname=NCEP.T2M, tc=tc, var=var, prefix="foo", source=source)
+    kwargs = dict(c=c, varname=NOAA.T2M, tc=tc, var=var, prefix="foo", source=source)
     with patch.object(workflow, "classify_data_format", return_value=datafmt):
         stat = workflow._stats_vs_obs(**kwargs, dry_run=True).ref
         cfgfile = stat.with_suffix(".config")
@@ -763,7 +763,7 @@ def test_workflow__forecast_grid__missing(c, tc, testvars):
 
 
 def test_workflow__meta(c):
-    meta = workflow._meta(c=c, varname=NCEP.HGT)
+    meta = workflow._meta(c=c, varname=NOAA.HGT)
     assert meta.cf_standard_name == "geopotential_height"
     assert meta.level_type == S.isobaricInhPa
 
@@ -851,29 +851,29 @@ def test_workflow__stat_reqs(baseline_name, c, statkit, cycle):
 
 
 def test_workflow__stats_widths(c):
-    assert list(workflow._stats_widths(c=c, varname=NCEP.REFC)) == [
+    assert list(workflow._stats_widths(c=c, varname=NOAA.REFC)) == [
         (MET.FSS, 3),
         (MET.FSS, 5),
         (MET.FSS, 11),
         (MET.PODY, None),
     ]
-    assert list(workflow._stats_widths(c=c, varname=NCEP.SPFH)) == [
+    assert list(workflow._stats_widths(c=c, varname=NOAA.SPFH)) == [
         (MET.ME, None),
         (MET.RMSE, None),
     ]
 
 
 def test_workflow__var(c, testvars):
-    assert workflow._var(c=c, varname=NCEP.HGT, level=900) == testvars[EC.gh]
+    assert workflow._var(c=c, varname=NOAA.HGT, level=900) == testvars[EC.gh]
 
 
 def test_workflow__varnames_levels(c):
     assert list(workflow._varnames_levels(c=c)) == [
-        (NCEP.HGT, 900),
-        (NCEP.REFC, None),
-        (NCEP.SPFH, 900),
-        (NCEP.SPFH, 1000),
-        (NCEP.T2M, 2),
+        (NOAA.HGT, 900),
+        (NOAA.REFC, None),
+        (NOAA.SPFH, 900),
+        (NOAA.SPFH, 1000),
+        (NOAA.T2M, 2),
     ]
 
 
@@ -886,11 +886,11 @@ def test_workflow__vars_varnames_times(c, ngrids):
 
 def test_workflow__vxvars(c, testvars):
     assert workflow._vxvars(c=c) == {
-        testvars[EC.t2]: NCEP.T2M,
-        testvars[EC.gh]: NCEP.HGT,
-        Var(EC.q, S.isobaricInhPa, 1000): NCEP.SPFH,
-        Var(EC.q, S.isobaricInhPa, 900): NCEP.SPFH,
-        testvars[EC.refc]: NCEP.REFC,
+        testvars[EC.t2]: NOAA.T2M,
+        testvars[EC.gh]: NOAA.HGT,
+        Var(EC.q, S.isobaricInhPa, 1000): NOAA.SPFH,
+        Var(EC.q, S.isobaricInhPa, 900): NOAA.SPFH,
+        testvars[EC.refc]: NOAA.REFC,
     }
 
 
@@ -954,7 +954,7 @@ def statkit(tc, testvars):
         source=Source.FORECAST,
         tc=tc,
         var=testvars[EC.gh],
-        varname=NCEP.HGT,
+        varname=NOAA.HGT,
     )
 
 
