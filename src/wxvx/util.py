@@ -123,7 +123,7 @@ def fail(msg: str | None = None, *args) -> NoReturn:
 def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> None:
     logging.info("%s: Running in %s: %s", taskname, rundir, cmd)
     rundir.mkdir(parents=True, exist_ok=True)
-    kwds = {"capture_output": True, "check": False, "cwd": rundir, "shell": True}
+    kwds = {"capture_output": True, "check": False, "cwd": rundir, "shell": True, "text": True}
     if env:
         kwds[S.env] = env
     with _POOL_LOCK:
