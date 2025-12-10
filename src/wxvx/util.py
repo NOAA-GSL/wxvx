@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import subprocess
 import sys
 from contextlib import contextmanager
 from datetime import datetime, timedelta
@@ -11,7 +12,6 @@ from importlib import resources
 from multiprocessing.pool import Pool
 from pathlib import Path
 from signal import SIG_IGN, SIGINT, signal
-from subprocess import run
 from threading import Lock
 from typing import TYPE_CHECKING, NoReturn, cast, overload
 from urllib.parse import urlparse
@@ -123,13 +123,15 @@ def fail(msg: str | None = None, *args) -> NoReturn:
 def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> None:
     logging.info("%s: Running in %s: %s", taskname, rundir, cmd)
     rundir.mkdir(parents=True, exist_ok=True)
-    kwargs = {"check": False, "cwd": rundir, "shell": True}
+    kwds = {"capture_output": True, "check": False, "cwd": rundir, "shell": True}
     if env:
-        kwargs[S.env] = env
+        kwds[S.env] = env
     with _POOL_LOCK:
         if S.pool not in _STATE:
             _initpool()
-    _STATE[S.pool].apply(run, [cmd], kwargs)
+    result = _STATE[S.pool].apply(subprocess.run, (cmd,), kwds)
+    if result.returncode != 0:
+        logging.error("%s: %s", taskname, result)
 
 
 def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:
