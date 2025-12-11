@@ -431,7 +431,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
         log=f"{path.stem}.log",
     )
     _write_runscript(runscript, content)
-    mpexec(str(runscript), rundir, taskname)
+    mpexec(_bash(runscript), rundir, taskname)
 
 
 @task
@@ -521,7 +521,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
         log=f"{path.stem}.log",
     )
     _write_runscript(runscript, content)
-    mpexec(str(runscript), rundir, taskname)
+    mpexec(_bash(runscript), rundir, taskname)
 
 
 @task
@@ -559,7 +559,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
         log=f"{path.stem}.log",
     )
     _write_runscript(runscript, content)
-    mpexec(str(runscript), rundir, taskname)
+    mpexec(_bash(runscript), rundir, taskname)
 
 
 # Support
@@ -568,6 +568,12 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
 def _at_validtime(tc: TimeCoords) -> str:
     yyyymmdd, hh, leadtime = tcinfo(tc)
     return "at %s %sZ %s" % (yyyymmdd, hh, leadtime)
+
+
+def _bash(runscript: Path) -> str:
+    # To avoid rare but observed "bad interpreter: Text file busy" errors when a just-created script
+    # is then immediately executed, invoke bash directly and do not rely on the #! mechanism.
+    return f"/usr/bin/env bash {runscript}"
 
 
 def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
@@ -722,5 +728,5 @@ def _vxvars(c: Config) -> dict[Var, str]:
 
 def _write_runscript(path: Path, content: str) -> None:
     with atomic(path) as tmp:
-        tmp.write_text("#!/bin/bash\n\n%s\n" % dedent(content).strip())
+        tmp.write_text("#!/usr/bin/env bash\n\n%s\n" % dedent(content).strip())
         tmp.chmod(tmp.stat().st_mode | S_IEXEC)
