@@ -467,8 +467,8 @@ def _plot(
         plt.legend(title="Model", bbox_to_anchor=(1.02, 1), loc="upper left")
         plt.figtext(0.403, 0.0, f"wxvx {version()}", fontsize=6)
         plt.tight_layout(rect=(0, 0.005, 1, 1))
-        path.parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(path, bbox_inches="tight")
+        with atomic(path) as tmp:
+            plt.savefig(tmp, bbox_inches="tight", format="png")
         plt.close()
 
 
