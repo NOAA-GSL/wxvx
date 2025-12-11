@@ -27,6 +27,7 @@
       "ruff ==0.14.*",
       "seaborn ==0.13.*",
       "setuptools",
+      "types-PyYAML",
       "types-requests",
       "types-seaborn",
       "uwtools ==2.12.*",
