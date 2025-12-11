@@ -7,7 +7,7 @@ import os
 import re
 from datetime import timedelta
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from pytest import mark, raises
 
@@ -214,6 +214,15 @@ def test_util_resource(fs):
 
 def test_util_resource_path():
     assert str(util.resource_path("foo")).endswith("%s/resources/foo" % util.pkgname)
+
+
+def test_util_shutdown():
+    # See safety note in mpexec() test.
+    pool = Mock()
+    with patch.dict(util._STATE, {S.pool: pool}):
+        util.shutdown()
+    pool.close.assert_called_once_with()
+    pool.terminate.assert_called_once_with()
 
 
 def test_util_to_datetime(utc):
