@@ -38,6 +38,7 @@ test:
     - pyfakefs 5.10.*
     - pytest 9.0.*
     - pytest-cov 7.0.*
+    - pytest-randomly 3.15.*
     - pytest-xdist 3.8.*
     - ruff 0.14.*
     - {{ python }}
