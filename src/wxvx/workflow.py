@@ -304,7 +304,6 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source:
     yyyymmdd, hh, leadtime = tcinfo(tc)
     gridsdir = c.paths.grids_truth if source is Source.TRUTH else c.paths.grids_baseline
     outdir = gridsdir / yyyymmdd / hh / leadtime
-    outdir.mkdir(parents=True, exist_ok=True)
     path = outdir / f"{grib_path.name}.ecidx"
     taskname = "GRIB index file %s %s" % (path, _at_validtime(tc))
     yield taskname
