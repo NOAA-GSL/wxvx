@@ -431,7 +431,6 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
         log=f"{path.stem}.log",
     )
     _write_runscript(runscript, content)
-    path.parent.mkdir(parents=True, exist_ok=True)
     mpexec(str(runscript), rundir, taskname)
 
 
