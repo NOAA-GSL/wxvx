@@ -11,6 +11,7 @@
       "met2go ==11.0.*",
       "mypy ==1.19.*",
       "netcdf4 ==1.7.*",
+      "pandas-stubs",
       "pip",
       "pyfakefs ==5.10.*",
       "pyproj ==3.7.*",
@@ -26,6 +27,8 @@
       "ruff ==0.14.*",
       "seaborn ==0.13.*",
       "setuptools",
+      "types-requests",
+      "types-seaborn",
       "uwtools ==2.12.*",
       "xarray ==2025.1.*",
       "zarr ==3.1.*"
