@@ -172,8 +172,11 @@ def test_util_mpexec(delpool, env, tmp_path):
     assert path.read_text().strip() == expected
 
 
-# def test_util_mpexec__fail():
-#     util.mpexec(cmd="echo good && echo bad >&2 && /bin/false", taskname="foo")
+def test_util_mpexec__fail(tmp_path):
+    result = util.mpexec(cmd="echo good && echo bad >&2 && false", rundir=tmp_path, taskname="foo")
+    assert result.stdout.strip() == "good"
+    assert result.stderr.strip() == "bad"
+    assert result.returncode == 1
 
 
 def test_util_render(utc):
