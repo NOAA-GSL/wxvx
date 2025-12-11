@@ -304,7 +304,6 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source:
     yyyymmdd, hh, leadtime = tcinfo(tc)
     gridsdir = c.paths.grids_truth if source is Source.TRUTH else c.paths.grids_baseline
     outdir = gridsdir / yyyymmdd / hh / leadtime
-    outdir.mkdir(parents=True, exist_ok=True)
     path = outdir / f"{grib_path.name}.ecidx"
     taskname = "GRIB index file %s %s" % (path, _at_validtime(tc))
     yield taskname
@@ -432,8 +431,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
         log=f"{path.stem}.log",
     )
     _write_runscript(runscript, content)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    mpexec(str(runscript), rundir, taskname)
+    mpexec(_bash(runscript), rundir, taskname)
 
 
 @task
@@ -469,8 +467,8 @@ def _plot(
         plt.legend(title="Model", bbox_to_anchor=(1.02, 1), loc="upper left")
         plt.figtext(0.403, 0.0, f"wxvx {version()}", fontsize=6)
         plt.tight_layout(rect=(0, 0.005, 1, 1))
-        path.parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(path, bbox_inches="tight")
+        with atomic(path) as tmp:
+            plt.savefig(tmp, bbox_inches="tight", format="png")
         plt.close()
 
 
@@ -523,7 +521,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
         log=f"{path.stem}.log",
     )
     _write_runscript(runscript, content)
-    mpexec(str(runscript), rundir, taskname)
+    mpexec(_bash(runscript), rundir, taskname)
 
 
 @task
@@ -561,7 +559,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
         log=f"{path.stem}.log",
     )
     _write_runscript(runscript, content)
-    mpexec(str(runscript), rundir, taskname)
+    mpexec(_bash(runscript), rundir, taskname)
 
 
 # Support
@@ -570,6 +568,12 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
 def _at_validtime(tc: TimeCoords) -> str:
     yyyymmdd, hh, leadtime = tcinfo(tc)
     return "at %s %sZ %s" % (yyyymmdd, hh, leadtime)
+
+
+def _bash(runscript: Path) -> str:
+    # To avoid rare but observed "bad interpreter: Text file busy" errors when a just-created script
+    # is then immediately executed, invoke bash directly and do not rely on the #! mechanism.
+    return f"/usr/bin/env bash {runscript}"
 
 
 def _config_fields(c: Config, varname: str, var: Var, datafmt: DataFormat):
@@ -725,4 +729,4 @@ def _vxvars(c: Config) -> dict[Var, str]:
 def _write_runscript(path: Path, content: str) -> None:
     with atomic(path) as tmp:
         tmp.write_text("#!/usr/bin/env bash\n\n%s\n" % dedent(content).strip())
-    path.chmod(path.stat().st_mode | S_IEXEC)
+        tmp.chmod(tmp.stat().st_mode | S_IEXEC)

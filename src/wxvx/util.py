@@ -11,7 +11,7 @@ from importlib import resources
 from multiprocessing.pool import Pool
 from pathlib import Path
 from signal import SIG_IGN, SIGINT, signal
-from subprocess import run
+from subprocess import CompletedProcess, run
 from threading import Lock
 from typing import TYPE_CHECKING, NoReturn, cast, overload
 from urllib.parse import urlparse
@@ -120,16 +120,19 @@ def fail(msg: str | None = None, *args) -> NoReturn:
     sys.exit(1)
 
 
-def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> None:
+def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> CompletedProcess:
     logging.info("%s: Running in %s: %s", taskname, rundir, cmd)
     rundir.mkdir(parents=True, exist_ok=True)
-    kwargs = {"check": False, "cwd": rundir, "shell": True}
+    kwds = {"capture_output": True, "check": False, "cwd": rundir, "shell": True, "text": True}
     if env:
-        kwargs[S.env] = env
+        kwds[S.env] = env
     with _POOL_LOCK:
         if S.pool not in _STATE:
             _initpool()
-    _STATE[S.pool].apply(run, [cmd], kwargs)
+    result: CompletedProcess = _STATE[S.pool].apply(run, (cmd,), kwds)  # i.e. subprocess.run
+    if result.returncode != 0:
+        logging.error("%s: %s", taskname, result)
+    return result
 
 
 def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:

@@ -573,7 +573,7 @@ def test_workflow__netcdf_from_obs(c, tc):
     assert cfgfile.is_file()
     runscript = cfgfile.with_suffix(".sh")
     assert runscript.is_file()
-    mpexec.assert_called_once_with(str(runscript), ANY, ANY)
+    mpexec.assert_called_once_with(f"/usr/bin/env bash {runscript}", ANY, ANY)
 
 
 def test_workflow__netcdf_from_obs__no_path(c, tc):
@@ -666,7 +666,7 @@ def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars)
             assert stat.is_file()
             assert cfgfile.is_file()
             assert runscript.is_file()
-            mpexec.assert_called_once_with(str(runscript), rundir, taskname)
+            mpexec.assert_called_once_with(f"/usr/bin/env bash {runscript}", rundir, taskname)
 
 
 @mark.parametrize("datafmt", [DataFormat.NETCDF, DataFormat.ZARR, DataFormat.UNKNOWN])
@@ -702,7 +702,7 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, source, tc, testvars):
             assert stat.is_file()
             assert cfgfile.is_file()
             assert runscript.is_file()
-            mpexec.assert_called_once_with(str(runscript), rundir, taskname)
+            mpexec.assert_called_once_with(f"/usr/bin/env bash {runscript}", rundir, taskname)
 
 
 # Support Tests
