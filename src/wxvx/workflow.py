@@ -724,4 +724,4 @@ def _vxvars(c: Config) -> dict[Var, str]:
 def _write_runscript(path: Path, content: str) -> None:
     with atomic(path) as tmp:
         tmp.write_text("#!/usr/bin/env bash\n\n%s\n" % dedent(content).strip())
-    path.chmod(path.stat().st_mode | S_IEXEC)
+        tmp.chmod(tmp.stat().st_mode | S_IEXEC)
