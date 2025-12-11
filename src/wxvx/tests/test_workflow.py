@@ -712,6 +712,11 @@ def test_workflow__at_validtime(tc):
     assert workflow._at_validtime(tc=tc) == "at 19700101 00Z 000"
 
 
+def test_workflow__bash():
+    path = Path("/path/to/script")
+    assert workflow._bash(runscript=path) == f"/usr/bin/env bash {path}"
+
+
 def test_workflow__enforce_point_truth_type(c):
     c.truth = replace(c.truth, type=S.grid)
     with raises(WXVXError) as e:
