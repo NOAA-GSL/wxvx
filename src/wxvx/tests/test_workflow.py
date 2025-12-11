@@ -899,7 +899,7 @@ def test_workflow__write_runscript(fakefs, tidy):
     assert not path.exists()
     workflow._write_runscript(path=path, content="foo")
     expected = """
-    #!/usr/bin/env bash
+    #!/bin/bash
 
     foo
     """
