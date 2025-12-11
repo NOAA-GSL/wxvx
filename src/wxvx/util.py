@@ -117,6 +117,7 @@ def expand(start, step, stop):
 def fail(msg: str | None = None, *args) -> NoReturn:
     if msg:
         logging.error(msg, *args)
+    shutdown()
     sys.exit(1)
 
 
@@ -154,6 +155,14 @@ def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:
 def resource(relpath: str | Path) -> str:
     with resource_path(relpath).open("r") as f:
         return f.read()
+
+
+def shutdown() -> None:
+    # Only call from a serial context. See the "Warning" section in:
+    # https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.Pool
+    if pool := _STATE.get(S.pool):
+        pool.close()
+        pool.terminate()
 
 
 def resource_path(relpath: str | Path) -> Path:
