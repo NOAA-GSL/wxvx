@@ -7,7 +7,7 @@ import os
 import re
 from datetime import timedelta
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from pytest import mark, raises
 
@@ -154,19 +154,29 @@ def test_util_fail(caplog):
     assert e.value.code == 1
 
 
-@mark.parametrize(S.env, [{"PI": "3.14"}, None])
+@mark.parametrize("env", [{"PI": "3.14"}, None])
 @mark.parametrize("delpool", [True, False])
 def test_util_mpexec(delpool, env, tmp_path):
-    # This is safe because pytest-xdist parallelizes across *processes*, and each process has its
-    # own memory space, and tests run serially within each process, so if this test is running then
-    # no other test is modifying the state / pool.
+    # Manipulating the multiprocessing Pool here is safe because pytest-xdist parallelizes across
+    # *processes*, and each process has its own memory space, and tests run serially within each
+    # process, so if this test is running then no other test is modifying the state / pool.
     util._initpool()
     if delpool:
         del util._STATE[S.pool]
     path = tmp_path / "out"
-    cmd = 'echo "$PI" >%s' % path
-    util.mpexec(cmd=cmd, rundir=tmp_path, taskname="foo", env=env)
-    assert path.read_text().strip() == ("3.14" if env else "")
+    cmd = 'echo "$PI" | tee %s' % path
+    result = util.mpexec(cmd=cmd, rundir=tmp_path, taskname="foo", env=env)
+    assert result.stderr == ""
+    expected = "3.14" if env else ""
+    assert result.stdout.strip() == expected
+    assert path.read_text().strip() == expected
+
+
+def test_util_mpexec__fail(tmp_path):
+    result = util.mpexec(cmd="echo good && echo bad >&2 && false", rundir=tmp_path, taskname="foo")
+    assert result.stdout.strip() == "good"
+    assert result.stderr.strip() == "bad"
+    assert result.returncode == 1
 
 
 def test_util_render(utc):
@@ -204,6 +214,15 @@ def test_util_resource(fs):
 
 def test_util_resource_path():
     assert str(util.resource_path("foo")).endswith("%s/resources/foo" % util.pkgname)
+
+
+def test_util_shutdown():
+    # See safety note in mpexec() test.
+    pool = Mock()
+    with patch.dict(util._STATE, {S.pool: pool}):
+        util.shutdown()
+    pool.close.assert_called_once_with()
+    pool.terminate.assert_called_once_with()
 
 
 def test_util_to_datetime(utc):

@@ -11,7 +11,7 @@ from uwtools.api.logging import use_uwtools_logger
 from wxvx import workflow
 from wxvx.net import configure_session
 from wxvx.types import validated_config
-from wxvx.util import WXVXError, fail, pkgname, version
+from wxvx.util import WXVXError, fail, pkgname, shutdown, version
 
 # Public
 
@@ -40,6 +40,7 @@ def main() -> None:
         for line in traceback.format_exc().strip().split("\n"):
             logging.debug(line)
         fail(str(e))
+    shutdown()
 
 
 # Private
