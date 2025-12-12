@@ -26,6 +26,7 @@
       "ruff ==0.14.*",
       "seaborn ==0.13.*",
       "setuptools",
+      "types-PyYAML",
       "uwtools ==2.12.*",
       "xarray ==2025.1.*",
       "zarr ==3.1.*"
