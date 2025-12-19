@@ -5,7 +5,7 @@
   "packages": {
     "dev": [
       "docformatter ==1.7.*",
-      "iotaa ==1.5.*",
+      "iotaa ==1.6.*",
       "jq ==1.8.*",
       "make ==4.4.*",
       "met2go ==11.0.*",
@@ -35,7 +35,7 @@
       "zarr ==3.1.*"
     ],
     "run": [
-      "iotaa ==1.5.*",
+      "iotaa ==1.6.*",
       "met2go ==11.0.*",
       "netcdf4 ==1.7.*",
       "pyproj ==3.7.*",
