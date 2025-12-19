@@ -173,6 +173,7 @@ def test_util_mpexec(delpool, env, tmp_path):
 
 
 def test_util_mpexec__fail(tmp_path):
+    util._initpool()
     result = util.mpexec(cmd="echo good && echo bad >&2 && false", rundir=tmp_path, taskname="foo")
     assert result.stdout.strip() == "good"
     assert result.stderr.strip() == "bad"
