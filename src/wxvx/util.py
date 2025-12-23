@@ -121,6 +121,10 @@ def fail(msg: str | None = None, *args) -> NoReturn:
     sys.exit(1)
 
 
+def initialize_pool() -> None:
+    _STATE[S.pool] = Pool(initializer=signal, initargs=(SIGINT, SIG_IGN))
+
+
 def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> CompletedProcess:
     logging.info("%s: Running in %s: %s", taskname, rundir, cmd)
     rundir.mkdir(parents=True, exist_ok=True)
@@ -129,7 +133,7 @@ def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> Co
         kwds[S.env] = env
     with _POOL_LOCK:
         if S.pool not in _STATE:
-            _initpool()
+            initialize_pool()
     result: CompletedProcess = _STATE[S.pool].apply(run, (cmd,), kwds)  # i.e. subprocess.run
     if result.returncode != 0:
         logging.error("%s: %s", taskname, result)
@@ -186,7 +190,3 @@ def to_timedelta(value: str | int) -> timedelta:
 def version() -> str:
     info = json.loads(resource("info.json"))
     return "version %s build %s" % (info["version"], info["buildnum"])
-
-
-def _initpool() -> None:
-    _STATE[S.pool] = Pool(initializer=signal, initargs=(SIGINT, SIG_IGN))

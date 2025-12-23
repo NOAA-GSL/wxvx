@@ -160,7 +160,7 @@ def test_util_mpexec(delpool, env, tmp_path):
     # Manipulating the multiprocessing Pool here is safe because pytest-xdist parallelizes across
     # *processes*, and each process has its own memory space, and tests run serially within each
     # process, so if this test is running then no other test is modifying the state / pool.
-    util._initpool()
+    util.initialize_pool()
     if delpool:
         del util._STATE[S.pool]
     path = tmp_path / "out"
@@ -173,7 +173,7 @@ def test_util_mpexec(delpool, env, tmp_path):
 
 
 def test_util_mpexec__fail(tmp_path):
-    util._initpool()
+    util.initialize_pool()
     result = util.mpexec(cmd="echo good && echo bad >&2 && false", rundir=tmp_path, taskname="foo")
     assert result.stdout.strip() == "good"
     assert result.stderr.strip() == "bad"
