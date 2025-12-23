@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 from requests import Session
 
-# The session needs to be set up, by calling configure_session(),  before fetch() or status() are
+# The session needs to be set up, by calling initialize_session(),  before fetch() or status() are
 # called. The connections argument should be equal to the number of threads in use, so the configure
 # call is made from wxvx.cli.main() where this is known.
 
@@ -46,7 +46,7 @@ def fetch(taskname: str, url: str, path: Path, headers: dict[str, str] | None = 
     return False
 
 
-def configure_session(connections: int) -> None:
+def initialize_session(connections: int) -> None:
     session = Session()
     adapter = HTTPAdapter(pool_connections=connections, pool_maxsize=connections)
     for scheme in ["http://", "https://"]:
