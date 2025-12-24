@@ -12,7 +12,6 @@ from multiprocessing.pool import Pool
 from pathlib import Path
 from signal import SIG_IGN, SIGINT, signal
 from subprocess import CompletedProcess, run
-from threading import Lock
 from typing import TYPE_CHECKING, NoReturn, cast, overload
 from urllib.parse import urlparse
 
@@ -28,7 +27,10 @@ if TYPE_CHECKING:
 
     from wxvx.times import TimeCoords
 
-_POOL_LOCK = Lock()
+# The pool needs to be set up, by calling initialize_pool(), before mpexec() is called. The
+# processes argument should be equal to the number of threads in use, so the call is made from
+# wxvx.cli.main() where this is known.
+
 _STATE: dict = {}
 
 pkgname = __name__.split(".", maxsplit=1)[0]
@@ -121,8 +123,8 @@ def fail(msg: str | None = None, *args) -> NoReturn:
     sys.exit(1)
 
 
-def initialize_pool() -> None:
-    _STATE[S.pool] = Pool(initializer=signal, initargs=(SIGINT, SIG_IGN))
+def initialize_pool(processes: int) -> None:
+    _STATE[S.pool] = Pool(processes=processes, initializer=signal, initargs=(SIGINT, SIG_IGN))
 
 
 def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> CompletedProcess:
@@ -131,9 +133,6 @@ def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> Co
     kwds = {"capture_output": True, "check": False, "cwd": rundir, "shell": True, "text": True}
     if env:
         kwds[S.env] = env
-    with _POOL_LOCK:
-        if S.pool not in _STATE:
-            initialize_pool()
     result: CompletedProcess = _STATE[S.pool].apply(run, (cmd,), kwds)  # i.e. subprocess.run
     if result.returncode != 0:
         logging.error("%s: %s", taskname, result)

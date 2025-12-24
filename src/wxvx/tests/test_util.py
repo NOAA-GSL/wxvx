@@ -155,14 +155,8 @@ def test_util_fail(caplog):
 
 
 @mark.parametrize("env", [{"PI": "3.14"}, None])
-@mark.parametrize("delpool", [True, False])
-def test_util_mpexec(delpool, env, tmp_path):
-    # Manipulating the multiprocessing Pool here is safe because pytest-xdist parallelizes across
-    # *processes*, and each process has its own memory space, and tests run serially within each
-    # process, so if this test is running then no other test is modifying the state / pool.
-    util.initialize_pool()
-    if delpool:
-        del util._STATE[S.pool]
+def test_util_mpexec(env, tmp_path):
+    util.initialize_pool(processes=1)
     path = tmp_path / "out"
     cmd = 'echo "$PI" | tee %s' % path
     result = util.mpexec(cmd=cmd, rundir=tmp_path, taskname="foo", env=env)
@@ -173,7 +167,7 @@ def test_util_mpexec(delpool, env, tmp_path):
 
 
 def test_util_mpexec__fail(tmp_path):
-    util.initialize_pool()
+    util.initialize_pool(processes=1)
     result = util.mpexec(cmd="echo good && echo bad >&2 && false", rundir=tmp_path, taskname="foo")
     assert result.stdout.strip() == "good"
     assert result.stderr.strip() == "bad"

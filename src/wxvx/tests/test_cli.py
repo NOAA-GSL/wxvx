@@ -6,7 +6,6 @@ import logging
 import re
 from argparse import ArgumentTypeError, Namespace
 from pathlib import Path
-from unittest.mock import DEFAULT as D
 from unittest.mock import patch
 
 import yaml
@@ -24,18 +23,22 @@ from wxvx.util import WXVXError, pkgname, resource_path
 @mark.parametrize("switch_n", ["-n", "--threads"])
 @mark.parametrize("switch_t", ["-t", "--task"])
 @mark.parametrize("threads", [1, 2])
-def test_cli_main(config_data, fs, logged, switch_c, switch_n, switch_t, threads):
+def test_cli_main_x(config_data, fs, logged, switch_c, switch_n, switch_t, threads):
     fs.add_real_file(resource_path("config.jsonschema"))
     fs.add_real_file(resource_path("info.json"))
-    with patch.multiple(cli, workflow=D, sys=D, use_uwtools_logger=D) as mocks:
-        cf = fs.create_file("/path/to/config.yaml", contents=yaml.safe_dump(config_data))
-        argv = [pkgname, switch_c, cf.path, switch_n, str(threads), switch_t, S.plots]
-        mocks["sys"].argv = argv
-        with patch.object(cli, "_parse_args", wraps=cli._parse_args) as _parse_args:
-            cli.main()
-        _parse_args.assert_called_once_with(argv)
-    mocks["use_uwtools_logger"].assert_called_once_with(verbose=False)
-    mocks["workflow"].plots.assert_called_once_with(Config(config_data), threads=threads)
+    cf = fs.create_file("/path/to/config.yaml", contents=yaml.safe_dump(config_data))
+    argv = [pkgname, switch_c, cf.path, switch_n, str(threads), switch_t, S.plots]
+    with (
+        patch.object(cli, "_parse_args", wraps=cli._parse_args) as _parse_args,
+        patch.object(cli, "tasknames", return_value=["plots"]) as plots,
+        patch.object(cli, "use_uwtools_logger") as use_uwtools_logger,
+        patch.object(cli.sys, "argv", argv),
+        patch.object(cli.workflow, "plots") as plots,
+    ):
+        cli.main()
+    _parse_args.assert_called_once_with(argv)
+    use_uwtools_logger.assert_called_once_with(verbose=False)
+    plots.assert_called_once_with(Config(config_data), threads=threads)
     if threads > 1:
         assert logged("Using %s threads" % threads)
     else:
