@@ -164,21 +164,23 @@ def test_util_finalize_pool():
     pool.join.assert_called_once_with()
 
 
-@mark.skip
 @mark.parametrize("env", [{"PI": "3.14"}, None])
 def test_util_mpexec(env, tmp_path):
     path = tmp_path / "out"
     cmd = 'echo "$PI" | tee %s' % path
+    util.initialize_pool(processes=1)
     result = util.mpexec(cmd=cmd, rundir=tmp_path, taskname="foo", env=env)
+    util.finalize_pool()
     assert result.stderr == ""
     expected = "3.14" if env else ""
     assert result.stdout.strip() == expected
     assert path.read_text().strip() == expected
 
 
-@mark.skip
 def test_util_mpexec__fail(tmp_path):
+    util.initialize_pool(processes=1)
     result = util.mpexec(cmd="echo good && echo bad >&2 && false", rundir=tmp_path, taskname="foo")
+    util.finalize_pool()
     assert result.stdout.strip() == "good"
     assert result.stderr.strip() == "bad"
     assert result.returncode == 1
