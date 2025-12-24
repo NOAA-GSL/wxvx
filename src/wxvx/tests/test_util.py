@@ -154,14 +154,19 @@ def test_util_fail(caplog):
     assert e.value.code == 1
 
 
-def test_util_finalize_pool():
-    # See safety note in mpexec() test.
+@mark.parametrize("pool_defined", [True, False])
+def test_util_finalize_pool(pool_defined):
     pool = Mock()
-    with patch.dict(util._STATE, {S.pool: pool}):
+    with patch.dict(util._STATE, {S.pool: pool} if pool_defined else {}):
         util.finalize_pool()
-    pool.close.assert_called_once_with()
-    pool.terminate.assert_called_once_with()
-    pool.join.assert_called_once_with()
+    if pool_defined:
+        pool.close.assert_called_once_with()
+        pool.terminate.assert_called_once_with()
+        pool.join.assert_called_once_with()
+    else:
+        pool.close.assert_not_called()
+        pool.terminate.assert_not_called()
+        pool.join.assert_not_called()
 
 
 @mark.parametrize("env", [{"PI": "3.14"}, None])
