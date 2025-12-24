@@ -11,7 +11,7 @@ from uwtools.api.logging import use_uwtools_logger
 from wxvx import workflow
 from wxvx.net import initialize_session
 from wxvx.types import validated_config
-from wxvx.util import WXVXError, fail, finalize_pool, pkgname, version
+from wxvx.util import WXVXError, fail, finalize_pool, initialize_pool, pkgname, version
 
 # Public
 
@@ -34,7 +34,7 @@ def main() -> None:
         task = getattr(workflow, args.task)
         if args.threads > 1:
             logging.info("Using %s threads", args.threads)
-        # initialize_pool(args.threads)
+        initialize_pool(args.threads)
         initialize_session(args.threads)
         task(c, threads=args.threads)
     except WXVXError as e:

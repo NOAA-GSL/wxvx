@@ -19,19 +19,15 @@ from wxvx.util import WXVXError, pkgname, resource_path
 # Tests
 
 
-# @mark.parametrize("switch_c", ["-c", "--config"])
-# @mark.parametrize("switch_n", ["-n", "--threads"])
-# @mark.parametrize("switch_t", ["-t", "--task"])
-# @mark.parametrize("threads", [1, 2])
-@mark.parametrize("switch_c", ["-c"])
-@mark.parametrize("switch_n", ["-n"])
-@mark.parametrize("switch_t", ["-t"])
-@mark.parametrize("threads", [1])
-def test_cli_main_x(config_data, fs, logged, switch_c, switch_n, switch_t, threads):
-    fs.add_real_file(resource_path("config.jsonschema"))
-    fs.add_real_file(resource_path("info.json"))
-    cf = fs.create_file("/path/to/config.yaml", contents=yaml.safe_dump(config_data))
-    argv = [pkgname, switch_c, cf.path, switch_n, str(threads), switch_t, S.plots]
+@mark.parametrize("switch_c", ["-c", "--config"])
+@mark.parametrize("switch_n", ["-n", "--threads"])
+@mark.parametrize("switch_t", ["-t", "--task"])
+@mark.parametrize("threads", [1, 2])
+def test_cli_main(config_data, logged, switch_c, switch_n, switch_t, threads, tmp_path):
+    cfgfile = tmp_path / "config.yaml"
+    with cfgfile.open("w") as f:
+        yaml.safe_dump(config_data, f)
+    argv = [pkgname, switch_c, str(cfgfile), switch_n, str(threads), switch_t, S.plots]
     with (
         patch.object(cli, "_parse_args", wraps=cli._parse_args) as _parse_args,
         patch.object(cli, "tasknames", return_value=["plots"]) as plots,
