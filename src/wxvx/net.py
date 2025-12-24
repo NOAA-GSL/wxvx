@@ -14,9 +14,9 @@ if TYPE_CHECKING:
 
 from requests import Session
 
-# The session needs to be set up, by calling initialize_session(), before fetch() or status() are
-# called. The connections argument should be equal to the number of threads in use, so the call is
-# made from wxvx.cli.main() where this is known.
+# The session must be initialized via initialize_session() before fetch() or status() are called.
+# The 'connections' argument should be the number of threads in use, so the call is made from
+# wxvx.cli.main() where this is known.
 
 _STATE: dict = {}
 

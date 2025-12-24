@@ -154,6 +154,16 @@ def test_util_fail(caplog):
     assert e.value.code == 1
 
 
+def test_util_finalize_pool():
+    # See safety note in mpexec() test.
+    pool = Mock()
+    with patch.dict(util._STATE, {S.pool: pool}):
+        util.finalize_pool()
+    pool.close.assert_called_once_with()
+    pool.terminate.assert_called_once_with()
+    pool.join.assert_called_once_with()
+
+
 @mark.parametrize("env", [{"PI": "3.14"}, None])
 def test_util_mpexec(env, tmp_path):
     util.initialize_pool(processes=1)
@@ -209,15 +219,6 @@ def test_util_resource(fs):
 
 def test_util_resource_path():
     assert str(util.resource_path("foo")).endswith("%s/resources/foo" % util.pkgname)
-
-
-def test_util_shutdown():
-    # See safety note in mpexec() test.
-    pool = Mock()
-    with patch.dict(util._STATE, {S.pool: pool}):
-        util.shutdown()
-    pool.close.assert_called_once_with()
-    pool.terminate.assert_called_once_with()
 
 
 def test_util_to_datetime(utc):

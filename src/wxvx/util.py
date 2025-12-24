@@ -27,9 +27,9 @@ if TYPE_CHECKING:
 
     from wxvx.times import TimeCoords
 
-# The pool needs to be set up, by calling initialize_pool(), before mpexec() is called. The
-# processes argument should be equal to the number of threads in use, so the call is made from
-# wxvx.cli.main() where this is known.
+# The pool must be initialized via initialize_pool() before mpexec() is called. The 'processes'
+# argument should be the number of threads in use, so the call is made from wxvx.cli.main() where
+# this is known.
 
 _STATE: dict = {}
 
@@ -119,8 +119,17 @@ def expand(start, step, stop):
 def fail(msg: str | None = None, *args) -> NoReturn:
     if msg:
         logging.error(msg, *args)
-    shutdown()
+    finalize_pool()
     sys.exit(1)
+
+
+def finalize_pool() -> None:
+    # Only call from a serial context. See the "Warning" section in:
+    # https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.Pool
+    if pool := _STATE.get(S.pool):
+        pool.close()
+        pool.terminate()
+        pool.join()
 
 
 def initialize_pool(processes: int) -> None:
@@ -158,14 +167,6 @@ def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:
 def resource(relpath: str | Path) -> str:
     with resource_path(relpath).open("r") as f:
         return f.read()
-
-
-def shutdown() -> None:
-    # Only call from a serial context. See the "Warning" section in:
-    # https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.Pool
-    if pool := _STATE.get(S.pool):
-        pool.close()
-        pool.terminate()
 
 
 def resource_path(relpath: str | Path) -> Path:

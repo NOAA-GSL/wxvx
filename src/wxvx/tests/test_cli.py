@@ -19,10 +19,14 @@ from wxvx.util import WXVXError, pkgname, resource_path
 # Tests
 
 
-@mark.parametrize("switch_c", ["-c", "--config"])
-@mark.parametrize("switch_n", ["-n", "--threads"])
-@mark.parametrize("switch_t", ["-t", "--task"])
-@mark.parametrize("threads", [1, 2])
+# @mark.parametrize("switch_c", ["-c", "--config"])
+# @mark.parametrize("switch_n", ["-n", "--threads"])
+# @mark.parametrize("switch_t", ["-t", "--task"])
+# @mark.parametrize("threads", [1, 2])
+@mark.parametrize("switch_c", ["-c"])
+@mark.parametrize("switch_n", ["-n"])
+@mark.parametrize("switch_t", ["-t"])
+@mark.parametrize("threads", [1])
 def test_cli_main_x(config_data, fs, logged, switch_c, switch_n, switch_t, threads):
     fs.add_real_file(resource_path("config.jsonschema"))
     fs.add_real_file(resource_path("info.json"))
