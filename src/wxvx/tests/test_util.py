@@ -157,7 +157,7 @@ def test_util_fail(caplog):
 @mark.parametrize("pool_defined", [True, False])
 def test_util_finalize_pool(pool_defined):
     pool = Mock()
-    with patch.dict(util._STATE, {S.pool: pool} if pool_defined else {}):
+    with patch.object(util, "_STATE", {S.pool: pool} if pool_defined else {}):
         util.finalize_pool()
     if pool_defined:
         pool.close.assert_called_once_with()
