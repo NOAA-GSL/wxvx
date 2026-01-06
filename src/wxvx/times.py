@@ -26,7 +26,7 @@ class TimeCoords:
         return self.cycle == other.cycle and self.leadtime == other.leadtime
 
     def __hash__(self):
-        return hash((self.cycle.timestamp(), self.leadtime.total_seconds()))
+        return hash((self.cycle, self.leadtime))
 
     def __lt__(self, other):
         return (self.cycle, self.leadtime) < (other.cycle, other.leadtime)

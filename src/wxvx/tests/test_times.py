@@ -17,7 +17,7 @@ from wxvx.types import Cycles, Leadtimes
 def test_times_TimeCoords(leadtime, utc):
     cycle = utc(2025, 1, 28, 12)
     tc = times.TimeCoords(cycle=cycle, leadtime=leadtime)
-    assert hash(tc) == hash((cycle.timestamp(), 3600))
+    assert hash(tc) == hash((cycle, timedelta(hours=1)))
     assert tc < times.TimeCoords(cycle=cycle, leadtime=timedelta(hours=2))
     assert tc == times.TimeCoords(cycle=cycle, leadtime=timedelta(hours=1))
     assert tc > times.TimeCoords(cycle=cycle, leadtime=timedelta(hours=0))
@@ -30,7 +30,7 @@ def test_times_TimeCoords(leadtime, utc):
 def test_times_TimeCoords__no_leadtime(utc):
     cycle = utc(2025, 1, 28, 12)
     tc = times.TimeCoords(cycle=cycle)
-    assert hash(tc) == hash((cycle.timestamp(), 0))
+    assert hash(tc) == hash((cycle, timedelta(hours=0)))
     assert tc < times.TimeCoords(cycle=cycle, leadtime=timedelta(hours=1))
     assert tc == times.TimeCoords(cycle=cycle, leadtime=timedelta(hours=0))
     assert tc > times.TimeCoords(cycle=cycle, leadtime=timedelta(hours=-1))
