@@ -21,7 +21,7 @@ from pytest import fixture, mark, raises
 from wxvx import variables, workflow
 from wxvx.strings import EC, MET, NOAA, S
 from wxvx.tests.support import with_del
-from wxvx.times import TimeCoords, gen_validtimes, tcinfo
+from wxvx.times import TimeCoords, gen_timecoords, tcinfo
 from wxvx.types import Config, Source, TruthType
 from wxvx.util import DataFormat, WXVXError, resource_path
 from wxvx.variables import Var
@@ -816,7 +816,7 @@ def test_workflow__regrid_width(c):
 def test_workflow__stat_args(c, statkit, cycle):
     with (
         patch.object(workflow, "_vxvars", return_value={statkit.var: statkit.varname}),
-        patch.object(workflow, "gen_validtimes", return_value=[statkit.tc]),
+        patch.object(workflow, "gen_timecoords", return_value=[statkit.tc]),
     ):
         stat_args = workflow._stat_args(
             c=c,
@@ -841,7 +841,7 @@ def test_workflow__stat_reqs(baseline_name, c, statkit, cycle):
     with (
         patch.object(workflow, "_stats_vs_grid") as _stats_vs_grid,
         patch.object(workflow, "_vxvars", return_value={statkit.var: statkit.varname}),
-        patch.object(workflow, "gen_validtimes", return_value=[statkit.tc]),
+        patch.object(workflow, "gen_timecoords", return_value=[statkit.tc]),
     ):
         reqs = workflow._stat_reqs(c=c, varname=statkit.varname, level=statkit.level, cycle=cycle)
     n = 1 if baseline_name is None else 2
@@ -916,7 +916,7 @@ def test_workflow__write_runscript(fakefs, tidy):
 
 @fixture
 def ngrids(c):
-    n_validtimes = len(list(gen_validtimes(c.cycles, c.leadtimes)))
+    n_validtimes = len(list(gen_timecoords(c.cycles, c.leadtimes)))
     n_var_level_pairs = len(list(workflow._varnames_levels(c)))
     return n_validtimes * n_var_level_pairs
 

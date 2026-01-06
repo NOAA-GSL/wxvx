@@ -35,7 +35,7 @@ class TimeCoords:
         return self.validtime.isoformat()
 
 
-def gen_validtimes(cycles: Cycles, leadtimes: Leadtimes) -> list[TimeCoords]:
+def gen_timecoords(cycles: Cycles, leadtimes: Leadtimes) -> list[TimeCoords]:
     return sorted(
         {
             TimeCoords(cycle=cycle, leadtime=leadtime)
