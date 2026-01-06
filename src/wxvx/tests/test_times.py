@@ -42,20 +42,18 @@ def test_times_TimeCoords__no_leadtime(utc):
 
 
 def test_times_gen_timecoords(config_data, utc):
-    actual = {
-        vt.validtime
-        for vt in times.gen_timecoords(
-            cycles=Cycles(raw=config_data[S.cycles]),
-            leadtimes=Leadtimes(raw=config_data[S.leadtimes]),
-        )
-    }
-    expected = {
-        utc(2024, 12, 19, 18),
-        utc(2024, 12, 20, 0),
-        utc(2024, 12, 20, 6),
-        utc(2024, 12, 20, 12),
-        utc(2024, 12, 20, 18),
-    }
+    actual = times.gen_timecoords(
+        cycles=Cycles(raw=config_data[S.cycles]),
+        leadtimes=Leadtimes(raw=config_data[S.leadtimes]),
+    )
+    expected = [
+        times.TimeCoords(cycle=utc(2024, 12, 19, 18), leadtime=0),
+        times.TimeCoords(cycle=utc(2024, 12, 19, 18), leadtime=6),
+        times.TimeCoords(cycle=utc(2024, 12, 19, 18), leadtime=12),
+        times.TimeCoords(cycle=utc(2024, 12, 20, 6), leadtime=0),
+        times.TimeCoords(cycle=utc(2024, 12, 20, 6), leadtime=6),
+        times.TimeCoords(cycle=utc(2024, 12, 20, 6), leadtime=12),
+    ]
     assert actual == expected
 
 
