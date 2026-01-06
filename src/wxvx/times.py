@@ -23,13 +23,13 @@ class TimeCoords:
         self.hh = hh(self.validtime)
 
     def __eq__(self, other):
-        return hash(self) == hash(other)
+        return self.cycle == other.cycle and self.leadtime == other.leadtime
 
     def __hash__(self):
-        return int(self.validtime.timestamp())
+        return hash((self.cycle, self.leadtime))
 
     def __lt__(self, other):
-        return hash(self) < hash(other)
+        return (self.cycle, self.leadtime) < (other.cycle, other.leadtime)
 
     def __repr__(self):
         return self.validtime.isoformat()
