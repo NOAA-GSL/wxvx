@@ -26,7 +26,7 @@ from wxvx import variables
 from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.strings import MET, S
-from wxvx.times import TimeCoords, gen_timecoords, hh, tcinfo, yyyymmdd
+from wxvx.times import TimeCoords, gen_timecoords, gen_timecoords_truth, hh, tcinfo, yyyymmdd
 from wxvx.types import Cycles, Named, Source, TruthType
 from wxvx.util import (
     LINETYPE,
@@ -113,7 +113,7 @@ def ncobs(c: Config):
     yield taskname
     yield [
         _netcdf_from_obs(c, TimeCoords(tc.validtime))
-        for tc in gen_timecoords(c.cycles, c.leadtimes)
+        for tc in gen_timecoords_truth(c.cycles, c.leadtimes)
     ]
 
 
@@ -123,7 +123,7 @@ def obs(c: Config):
     _enforce_point_truth_type(c, taskname)
     yield taskname
     reqs = []
-    for tc in gen_timecoords(c.cycles, c.leadtimes):
+    for tc in gen_timecoords_truth(c.cycles, c.leadtimes):
         tc_valid = TimeCoords(tc.validtime)
         url = render(c.truth.url, tc_valid, context=c.raw)
         yyyymmdd, hh, _ = tcinfo(tc_valid)

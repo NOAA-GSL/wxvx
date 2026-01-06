@@ -57,6 +57,21 @@ def test_times_gen_timecoords(config_data, utc):
     assert actual == expected
 
 
+def test_times_gen_timecoords_truth(config_data, utc):
+    actual = times.gen_timecoords_truth(
+        cycles=Cycles(raw=config_data[S.cycles]),
+        leadtimes=Leadtimes(raw=config_data[S.leadtimes]),
+    )
+    expected = [
+        times.TimeCoords(cycle=utc(2024, 12, 19, 18), leadtime=0),
+        times.TimeCoords(cycle=utc(2024, 12, 20, 0), leadtime=0),
+        times.TimeCoords(cycle=utc(2024, 12, 20, 6), leadtime=0),
+        times.TimeCoords(cycle=utc(2024, 12, 20, 12), leadtime=0),
+        times.TimeCoords(cycle=utc(2024, 12, 20, 18), leadtime=0),
+    ]
+    assert actual == expected
+
+
 def test_times_hh(utc):
     assert times.hh(utc(2025, 1, 30, 6)) == "06"
     assert times.hh(utc(2025, 1, 30, 18)) == "18"

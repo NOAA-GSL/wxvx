@@ -44,6 +44,10 @@ def gen_timecoords(cycles: Cycles, leadtimes: Leadtimes) -> list[TimeCoords]:
     )
 
 
+def gen_timecoords_truth(cycles: Cycles, leadtimes: Leadtimes) -> list[TimeCoords]:
+    return sorted({TimeCoords(cycle=tc.validtime) for tc in gen_timecoords(cycles, leadtimes)})
+
+
 def hh(dt: datetime) -> str:
     return dt.strftime("%H")
 
