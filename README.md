@@ -83,7 +83,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 
 ### baseline
 
-Describes a baseline dataset to be verified, alongside forecasts from the experimental model, against the truth dataset.
+The (optional) baseline forecast dataset to be verified, alongside forecasts from the experimental model, against the truth dataset.
 
 ### baseline.name
 
@@ -99,7 +99,7 @@ The `start` and `stop` values should be in optionally quoted [ISO8601](https://e
 
 When using `start` / `step` / `stop` syntax, the final cycle is included in verification. That is, the range is inclusive of its upper bound.
 
-Alternatively, the cycles to verify may be specified as an arbitrary list of ISO8601-formatted values, e.g.
+Alternatively, the cycles to verify may be specified as a sequence of arbitrary ISO8601-formatted values, e.g.
 
 ``` yaml
 cycles:
@@ -114,6 +114,26 @@ or
 cycles: [2025-06-01T06:00:00, 2025-06-02T12:00:00, 2025-06-03T18:00:00]
 ```
 
+### forecast
+
+The forecast dataset,, typically but not necessarily from an AI model, to verify.
+
+### forecast.coords
+
+A mapping from canonical geospatial and temporal names to names used for these concepts in the actual forecast-model dataset.
+
+### forecast.coords.latitude
+
+The name of the latitude coordinate variable in the forecast dataset.
+
+### forecast.coords.level
+
+The name of the vertical-level coordinate variable in the forecast dataset.
+
+### forecast.coords.longitude
+
+The name of the longitude coordinate variable in the forecast dataset.
+
 ### forecast.coords.time
 
 Specify values under `forecast.coords.time` as follows:
@@ -126,15 +146,24 @@ If a variable specified under `forecast.coords.time` names a coordinate dimensio
 
 ### forecast.mask
 
+A sequence of latitude/longitude pairs describing a masking polygon. See the [Example](#example). The specified mask will be applied to forecast, baseline, or truth grids before verification.
+
 The `forecast.mask` value may be omitted, or set to the YAML value `null`, in which case no masking will be applied.
 
 ### forecast.name
 
-An arbitrary value identifying the forecast model being verified. This name will appear in MET stat output. This name must differ from `truth.name`.
+An arbitrary value identifying the forecast model being verified. This name will appear in MET stat output. This name must differ from `baseline.name` and `truth.name`.
 
 ### forecast.path
 
 Specifies the location of forecast data. Values must be local-filesystem paths and may contain Jinja2 [expressions](#expressions).
+
+### forecast.projection
+
+The `forecast.projection` block is optional, and defaults to a `latlon` projection when not specified. When provided, the `forecast.projection` value should be a mapping with at least a `proj` key identifying the ID of the [projection](https://proj.org/en/stable/operations/projections/index.html), and potentially additional projection attributes depending on the `proj` value:
+
+  - When `proj` is [`latlon`](https://proj.org/en/stable/operations/conversions/latlon.html), specify no additional attributes.
+  - When `proj` is [`lcc`](https://proj.org/en/stable/operations/projections/lcc.html), specify attributes `a`, `b`, `lat_0`, `lat_1`, `lat_2`, and `lon_0`.
 
 ### leadtimes
 
@@ -142,7 +171,7 @@ Each value should be either an `int` specifying the number of hours, or a **quot
 
 When using `start` / `step` / `stop` syntax, the final leadtime is included in verification. That is, the range is inclusive of its upper bound.
 
-Alternatively, the leadtimes to verify may be specified as an arbitrary list of values, e.g.
+Alternatively, the leadtimes to verify may be specified as an arbitrary sequence of values, e.g.
 
 ``` yaml
 leadtimes:
@@ -167,7 +196,7 @@ Defines paths where various runtime assets are to be written.
 
 ### paths.grids.baseline
 
-Where to store grids extracted from GRIB baseline datasets. When `baseline.name` is `truth`, this value will be ignored (`paths.grids.truth` will be used instead), and a warning will be issued if it is set.
+Where to store grids extracted from baseline datasets. When `baseline.name` is `truth`, this value will be ignored (`paths.grids.truth` will be used instead), and a warning will be issued if it is set.
 
 ### paths.grids.forecast
 
@@ -175,30 +204,31 @@ Where to store grids extracted from netCDF or Zarr forecast datasets. GRIB forec
 
 ### paths.grids.truth
 
-Where to store grids extracted from GRIB truth datasets.
+Where to store grids extracted from truth datasets.
 
 ### paths.obs
 
-Where to store raw prepbufr files when they must be downloaded, and where to store netCDF files created from prepbufr sources with the MET tool `pb2nc`.
+Where to store raw PREPBUFR files when they must be downloaded, and where to store netCDF files created from PREPBUFR sources with the MET tool `pb2nc`.
 
 ### paths.run
 
 Where to store run directories for various `wxvx` workflow tasks: run directories for MET programs `pb2nc`, `grid_stat`, and `point_stat`, as well as those for plots.
 
-### projection
+### regrid
 
-The `forecast.projection` block is optional, and defaults to a `latlon` projection when not specified. When provided, the `forecast.projection` value should be a mapping with at least a `proj` key identifying the ID of the [projection](https://proj.org/en/stable/operations/projections/index.html), and potentially additional projection attributes depending on the `proj` value:
-
-  - When `proj` is [`latlon`](https://proj.org/en/stable/operations/conversions/latlon.html), specify no additional attributes.
-  - When `proj` is [`lcc`](https://proj.org/en/stable/operations/projections/lcc.html), specify attributes `a`, `b`, `lat_0`, `lat_1`, `lat_2`, and `lon_0`.
+Configuration for optional regridding.
 
 ### regrid.method
 
-Options are listed [here](https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/config_options.html#regrid) (default: `NEAREST`).
+Options are listed [here](https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/config_options.html#regrid) (default if unspecified: `NEAREST`).
 
 ### regrid.to
 
 Regrid grids and observations to the specified grid. Options are `truth`, `forecast`, or a [GNNN grid ID](https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/appendixB.html#grids) (default: `forecast`). Option `truth` must not be used when `truth.type` is `point`.
+
+### truth
+
+The truth dataset to verify forecast (and, optionally, the baseline) data, against.
 
 ### truth.name
 
@@ -210,7 +240,7 @@ One of `grid` or `point`.
 
 * For `grid`, `url` should point to GRIB data, and `name` should be one of: `GFS`, `HRRR`.
 
-* For `point`, `url` should point to prepbufr data, `name` should be `PREPBUFR`, and `regrid.to` must not be `truth`.
+* For `point`, `url` should point to PREPBUFR data, `name` should be `PREPBUFR`, and `regrid.to` must not be `truth`.
 
 ### truth.url
 
@@ -229,6 +259,10 @@ Currently supported level types are: `atmosphere`, `heightAboveGround`, `isobari
 ### variables.*.levels
 
 A `levels:` value should only be specified if a level type supports it. Currently, these are: `heightAboveGround`, `isobaricInhPa`.
+
+### variables.name
+
+The ECMWF name for the variable.
 
 ## Expressions
 
