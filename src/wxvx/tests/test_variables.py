@@ -120,6 +120,24 @@ def test_variables_da_construct(
     assert new.forecast_reference_time == [np.datetime64(str(tc.cycle.isoformat()))]
 
 
+def test_variables_da_construct__lat_lev_lon(config_data, da_with_leadtime, fakefs, gen_config, tc):
+    # Specify that the forecast dataset has alternate geo-coordinate names lat, lev, and lon:
+    coords = config_data["forecast"]["coords"]
+    coords.update({"latitude": "lat", "level": "lev", "longitude": "lon"})
+    # Update the test DataArray to use these alternate geo-coordinate names:
+    da = da_with_leadtime.rename({"latitude": "lat", "level": "lev", "longitude": "lon"})
+    # Test that da_select properly translates these geo-coordinate names:
+    c = gen_config(config_data, fakefs)
+    var = variables.Var(name=EC.gh, level_type=S.isobaricInhPa, level=900)
+    selected = variables.da_select(c=c, ds=da.to_dataset(), varname=NOAA.HGT, tc=tc, var=var)
+    new = variables.da_construct(c=c, da=selected)
+    assert new.name == da.name
+    assert all(new.latitude == da[coords["latitude"]])
+    assert all(new.longitude == da[coords["longitude"]])
+    assert new.time == [np.datetime64(str(tc.validtime.isoformat()))]
+    assert new.forecast_reference_time == [np.datetime64(str(tc.cycle.isoformat()))]
+
+
 def test_variables_da_select(c, da_with_leadtime, tc):
     var = variables.Var(name=EC.gh, level_type=S.isobaricInhPa, level=900)
     kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname=NOAA.HGT, tc=tc, var=var)
