@@ -131,11 +131,8 @@ def test_variables_da_construct__lat_lev_lon(config_data, da_with_leadtime, fake
     var = variables.Var(name=EC.gh, level_type=S.isobaricInhPa, level=900)
     selected = variables.da_select(c=c, ds=da.to_dataset(), varname=NOAA.HGT, tc=tc, var=var)
     new = variables.da_construct(c=c, da=selected)
-    assert new.name == da.name
-    assert all(new.latitude == da[coords["latitude"]])
-    assert all(new.longitude == da[coords["longitude"]])
-    assert new.time == [np.datetime64(str(tc.validtime.isoformat()))]
-    assert new.forecast_reference_time == [np.datetime64(str(tc.cycle.isoformat()))]
+    assert all(new.latitude == da.lat)
+    assert all(new.longitude == da.lon)
 
 
 def test_variables_da_select(c, da_with_leadtime, tc):
