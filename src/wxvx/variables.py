@@ -256,13 +256,16 @@ def da_construct(c: Config, da: xr.DataArray) -> xr.DataArray:
     else:
         assert validtime is not None
         time = _da_val(da, validtime, S.validtime, np.datetime64)
+    da = da.rename(
+        {c.forecast.coords.latitude: "latitude", c.forecast.coords.longitude: "longitude"}
+    )
     return xr.DataArray(
         data=da.expand_dims(dim=[S.forecast_reference_time, S.time]),
         coords=dict(
             forecast_reference_time=[inittime + np.timedelta64(0, "s")],
             time=[time],
-            latitude=da[c.forecast.coords.latitude],
-            longitude=da[c.forecast.coords.longitude],
+            latitude=da.latitude,
+            longitude=da.longitude,
         ),
         dims=(S.forecast_reference_time, S.time, S.latitude, S.longitude),
         name=da.name,
