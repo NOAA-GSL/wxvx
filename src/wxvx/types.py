@@ -80,6 +80,7 @@ class Config:
         self.cycles = Cycles(raw[S.cycles])
         self.forecast = Forecast(**raw[S.forecast])
         self.leadtimes = Leadtimes(raw[S.leadtimes])
+        self.ncdiffs = raw.get(S.ncdiffs)
         self.paths = Paths(
             grids.get(S.baseline),
             grids.get(S.forecast),

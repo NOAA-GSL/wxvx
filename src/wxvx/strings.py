@@ -165,6 +165,7 @@ class _S(_ValsMatchKeys):
     mask: str = _
     method: str = _
     name: str = _
+    ncdiffs: str = _
     obs: str = _
     path: str = _
     paths: str = _
