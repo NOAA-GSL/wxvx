@@ -193,7 +193,7 @@ The `meta:` block may contain, for example, values tagged with YAML anchors refe
 
 ### ncdiffs
 
-A truthy [YAML boolean](https://yaml.org/type/bool.html) value instructs MET's `grid_stat` tool to create, alongside each `.stat` file, an `.nc` file containing a grid of forecast-vs-truth differences (errors). Must be false, or omitted, when `truth.type` is `point`.
+Set to `true` to instruct MET's `grid_stat` tool to create, alongside each `.stat` file, an `.nc` file containing a grid of forecast-vs-truth differences (errors). Must be set to `false`, or omitted, when `truth.type` is `point`.
 
 ### paths
 
