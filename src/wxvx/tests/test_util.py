@@ -47,12 +47,14 @@ def test_util_atomic(fakefs):
 def test_util_classify_data_format__file(expected, fakefs, inferred):
     path = fakefs / "datafile"
     path.touch()
+    util.classify_data_format.cache_clear()
     with patch.object(util.magic, "from_file", return_value=inferred):
         assert util.classify_data_format(path=path) == expected
 
 
 def test_util_classify_data_format__file_missing(fakefs, logged):
-    path = fakefs / "no-souch-file"
+    path = fakefs / "no-such-file"
+    util.classify_data_format.cache_clear()
     assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
     assert logged(f"Path not found: {path}")
 
@@ -60,6 +62,7 @@ def test_util_classify_data_format__file_missing(fakefs, logged):
 def test_util_classify_data_format__file_unrecognized(fakefs):
     path = fakefs / "datafile"
     path.touch()
+    util.classify_data_format.cache_clear()
     with (
         patch.object(util.magic, "from_file", return_value="What Is This I Don't Even"),
         raises(util.WXVXError) as e,
@@ -71,6 +74,7 @@ def test_util_classify_data_format__file_unrecognized(fakefs):
 def test_util_classify_data_format__zarr(fakefs):
     path = fakefs / "datadir"
     path.mkdir()
+    util.classify_data_format.cache_clear()
     with patch.object(util.zarr, "open"):
         assert util.classify_data_format(path=path) == util.DataFormat.ZARR
 
@@ -78,6 +82,7 @@ def test_util_classify_data_format__zarr(fakefs):
 def test_util_classify_data_format__zarr_corrupt(fakefs):
     path = fakefs / "datadir"
     path.mkdir()
+    util.classify_data_format.cache_clear()
     with (
         patch.object(util.zarr, "open", side_effect=Exception("failure")),
         raises(util.WXVXError) as e,
@@ -88,6 +93,7 @@ def test_util_classify_data_format__zarr_corrupt(fakefs):
 
 def test_util_classify_data_format__zarr_missing(fakefs, logged):
     path = fakefs / "no-such-dir"
+    util.classify_data_format.cache_clear()
     assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
     assert logged(f"Path not found: {path}")
 

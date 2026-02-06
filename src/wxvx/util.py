@@ -7,6 +7,7 @@ import sys
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from enum import Enum, auto
+from functools import cache
 from importlib import resources
 from multiprocessing.pool import Pool
 from pathlib import Path
@@ -68,6 +69,7 @@ def atomic(path: Path) -> Iterator[Path]:
     tmp.rename(path)
 
 
+@cache
 def classify_data_format(path: str | Path) -> DataFormat:
     path = Path(path)
     if path.is_file():
