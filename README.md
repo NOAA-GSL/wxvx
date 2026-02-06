@@ -58,7 +58,8 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │   start:           │   First leadtime                          │
 │   step:            │   Interval between leadtimes              │
 │   stop:            │   Last leadtime                           │
-│ meta:              │ Optional free-form data section           │
+│ meta:              │ Free-form data section (optional)         │
+│ ncdiffs:           │ Create diffs .nc files (optional)         │
 │ paths:             │ Paths                                     │
 │   grids:           │   Where to store...                       │
 │     baseline:      │     Baseline grids                        │
@@ -120,7 +121,7 @@ The forecast dataset,, typically but not necessarily from an AI model, to verify
 
 ### forecast.coords
 
-A mapping from canonical geospatial and temporal names to names used for these concepts in the actual forecast-model dataset.
+A mapping from canonical geospatial and temporal names to names used for these concepts in the actual forecast-model dataset. Required for netCDF and Zarr forecast datasets; ignored for GRIB forecast datasets.
 
 ### forecast.coords.latitude
 
@@ -189,6 +190,10 @@ leadtimes: [3, 6, 9]
 ### meta
 
 The `meta:` block may contain, for example, values tagged with YAML anchors referenced elsewhere via aliases (see the _Aliases_ section [here](https://pyyaml.org/wiki/PyYAMLDocumentation)), or values referenced elsewhere in Jinja2 expressions to be rendered by `uwtools` (see examples in [here](https://uwtools.readthedocs.io/en/stable/sections/user_guide/cli/tools/config.html#realize)).
+
+### ncdiffs
+
+A truthy [YAML boolean](https://yaml.org/type/bool.html) value instructs MET's `grid_stat` tool to create, alongside each `.stat` file, an `.nc` file containing a grid of forecast-vs-truth differences (errors). Must be false, or omitted, when `truth.type` is `point`.
 
 ### paths
 
