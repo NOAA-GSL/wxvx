@@ -727,10 +727,7 @@ def test_workflow__enforce_point_truth_type(c):
 
 @mark.parametrize(
     ("fmt", "path"),
-    [
-        (DataFormat.NETCDF, "/path/to/a.nc"),
-        (DataFormat.ZARR, "/path/to/a.zarr"),
-    ],
+    [(DataFormat.NETCDF, "/path/to/a.nc"), (DataFormat.ZARR, "/path/to/a.zarr")],
 )
 def test_workflow__forecast_grid(c, fmt, path, tc, testvars):
     with patch.object(workflow, "classify_data_format", return_value=fmt):
@@ -765,6 +762,17 @@ def test_workflow__forecast_grid__missing(c, tc, testvars):
     # further execution.
     assert req.taskname.startswith("Missing path")
     assert datafmt == DataFormat.UNKNOWN
+
+
+@mark.parametrize(
+    ("fmt", "path"),
+    [(DataFormat.NETCDF, "/path/to/a.nc"), (DataFormat.ZARR, "/path/to/a.zarr")],
+)
+def test_workflow__forecast_grid__no_coords(c, fmt, path, tc, testvars):
+    c.forecast._coords = None
+    with patch.object(workflow, "classify_data_format", return_value=fmt), raises(WXVXError) as e:
+        workflow._forecast_grid(path=path, c=c, varname="foo", tc=tc, var=testvars[EC.t2])
+    assert str(e.value) == f"Set forecast.coords for dataset {path}"
 
 
 def test_workflow__meta(c):
