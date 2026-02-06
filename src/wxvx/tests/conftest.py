@@ -98,6 +98,7 @@ def config_data():
             S.step: "06:00:00",
             S.stop: "12:00:00",
         },
+        S.ncdiffs: False,
         S.paths: {
             S.grids: {
                 S.baseline: "/path/to/grids/baseline",

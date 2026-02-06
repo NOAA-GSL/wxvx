@@ -225,6 +225,21 @@ def test_schema_meta(config_data, fs, logged):
     assert logged("is not of type 'object'")
 
 
+def test_schema_ncdiffs(config_data, fs, logged):
+    ok = validator(fs)
+    config = config_data
+    # Basic correctness:
+    assert ok(config)
+    # Setting is optional:
+    assert ok(with_del(config, S.ncdiffs))
+    # Boolean values are ok:
+    for val in [True, False]:
+        assert ok(with_set(config, val, S.ncdiffs))
+    # Other types are not allowed:
+    assert not ok(with_set(config, 42, S.ncdiffs))
+    assert logged("42 is not of type 'boolean'")
+
+
 def test_schema_paths(config_data, fs, logged):
     ok = validator(fs, S.properties, S.paths)
     config = config_data[S.paths]
