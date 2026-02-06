@@ -611,7 +611,7 @@ def _forecast_grid(
         return _missing(path), data_format
     if data_format == DataFormat.GRIB:
         return _existing(path), data_format
-    # Dataset must be netCDF or Zarr.
+    # Dataset must therefore be netCDF or Zarr:
     if not c.forecast.coords:
         msg = "Set forecast.coords for dataset %s" % path
         raise WXVXError(msg)
