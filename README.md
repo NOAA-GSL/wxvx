@@ -19,7 +19,7 @@ conda activate
 2. Create and activate a conda virtual environment providing the latest `wxvx`. (Add the flags `-c conda-forge --override-channels` to the `conda create` command if you are using a non-conda-forge conda installation.)
 
 ``` bash
-conda create -y -n wxvx -c ufs-community -c paul.madden wxvx
+conda create -y -n wxvx -c oar-gsl -c ufs-community wxvx
 conda activate wxvx
 wxvx --version
 ```
