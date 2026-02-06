@@ -80,7 +80,7 @@ class Config:
         self.cycles = Cycles(raw[S.cycles])
         self.forecast = Forecast(**raw[S.forecast])
         self.leadtimes = Leadtimes(raw[S.leadtimes])
-        self.ncdiffs = raw.get(S.ncdiffs)
+        self.ncdiffs: bool = raw.get(S.ncdiffs, False)
         self.paths = Paths(
             grids.get(S.baseline),
             grids.get(S.forecast),
@@ -113,29 +113,72 @@ class Config:
 
         names = (self.baseline.name, self.forecast.name, self.truth.name)
         if len(set(names)) != len(names):
-            msg = "Distinct baseline.name (if set), forecast.name, and truth.name required"
+            msg = "Distinct %s.%s (if set), %s.%s, and %s.%s required" % (
+                S.baseline,
+                S.name,
+                S.forecast,
+                S.name,
+                S.truth,
+                S.name,
+            )
             raise WXVXError(msg)
         if self.baseline.name == S.truth:
             if self.truth.type is TruthType.POINT:
-                msg = "Settings baseline.name '%s' and truth.type '%s' are incompatible" % (
+                msg = "Values %s.%s '%s' and %s.%s '%s' are incompatible" % (
+                    S.baseline,
+                    S.name,
                     self.baseline.name,
+                    S.truth,
+                    S.type,
                     self.truth.type.name.lower(),
                 )
                 raise WXVXError(msg)
             if self.paths.grids_baseline is not None:
-                logging.warning("Ignoring paths.grids.baseline when baseline.name is '%s'", S.truth)
+                logging.warning(
+                    "Ignoring %s.%s.%s when %s.%s is '%s'",
+                    S.paths,
+                    S.grids,
+                    S.baseline,
+                    S.baseline,
+                    S.name,
+                    S.truth,
+                )
         elif self.baseline.name is not None and not self.paths.grids_baseline:
-            msg = f"Specify paths.grids.baseline when baseline.name is not '{S.truth}'"
+            msg = "Specify %s.%s.%s when %s.%s is not '%s'" % (
+                S.paths,
+                S.grids,
+                S.baseline,
+                S.baseline,
+                S.name,
+                S.truth,
+            )
             raise WXVXError(msg)
         if self.regrid.to == S.OBS:
-            msg = "Cannot regrid to observations per regrid.to config value"
+            msg = "Cannot regrid to observations per %s.%s config value" % (S.regrid, S.to)
             raise WXVXError(msg)
         if self.truth.type == TruthType.GRID and not self.paths.grids_truth:
-            msg = "Specify paths.grids.truth when truth.type is '%s'" % TruthType.GRID.name.lower()
+            msg = "Specify %s.%s.%s when %s.%s is '%s'" % (
+                S.paths,
+                S.grids,
+                S.truth,
+                S.truth,
+                S.type,
+                TruthType.GRID.name.lower(),
+            )
             raise WXVXError(msg)
-        if self.truth.type == TruthType.POINT and not self.paths.obs:
-            msg = "Specify paths.obs when truth.type is '%s'" % TruthType.POINT.name.lower()
-            raise WXVXError(msg)
+        if self.truth.type == TruthType.POINT:
+            name = TruthType.POINT.name.lower()
+            if self.ncdiffs:
+                msg = "Option %s must be false (or omitted) when %s.%s is '%s'" % (
+                    S.ncdiffs,
+                    S.truth,
+                    S.type,
+                    name,
+                )
+                raise WXVXError(msg)
+            if not self.paths.obs:
+                msg = "Specify %s.%s when %s.%s is '%s'" % (S.paths, S.obs, S.truth, S.type, name)
+                raise WXVXError(msg)
 
 
 @dataclass(frozen=True)
