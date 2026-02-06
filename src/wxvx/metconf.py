@@ -137,6 +137,13 @@ def _nbrhd(k: str, v: Any, level: int) -> list[str]:
     return _fail(k)
 
 
+def _nc_pairs_flag(k: str, v: Any, level: int) -> list[str]:
+    match k:
+        case MET.climo | MET.raw:
+            return _kvpair(k, _bare(v), level)
+    return _fail(k)
+
+
 def _obs_window(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Key-Value Pair: bare.
@@ -201,6 +208,10 @@ def _top(k: str, v: Any, level: int) -> list[str]:
             return _mapping(k, _collect(_mask, v, level + 1), level)
         case MET.nbrhd:
             return _mapping(k, _collect(_nbrhd, v, level + 1), level)
+        case MET.nc_pairs_flag:
+            if isinstance(v, dict):
+                return _mapping(k, _collect(_nc_pairs_flag, v, level + 1), level)
+            return _kvpair(k, _bare(v), level)
         case MET.obs:
             return _mapping(k, _collect(_dataset, v, level + 1), level)
         case MET.obs_window:
@@ -212,7 +223,7 @@ def _top(k: str, v: Any, level: int) -> list[str]:
         case MET.time_summary:
             return _mapping(k, _collect(_time_summary, v, level + 1), level)
         # Scalar: bare.
-        case MET.nc_pairs_flag | MET.quality_mark_thresh:
+        case MET.quality_mark_thresh:
             return _kvpair(k, _bare(v), level)
         # Scalar: quoted.
         case MET.model | MET.obtype | MET.output_prefix | MET.tmp_dir:

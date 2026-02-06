@@ -66,6 +66,7 @@ class _MET(_ValsMatchKeys):
     SQUARE: str = _
     beg: str = _
     cat_thresh: str = _
+    climo: str = _
     cnt: str = _
     cnt_thresh: str = _
     cts: str = _
@@ -95,6 +96,7 @@ class _MET(_ValsMatchKeys):
     output_prefix: str = _
     poly: str = _
     quality_mark_thresh: str = _
+    raw: str = _
     regrid: str = _
     set_attr_level: str = _
     shape: str = _

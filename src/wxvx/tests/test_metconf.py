@@ -52,7 +52,10 @@ def test_metconf_render(tidy):
                 5,
             ],
         },
-        MET.nc_pairs_flag: "FALSE",
+        MET.nc_pairs_flag: {
+            MET.climo: MET.FALSE,
+            MET.raw: MET.FALSE,
+        },
         MET.obs: {
             MET.field: [
                 {
@@ -139,7 +142,10 @@ def test_metconf_render(tidy):
         5
       ];
     }
-    nc_pairs_flag = FALSE;
+    nc_pairs_flag = {
+      climo = FALSE;
+      raw = FALSE;
+    }
     obs = {
       field = [
         {
@@ -183,6 +189,11 @@ def test_metconf_render(tidy):
     """
     expected = tidy(text)
     assert metconf.render(config=config).strip() == expected
+
+
+def test_metconf_render__nc_pairs_flag_false():
+    config = {MET.nc_pairs_flag: MET.FALSE}
+    assert metconf.render(config=config) == "nc_pairs_flag = FALSE;"
 
 
 def test_metconf_render__fail():
@@ -343,6 +354,11 @@ def test_metconf__mask__grid_str():
 def test_metconf__nbrhd():
     with raises(ValueError, match="Unsupported key: foo"):
         metconf._nbrhd(k="foo", v=None, level=0)
+
+
+def test_metconf__nc_pairs_flag():
+    with raises(ValueError, match="Unsupported key: foo"):
+        metconf._nc_pairs_flag(k="foo", v=None, level=0)
 
 
 @mark.parametrize(("k", "v"), [(MET.beg, -1800), (MET.end, 1800)])

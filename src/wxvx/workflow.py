@@ -180,7 +180,7 @@ def _config_grid_stat(
             MET.poly: [polyfile.ref] if polyfile else [],
         },
         MET.model: c.truth.name if source == Source.TRUTH else c.forecast.name,
-        MET.nc_pairs_flag: MET.FALSE,
+        MET.nc_pairs_flag: {MET.climo: MET.FALSE, MET.raw: MET.FALSE} if c.ncdiffs else MET.FALSE,
         MET.obs: {MET.field: [field_obs]},
         MET.obtype: c.truth.name,
         MET.output_flag: dict.fromkeys(sorted({LINETYPE[x] for x in meta.met_stats}), MET.BOTH),
