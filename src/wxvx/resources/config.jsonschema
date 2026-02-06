@@ -287,6 +287,9 @@
     "meta": {
       "type": "object"
     },
+    "ncdiffs": {
+      "type": "boolean"
+    },
     "paths": {
       "additionalProperties": false,
       "anyOf": [
