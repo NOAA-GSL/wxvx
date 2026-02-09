@@ -1,0 +1,21 @@
+name: Release
+env:
+  ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+on:
+  workflow_dispatch:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install conda
+        run: .github/scripts/conda.sh
+      - name: Check Formatting
+        run: .github/scripts/checkformat.sh
+      - name: Build
+        run: .github/scripts/build.sh
+      - name: Publish
+        run: .github/scripts/publish.sh
