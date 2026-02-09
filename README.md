@@ -422,6 +422,30 @@ To update the version or build number:
 2. In a `base` conda environment with the `condev` package installed (see above), run `make meta`. This will update the `recipe/meta.*` files.
 3. Commit these changes.
 
+### Release Procedure
+
+### Create a GitHub Release
+
+In the GitHub web interface:
+
+1. Click **Releases**.
+2. Click **Draft a new release**.
+3. Set **Target** to `main`.
+4. Click **Choose a tag**, then enter the version number with a "v" prefix, e.g. `v1.2.3`. Click **+** below the text-entry field to create the new tag when the release is published.
+5. Set **Release title** to match the tag (e.g. `v1.2.3`).
+6. Click **Generate release notes** to pre-populate the release-description text box.
+7. Edit the pre-populated notes. Follow the style established in previous release notes.
+7. Click the green **Publish release** button.
+
+### Publish a conda Package
+
+In the GitHub web interface:
+
+1. Click **Actions**.
+2. Click **Publish** under **All workflows** in the left pane.
+3. Click the **Run workflow** pull-down, select the new release tag, then click the green **Run workflow** button.
+4. Wait for the workflow to complete, then confirm publication of the new package on [anaconda.org](https://anaconda.org/channels/OAR-GSL/packages/wxvx/overview).
+
 ## Cookbook
 
 ### Extract Grid Projection from GRIB
