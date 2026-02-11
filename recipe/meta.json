@@ -13,7 +13,7 @@
       "netcdf4 ==1.7.*",
       "pandas-stubs",
       "pip",
-      "pyfakefs ==5.10.*",
+      "pyfakefs ==6.1.*",
       "pyproj ==3.7.*",
       "pytest ==9.0.*",
       "pytest-cov ==7.0.*",
@@ -24,14 +24,14 @@
       "python-magic ==0.4.*",
       "pyyaml ==6.0.*",
       "requests ==2.32.*",
-      "ruff ==0.14.*",
+      "ruff ==0.15.*",
       "seaborn ==0.13.*",
       "setuptools",
       "types-PyYAML",
       "types-requests",
       "types-seaborn",
-      "uwtools ==2.12.*",
-      "xarray ==2025.1.*",
+      "uwtools ==2.13.*",
+      "xarray ==2025.12.*",
       "zarr ==3.1.*"
     ],
     "run": [
@@ -45,8 +45,8 @@
       "pyyaml ==6.0.*",
       "requests ==2.32.*",
       "seaborn ==0.13.*",
-      "uwtools ==2.12.*",
-      "xarray ==2025.1.*",
+      "uwtools ==2.13.*",
+      "xarray ==2025.12.*",
       "zarr ==3.1.*"
     ]
   },

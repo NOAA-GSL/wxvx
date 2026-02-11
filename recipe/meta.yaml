@@ -25,8 +25,8 @@ requirements:
     - pyyaml 6.0.*
     - requests 2.32.*
     - seaborn 0.13.*
-    - uwtools 2.12.*
-    - xarray 2025.1.*
+    - uwtools 2.13.*
+    - xarray 2025.12.*
     - zarr 3.1.*
     - {{ python }}
 test:
@@ -36,12 +36,12 @@ test:
     - make 4.4.*
     - mypy 1.19.*
     - pandas-stubs
-    - pyfakefs 5.10.*
+    - pyfakefs 6.1.*
     - pytest 9.0.*
     - pytest-cov 7.0.*
     - pytest-randomly 3.15.*
     - pytest-xdist 3.8.*
-    - ruff 0.14.*
+    - ruff 0.15.*
     - types-PyYAML
     - types-requests
     - types-seaborn
