@@ -8,7 +8,7 @@
       "iotaa ==1.6.*",
       "jq ==1.8.*",
       "make ==4.4.*",
-      "met2go ==11.0.*",
+      "met2go ==11.0.3=py313hd42e9f9_1",
       "mypy ==1.19.*",
       "netcdf4 ==1.7.*",
       "pandas-stubs",
@@ -36,7 +36,7 @@
     ],
     "run": [
       "iotaa ==1.6.*",
-      "met2go ==11.0.*",
+      "met2go ==11.0.3=py313hd42e9f9_1",
       "netcdf4 ==1.7.*",
       "pyproj ==3.7.*",
       "python ==3.13",
