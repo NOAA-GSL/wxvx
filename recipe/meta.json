@@ -13,7 +13,7 @@
       "netcdf4 ==1.7.*",
       "pandas-stubs",
       "pip",
-      "pyfakefs ==6.1.*",
+      "pyfakefs ==5.10.*",
       "pyproj ==3.7.*",
       "pytest ==9.0.*",
       "pytest-cov ==7.0.*",

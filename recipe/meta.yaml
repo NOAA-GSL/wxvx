@@ -36,7 +36,7 @@ test:
     - make 4.4.*
     - mypy 1.19.*
     - pandas-stubs
-    - pyfakefs 6.1.*
+    - pyfakefs 5.10.* # undiagnosed race-condition test failure observed with 6.1.*
     - pytest 9.0.*
     - pytest-cov 7.0.*
     - pytest-randomly 3.15.*
