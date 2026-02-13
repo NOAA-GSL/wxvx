@@ -4,7 +4,7 @@ run_tests() {
   echo TESTING PYTHON $PYTHON_VERSION
   env=python-$PYTHON_VERSION
   devpkgs=$(jq .packages.dev[] recipe/meta.json | tr -d ' "')
-  conda create --yes --name $env --quiet $devpkgs
+  conda create --yes --name $env --quiet --channel oar-gsl --channel ufs-community $devpkgs
   conda activate $env
   conda install --yes python=$PYTHON_VERSION
   set -x
