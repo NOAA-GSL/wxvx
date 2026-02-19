@@ -59,16 +59,13 @@ def test_util_classify_data_format__file_missing(fakefs, logged):
     assert logged(f"Path not found: {path}")
 
 
-def test_util_classify_data_format__file_unrecognized(fakefs):
+def test_util_classify_data_format__file_unrecognized(fakefs, logged):
     path = fakefs / "datafile"
     path.touch()
     util.classify_data_format.cache_clear()
-    with (
-        patch.object(util.magic, "from_file", return_value="What Is This I Don't Even"),
-        raises(util.WXVXError) as e,
-    ):
-        util.classify_data_format(path=path)
-    assert str(e.value) == f"Could not determine format of {path}"
+    with patch.object(util.magic, "from_file", return_value="What Is This I Don't Even"):
+        assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
+    assert logged(f"Could not determine format of {path}")
 
 
 def test_util_classify_data_format__zarr(fakefs):
@@ -79,16 +76,13 @@ def test_util_classify_data_format__zarr(fakefs):
         assert util.classify_data_format(path=path) == util.DataFormat.ZARR
 
 
-def test_util_classify_data_format__zarr_corrupt(fakefs):
+def test_util_classify_data_format__zarr_corrupt(fakefs, logged):
     path = fakefs / "datadir"
     path.mkdir()
     util.classify_data_format.cache_clear()
-    with (
-        patch.object(util.zarr, "open", side_effect=Exception("failure")),
-        raises(util.WXVXError) as e,
-    ):
-        util.classify_data_format(path=path)
-    assert str(e.value) == f"Could not determine format of {path}"
+    with patch.object(util.zarr, "open", side_effect=Exception("failure")):
+        assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
+    assert logged(f"Could not determine format of {path}")
 
 
 def test_util_classify_data_format__zarr_missing(fakefs, logged):

@@ -92,7 +92,8 @@ def classify_data_format(path: str | Path) -> DataFormat:
     else:
         logging.warning("Path not found: %s", path)
         return DataFormat.UNKNOWN
-    raise WXVXError("Could not determine format of %s" % path)
+    logging.error("Could not determine format of %s", path)
+    return DataFormat.UNKNOWN
 
 
 def classify_url(url: str) -> tuple[Proximity, str | Path]:
