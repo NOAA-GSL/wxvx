@@ -11,6 +11,7 @@ forecast:
     time:
       inittime: forecast_reference_time
       validtime: time
+  format: zarr
   name: AIWX
   path: /path/to/forecast.zarr
   projection:

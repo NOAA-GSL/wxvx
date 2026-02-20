@@ -12,6 +12,7 @@ forecast:
     time:
       inittime: time
       leadtime: lead_time
+  format: zarr
   mask:
     - [52.61564933, 225.90452027]
     - [52.61564933, 255.00000000]
