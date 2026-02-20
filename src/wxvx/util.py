@@ -16,7 +16,6 @@ from subprocess import CompletedProcess, run
 from typing import TYPE_CHECKING, NoReturn, cast, overload
 from urllib.parse import urlparse
 
-import cfgrib  # type: ignore[import-untyped]
 import jinja2
 import netCDF4
 import zarr
@@ -72,25 +71,30 @@ def atomic(path: Path) -> Iterator[Path]:
 
 @cache
 def classify_data_format(path: str | Path) -> DataFormat:
-    def check(path: Path, f: Callable) -> bool:
+    def check(f: Callable) -> bool:
         try:
-            f(path)
+            f()
         except Exception as e:
             for line in str(e).split():
-                logging.exception(line)
+                logging.debug(line)
             return False
         return True
+
+    def grib(path: Path) -> bool:
+        with path.open(mode="rb") as f:
+            header = f.read(8)
+        return header[:4] == b"GRIB" and header[7] in (b"12")
 
     path = Path(path)
     if not path.exists():
         logging.warning("Path not found: %s", path)
         return DataFormat.UNKNOWN
-    if check(path, netCDF4.Dataset):
-        return DataFormat.NETCDF
-    if check(path, cfgrib.open_datasets):
-        return DataFormat.GRIB
-    if check(path, zarr.open):
+    if check(lambda: zarr.open(path, mode="r")):
         return DataFormat.ZARR
+    if check(lambda: netCDF4.Dataset(path, mode="r")):
+        return DataFormat.NETCDF
+    if check(lambda: grib(path)):
+        return DataFormat.GRIB
     logging.error("Could not determine format of %s", path)
     return DataFormat.UNKNOWN
 

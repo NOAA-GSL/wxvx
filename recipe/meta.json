@@ -4,7 +4,6 @@
   "name": "wxvx",
   "packages": {
     "dev": [
-      "cfgrib ==0.9.15.*",
       "docformatter ==1.7.*",
       "iotaa ==1.6.*",
       "jq ==1.8.*",
@@ -35,7 +34,6 @@
       "zarr ==3.1.*"
     ],
     "run": [
-      "cfgrib ==0.9.15.*",
       "iotaa ==1.6.*",
       "met2go ==11.0.3.*",
       "netcdf4 ==1.7.*",
