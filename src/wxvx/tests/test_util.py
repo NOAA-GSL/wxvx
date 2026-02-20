@@ -37,33 +37,33 @@ def test_util_atomic(fakefs):
     assert recipient.read_text() == s2
 
 
-def test_util_classify_data_format__grib(tmp_path):
-    path = tmp_path / "a.grib"
-    for edition in [1, 2]:
-        path.write_bytes(b"GRIB\x00\x00\x00" + int.to_bytes(edition))
-    assert util.classify_data_format(path=path) == util.DataFormat.GRIB
-
-
-def test_util_classify_data_format__missing(fakefs, logged):
+def test_util_classify_data_format__fail_missing(fakefs, logged):
     path = fakefs / "a.missing"
     assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
     assert logged(f"Path not found: {path}")
 
 
-def test_util_classify_data_format__netcdf(tmp_path):
-    path = tmp_path / "a.nc"
-    xr.DataArray([1]).to_netcdf(path)
-    assert util.classify_data_format(path=path) == util.DataFormat.NETCDF
-
-
-def test_util_classify_data_format__unknown(logged, tmp_path):
+def test_util_classify_data_format__fail_unknown(logged, tmp_path):
     path = tmp_path / "a.foo"
     path.write_text("foo")
     assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
     assert logged(f"Could not determine format of: {path}")
 
 
-def test_util_classify_data_format__zarr(tmp_path):
+def test_util_classify_data_format__pass_grib(tmp_path):
+    path = tmp_path / "a.grib"
+    for edition in [1, 2]:
+        path.write_bytes(b"GRIB\x00\x00\x00" + int.to_bytes(edition))
+    assert util.classify_data_format(path=path) == util.DataFormat.GRIB
+
+
+def test_util_classify_data_format__pass_netcdf(tmp_path):
+    path = tmp_path / "a.nc"
+    xr.DataArray([1]).to_netcdf(path)
+    assert util.classify_data_format(path=path) == util.DataFormat.NETCDF
+
+
+def test_util_classify_data_format__pass_zarr(tmp_path):
     path = tmp_path / "a.zarr"
     xr.DataArray([1]).to_zarr(path)
     assert util.classify_data_format(path=path) == util.DataFormat.ZARR
