@@ -606,7 +606,8 @@ def _enforce_point_truth_type(c: Config, taskname: str):
 def _forecast_grid(
     path: Path, c: Config, varname: str, tc: TimeCoords, var: Var
 ) -> tuple[Node, DataFormat]:
-    data_format = classify_data_format(path)
+    if not (data_format := c.forecast.format):
+        data_format = classify_data_format(path)
     if data_format is DataFormat.UNKNOWN:
         return _missing(path), data_format
     if data_format == DataFormat.GRIB:
