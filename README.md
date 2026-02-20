@@ -50,6 +50,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │       inittime:    │       Forecast initialization time        │
 │       leadtime:    │       Forecast leadtime                   │
 │       validtime:   │       Forecast validtime                  │
+│   format:          │   'grib', 'netcdf', or 'zarr' (optional)  │
 │   mask:            │   Sequence of [lat, lon] pairs (optional) │
 │   name:            │   Dataset descriptive name                │
 │   path:            │   Filesystem path to Zarr/netCDF dataset  │
@@ -144,6 +145,10 @@ Specify values under `forecast.coords.time` as follows:
   - `validtime`: The name of the variable or attribute providing the forecast validtime. Exactly one of `validtime` and `leadtime` must be specified.
 
 If a variable specified under `forecast.coords.time` names a coordinate dimension variable, that variable will be used. If no such variable exists, `wxvx` will look for a dataset attribute with the given name and try to use it, coercing it to the expected type (e.g. `datetime` or `timedelta`) as needed. For example, it will parse an ISO8601-formatted string to a Python `datetime` object.
+
+### forecast.format
+
+If this optional value is omitted, `wxvx` will introspect forecast datasets to determine if they are GRIB, netCDF, or Zarr. As a performance optimization, or as an override for correctness in case `wxvx` makes the wrong determination, a value of `grib`, `netcdf`, or `zarr` may be supplied to indicate that forecast datasets are formatted as GRIB, netCDF, or Zarr, respectively. In this case, `wxvx` will behave as if it had determined the format, and will likely fail if the indicated format is incorrect.
 
 ### forecast.mask
 
