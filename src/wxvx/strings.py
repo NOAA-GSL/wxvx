@@ -146,6 +146,7 @@ class _S(_ValsMatchKeys):
     firstbyte: str = _
     forecast: str = _
     forecast_reference_time: str = _
+    format: str = _
     grid: str = _
     grids: str = _
     grids_baseline: str = _

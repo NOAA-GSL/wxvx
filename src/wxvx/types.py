@@ -12,7 +12,15 @@ from typing import Any, Protocol, cast
 from uwtools.api.config import YAMLConfig, validate
 
 from wxvx.strings import MET, S
-from wxvx.util import LINETYPE, WXVXError, expand, resource_path, to_datetime, to_timedelta
+from wxvx.util import (
+    LINETYPE,
+    DataFormat,
+    WXVXError,
+    expand,
+    resource_path,
+    to_datetime,
+    to_timedelta,
+)
 
 _TRUTH_NAMES_GRID = (S.GFS, S.HRRR)
 _TRUTH_NAMES_POINT = (S.PREPBUFR,)
@@ -225,6 +233,7 @@ class Cycles:
 class Forecast:
     KEYS = (
         S.coords,
+        S.format,
         S.mask,
         S.name,
         S.path,
@@ -236,12 +245,14 @@ class Forecast:
         name: str,
         path: str,
         coords: Coords | dict | None = None,
+        format: DataFormat | str | None = None,  # noqa: A002
         mask: list[list[float]] | None = None,
         projection: dict | None = None,
     ):
         self._name = name
         self._path = path
         self._coords = coords
+        self._format = format
         self._mask = mask
         self._projection = projection
 
@@ -262,6 +273,12 @@ class Forecast:
     @property
     def path(self) -> str:
         return self._path
+
+    @property
+    def format(self) -> DataFormat | None:
+        if isinstance(self._format, str):
+            self._format = cast(DataFormat, getattr(DataFormat, self._format.upper()))
+        return self._format
 
     @property
     def coords(self) -> Coords | None:

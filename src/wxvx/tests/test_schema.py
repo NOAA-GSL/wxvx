@@ -113,6 +113,12 @@ def test_schema_forecast(logged, config_data, fs):
     # Additional keys are not allowed:
     assert not ok(with_set(config, 42, "n"))
     assert logged("'n' was unexpected")
+    # Some keys have enum values:
+    for key in [S.format]:
+        for val in ["grib", "netcdf", "zarr"]:
+            assert ok(with_set(config, val, key))
+        assert not ok(with_set(config, "foo", key))
+        assert logged(r"'foo' is not one of \['grib', 'netcdf', 'zarr'\]")
     # Some keys have object values:
     for key in [S.coords, S.projection]:
         assert not ok(with_set(config, None, key))
@@ -122,7 +128,7 @@ def test_schema_forecast(logged, config_data, fs):
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
     # Some keys are optional:
-    for key in [S.mask]:
+    for key in [S.format, S.mask]:
         assert ok(with_del(config, key))
 
 

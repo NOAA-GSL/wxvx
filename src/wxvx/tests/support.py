@@ -13,7 +13,9 @@ def with_del(d: dict, *args: Any) -> dict:
     p = new
     for key in args[:-1]:
         p = p[key]
-    del p[args[-1]]
+    key = args[-1]
+    if key in p:
+        del p[key]
     return new
 
 

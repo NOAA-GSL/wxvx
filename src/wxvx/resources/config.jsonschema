@@ -153,6 +153,13 @@
           ],
           "type": "object"
         },
+        "format": {
+          "enum": [
+            "grib",
+            "netcdf",
+            "zarr"
+          ]
+        },
         "mask": {
           "items": {
             "items": {
