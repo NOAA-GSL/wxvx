@@ -81,9 +81,14 @@ def classify_data_format(path: str | Path) -> DataFormat:
         return True
 
     def grib(path: Path) -> None:
+        # It might be better to just try to read the file with a GRIB library like cfgrib, but this
+        # tends to be unacceptably slow: Since a GRIB file is just a series of messages without any
+        # kind of header/metadata, cfgrib et al. read the entire file. Instead, inspect the initial
+        # bytes in the file to see if it is apparently GRIB.
         with path.open(mode="rb") as f:
             header = f.read(8)
-        apparently_grib = header[:4] == b"GRIB" and header[7] in [1, 2]
+        editions = (1, 2)
+        apparently_grib = header[:4] == b"GRIB" and header[7] in editions
         assert apparently_grib
 
     path = Path(path)
