@@ -11,7 +11,7 @@ from uwtools.api.config import get_yaml_config
 
 from wxvx import types
 from wxvx.strings import EC, MET, S
-from wxvx.util import WXVXError, resource_path
+from wxvx.util import DataFormat, WXVXError, resource_path
 
 # Fixtures
 
@@ -247,6 +247,7 @@ def test_types_Forecast(config_data, forecast):
     assert obj.coords.longitude == "longitude"
     assert obj.coords.time.inittime == "time"
     assert obj.coords.time.leadtime == "lead_time"
+    assert obj.format is None
     assert obj.name == "Forecast"
     assert obj.path == "/path/to/forecast-{{ yyyymmdd }}-{{ hh }}-{{ '%03d' % fh }}.nc"
     cfg = config_data[S.forecast]
@@ -258,6 +259,14 @@ def test_types_Forecast(config_data, forecast):
     del cfg_no_proj[S.projection]
     default = types.Forecast(**cfg_no_proj)
     assert default.projection == {S.proj: S.latlon}
+    for k, v in {
+        "grib": DataFormat.GRIB,
+        "netcdf": DataFormat.NETCDF,
+        "zarr": DataFormat.ZARR,
+        None: None,
+    }.items():
+        obj = types.Forecast(**{**config_data[S.forecast], "format": k})
+        assert obj.format == v
 
 
 def test_types_Leadtimes():
