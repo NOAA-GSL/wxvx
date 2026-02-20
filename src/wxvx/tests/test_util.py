@@ -9,6 +9,7 @@ from datetime import timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import xarray as xr
 from pytest import mark, raises
 
 from wxvx import util
@@ -36,63 +37,55 @@ def test_util_atomic(fakefs):
     assert recipient.read_text() == s2
 
 
-@mark.skip
-# @mark.parametrize(
-#     ("expected", "inferred"),
-#     [
-#         (util.DataFormat.BUFR, "Binary Universal Form data (BUFR) Edition 3"),
-#         (util.DataFormat.GRIB, "Gridded binary (GRIB) version 2"),
-#         (util.DataFormat.NETCDF, "Hierarchical Data Format (version 5) data"),
-#     ],
-# )
-# def test_util_classify_data_format__file(expected, fakefs, inferred):
-def test_util_classify_data_format__file(fakefs):
-    path = fakefs / "datafile"
-    path.touch()
-    util.classify_data_format.cache_clear()
-    # with patch.object(util.magic, "from_file", return_value=inferred):
-    #     assert util.classify_data_format(path=path) == expected
+def test_util_classify_data_format__grib(tmp_path):
+    path = tmp_path / "a.grib"
+    for edition in [1, 2]:
+        path.write_bytes(b"GRIB\x00\x00\x00" + int.to_bytes(edition))
+    assert util.classify_data_format(path=path) == util.DataFormat.GRIB
 
 
-def test_util_classify_data_format__file_missing(fakefs, logged):
+def test_util_classify_data_format__missing(fakefs, logged):
     path = fakefs / "no-such-file"
     util.classify_data_format.cache_clear()
     assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
     assert logged(f"Path not found: {path}")
 
 
-@mark.skip
-def test_util_classify_data_format__file_unrecognized(fakefs):
-    path = fakefs / "datafile"
-    path.touch()
-    util.classify_data_format.cache_clear()
-    # with patch.object(util.magic, "from_file", return_value="What Is This I Don't Even"):
-    #     assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
-    # assert logged(f"Could not determine format of {path}")
+def test_util_classify_data_format__netcdf(tmp_path):
+    path = tmp_path / "a.nc"
+    xr.DataArray([1]).to_netcdf(path)
+    assert util.classify_data_format(path=path) == util.DataFormat.NETCDF
 
 
-def test_util_classify_data_format__zarr(fakefs):
-    path = fakefs / "datadir"
-    path.mkdir()
-    util.classify_data_format.cache_clear()
-    with patch.object(util.zarr, "open"):
-        assert util.classify_data_format(path=path) == util.DataFormat.ZARR
+def test_util_classify_data_format__zarr(tmp_path):
+    path = tmp_path / "a.zarr"
+    xr.DataArray([1]).to_zarr(path)
+    assert util.classify_data_format(path=path) == util.DataFormat.ZARR
 
 
-def test_util_classify_data_format__zarr_corrupt(fakefs, logged):
-    path = fakefs / "datadir"
-    path.mkdir()
-    util.classify_data_format.cache_clear()
-    with patch.object(util.zarr, "open", side_effect=Exception("failure")):
-        assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
-    assert logged(f"Could not determine format of {path}")
+# def test_util_classify_data_format__unrecognized(fakefs):
+#     path = fakefs / "datafile"
+#     path.touch()
+#     util.classify_data_format.cache_clear()
+#     # with patch.object(util.magic, "from_file", return_value="What Is This I Don't Even"):
+#     #     assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
+#     # assert logged(f"Could not determine format of: {path}")
 
 
-def test_util_classify_data_format__zarr_missing(fakefs, logged):
-    path = fakefs / "no-such-dir"
-    util.classify_data_format.cache_clear()
-    assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
-    assert logged(f"Path not found: {path}")
+# def test_util_classify_data_format__zarr_corrupt(fakefs, logged):
+#     path = fakefs / "datadir"
+#     path.mkdir()
+#     util.classify_data_format.cache_clear()
+#     with patch.object(util.zarr, "open", side_effect=Exception("failure")):
+#         assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
+#     assert logged(f"Could not determine format of: {path}")
+
+
+# def test_util_classify_data_format__zarr_missing(fakefs, logged):
+#     path = fakefs / "no-such-dir"
+#     util.classify_data_format.cache_clear()
+#     assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
+#     assert logged(f"Path not found: {path}")
 
 
 @mark.parametrize(

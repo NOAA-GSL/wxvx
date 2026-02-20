@@ -80,10 +80,11 @@ def classify_data_format(path: str | Path) -> DataFormat:
             return False
         return True
 
-    def grib(path: Path) -> bool:
+    def grib(path: Path) -> None:
         with path.open(mode="rb") as f:
             header = f.read(8)
-        return header[:4] == b"GRIB" and header[7] in (b"12")
+        apparently_grib = header[:4] == b"GRIB" and header[7] in [1, 2]
+        assert apparently_grib
 
     path = Path(path)
     if not path.exists():
@@ -95,7 +96,7 @@ def classify_data_format(path: str | Path) -> DataFormat:
         return DataFormat.NETCDF
     if check(lambda: grib(path)):
         return DataFormat.GRIB
-    logging.error("Could not determine format of %s", path)
+    logging.error("Could not determine format of: %s", path)
     return DataFormat.UNKNOWN
 
 
