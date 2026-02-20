@@ -96,6 +96,7 @@ def classify_data_format(path: str | Path) -> DataFormat:
         return DataFormat.NETCDF
     if check(lambda: grib(path)):
         return DataFormat.GRIB
+
     logging.error("Could not determine format of: %s", path)
     return DataFormat.UNKNOWN
 
