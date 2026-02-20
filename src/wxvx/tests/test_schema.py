@@ -355,6 +355,12 @@ def test_schema_variables(logged, config_data, fs):
         assert logged("None is not of type 'string'")
 
 
+def test_support_with_del():
+    # Test case where with_del() finds nothing to delete:
+    c = {"a": "apple"}
+    assert with_del(c, "b") == c
+
+
 # Helpers
 
 

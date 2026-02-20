@@ -75,6 +75,7 @@ def config_data():
                     S.leadtime: "lead_time",
                 },
             },
+            S.format: "grib",
             S.mask: [
                 [52.61564933, 225.90452027],
                 [52.61564933, 275.0],
