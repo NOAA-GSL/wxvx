@@ -4,6 +4,7 @@
   "name": "wxvx",
   "packages": {
     "dev": [
+      "cfgrib ==0.9.15.*",
       "docformatter ==1.7.*",
       "iotaa ==1.6.*",
       "jq ==1.8.*",
@@ -21,7 +22,6 @@
       "pytest-xdist ==3.8.*",
       "python ==3.13",
       "python-eccodes ==2.42.*",
-      "python-magic ==0.4.*",
       "pyyaml ==6.0.*",
       "requests ==2.32.*",
       "ruff ==0.15.*",
@@ -35,13 +35,13 @@
       "zarr ==3.1.*"
     ],
     "run": [
+      "cfgrib ==0.9.15.*",
       "iotaa ==1.6.*",
       "met2go ==11.0.3.*",
       "netcdf4 ==1.7.*",
       "pyproj ==3.7.*",
       "python ==3.13",
       "python-eccodes ==2.42.*",
-      "python-magic ==0.4.*",
       "pyyaml ==6.0.*",
       "requests ==2.32.*",
       "seaborn ==0.13.*",
