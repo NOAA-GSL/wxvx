@@ -45,8 +45,7 @@ def test_util_classify_data_format__grib(tmp_path):
 
 
 def test_util_classify_data_format__missing(fakefs, logged):
-    path = fakefs / "no-such-file"
-    util.classify_data_format.cache_clear()
+    path = fakefs / "a.missing"
     assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
     assert logged(f"Path not found: {path}")
 
@@ -57,35 +56,17 @@ def test_util_classify_data_format__netcdf(tmp_path):
     assert util.classify_data_format(path=path) == util.DataFormat.NETCDF
 
 
+def test_util_classify_data_format__unknown(logged, tmp_path):
+    path = tmp_path / "a.foo"
+    path.write_text("foo")
+    assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
+    assert logged(f"Could not determine format of: {path}")
+
+
 def test_util_classify_data_format__zarr(tmp_path):
     path = tmp_path / "a.zarr"
     xr.DataArray([1]).to_zarr(path)
     assert util.classify_data_format(path=path) == util.DataFormat.ZARR
-
-
-# def test_util_classify_data_format__unrecognized(fakefs):
-#     path = fakefs / "datafile"
-#     path.touch()
-#     util.classify_data_format.cache_clear()
-#     # with patch.object(util.magic, "from_file", return_value="What Is This I Don't Even"):
-#     #     assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
-#     # assert logged(f"Could not determine format of: {path}")
-
-
-# def test_util_classify_data_format__zarr_corrupt(fakefs, logged):
-#     path = fakefs / "datadir"
-#     path.mkdir()
-#     util.classify_data_format.cache_clear()
-#     with patch.object(util.zarr, "open", side_effect=Exception("failure")):
-#         assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
-#     assert logged(f"Could not determine format of: {path}")
-
-
-# def test_util_classify_data_format__zarr_missing(fakefs, logged):
-#     path = fakefs / "no-such-dir"
-#     util.classify_data_format.cache_clear()
-#     assert util.classify_data_format(path=path) == util.DataFormat.UNKNOWN
-#     assert logged(f"Path not found: {path}")
 
 
 @mark.parametrize(
