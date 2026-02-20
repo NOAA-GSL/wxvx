@@ -726,18 +726,28 @@ def test_workflow__enforce_point_truth_type(c):
 
 
 @mark.parametrize(
-    ("fmt", "path"),
-    [(DataFormat.NETCDF, "/path/to/a.nc"), (DataFormat.ZARR, "/path/to/a.zarr")],
+    ("datafmt_expected", "fmtstr", "path"),
+    [
+        (DataFormat.NETCDF, "netcdf", "/path/to/a.nc"),
+        (DataFormat.NETCDF, None, "/path/to/a.nc"),
+        (DataFormat.ZARR, "zarr", "/path/to/a.zarr"),
+        (DataFormat.ZARR, None, "/path/to/a.zarr"),
+    ],
 )
-def test_workflow__forecast_grid(c, fmt, path, tc, testvars):
-    with patch.object(workflow, "classify_data_format", return_value=fmt):
-        req, datafmt = workflow._forecast_grid(
+def test_workflow__forecast_grid(c, datafmt_expected, fmtstr, path, tc, testvars):
+    c.forecast._format = fmtstr
+    with patch.object(
+        workflow, "classify_data_format", return_value=datafmt_expected
+    ) as classify_data_format:
+        req, datafmt_actual = workflow._forecast_grid(
             path=path, c=c, varname="foo", tc=tc, var=testvars[EC.t2]
         )
+    expected_classify_data_format_call_count = 0 if fmtstr else 1
+    assert classify_data_format.call_count == expected_classify_data_format_call_count
     # For netCDF and Zarr forecast datasets, the grid will be extracted from the dataset and CF-
     # decorated, so the requirement is a _grid_nc task, whose taskname is "Forecast grid ..."
     assert req.taskname.startswith("Forecast grid")
-    assert datafmt == fmt
+    assert datafmt_actual == datafmt_expected
 
 
 def test_workflow__forecast_grid__grib(c, tc, testvars):
