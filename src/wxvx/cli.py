@@ -30,13 +30,15 @@ def main() -> None:
         c = validated_config(yc)
         if args.check:
             sys.exit(0)
-        logging.info("Preparing task graph for %s", args.task)
+        logging.info("Preparing task graph for '%s'", args.task)
         task = getattr(workflow, args.task)
         if args.threads > 1:
             logging.info("Using %s threads", args.threads)
         initialize_pool(args.threads)
         initialize_session(args.threads)
-        task(c, threads=args.threads)
+        node = task(c, threads=args.threads)
+        if args.fail and not node.ready:
+            fail(f"Task '{args.task}' did not fully succeed")
     except WXVXError as e:
         for line in traceback.format_exc().strip().split("\n"):
             logging.debug(line)
@@ -84,6 +86,12 @@ def _parse_args(argv: list[str]) -> Namespace:
         "--debug",
         action="store_true",
         help="Log all messages",
+    )
+    optional.add_argument(
+        "-f",
+        "--fail",
+        action="store_true",
+        help="Exit with error status if task did not fully succeed",
     )
     optional.add_argument(
         "-h",
