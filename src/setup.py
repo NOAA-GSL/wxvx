@@ -13,8 +13,7 @@ from setuptools import find_packages, setup  # type: ignore[import-untyped]
 
 recipe = os.environ.get("RECIPE_DIR", "../recipe")
 metasrc = Path(recipe, "meta.json")
-with metasrc.open() as f:
-    meta = json.load(f)
+meta = json.loads(metasrc.read_text())
 name_conda = meta["name"]
 name_py = name_conda.replace("-", "_")
 

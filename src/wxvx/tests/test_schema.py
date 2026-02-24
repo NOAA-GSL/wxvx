@@ -372,8 +372,7 @@ def validator(fs: FakeFilesystem, *args: Any) -> Callable:
     """
     schema_path = resource_path("config.jsonschema")
     fs.add_real_file(schema_path)
-    with schema_path.open() as f:
-        schema = json.load(f)
+    schema = json.loads(schema_path.read_text())
     defs = schema.get("$defs", {})
     for arg in args:
         schema = schema[arg]

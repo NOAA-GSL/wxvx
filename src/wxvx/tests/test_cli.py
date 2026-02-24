@@ -25,8 +25,7 @@ from wxvx.util import WXVXError, pkgname, resource_path
 @mark.parametrize("threads", [1, 2])
 def test_cli_main(config_data, logged, switch_c, switch_n, switch_t, threads, tmp_path):
     cfgfile = tmp_path / "config.yaml"
-    with cfgfile.open("w") as f:
-        yaml.safe_dump(config_data, f)
+    cfgfile.write_text(yaml.safe_dump(config_data))
     argv = [pkgname, switch_c, str(cfgfile), switch_n, str(threads), switch_t, S.plots]
     with (
         patch.object(cli, "_parse_args", wraps=cli._parse_args) as _parse_args,

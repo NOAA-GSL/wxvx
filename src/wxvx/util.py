@@ -178,8 +178,7 @@ def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:
 
 
 def resource(relpath: str | Path) -> str:
-    with resource_path(relpath).open("r") as f:
-        return f.read()
+    return resource_path(relpath).read_text()
 
 
 def resource_path(relpath: str | Path) -> Path:
