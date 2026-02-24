@@ -2,16 +2,16 @@
 Tests for wxvx.cli.
 """
 
-import logging
 import re
 from argparse import ArgumentTypeError, Namespace
 from pathlib import Path
 from unittest.mock import patch
 
 import yaml
+from iotaa import Asset, external
 from pytest import mark, raises
 
-from wxvx import cli
+from wxvx import cli, workflow
 from wxvx.strings import S
 from wxvx.types import Config
 from wxvx.util import WXVXError, pkgname, resource_path
@@ -85,9 +85,30 @@ def test_cli_main__exception(logged):
     assert e.value.code == 1
 
 
+@mark.parametrize("switch", ["-f", "--fail", None])
+def test_cli_main__fail(config_data, switch, tmp_path):
+    @external
+    def bad(_):
+        yield "bad"
+        yield Asset(None, lambda: False)
+
+    cfgfile = tmp_path / "config.yaml"
+    cfgfile.write_text(yaml.safe_dump(config_data))
+    argv = [pkgname, "-c", str(cfgfile), "-t", "bad", switch]
+    with (
+        patch.object(cli.sys, "argv", list(filter(None, argv))),
+        patch.object(workflow, "bad", create=True, new=bad),
+    ):
+        if switch:
+            with raises(SystemExit) as e:
+                cli.main()
+            assert e.value.code == 1
+        else:
+            cli.main()
+
+
 @mark.parametrize("switch", ["-l", "--list"])
 def test_cli_main__task_list(caplog, switch, tidy):
-    caplog.set_level(logging.INFO)
     with (
         patch.object(
             cli.sys, "argv", [pkgname, "-c", str(resource_path("config-grid.yaml")), switch]
@@ -126,14 +147,13 @@ def test_cli_main__show_config(capsys, check, fs, switch):
     assert isinstance(yaml.safe_load(capsys.readouterr().out), dict)
 
 
-def test_cli_main__task_missing(caplog):
-    caplog.set_level(logging.INFO)
+def test_cli_main__task_missing(logged):
     argv = [pkgname, "-c", str(resource_path("config-grid.yaml")), "-t", "foo"]
     with patch.object(cli.sys, "argv", argv), patch.object(cli, "use_uwtools_logger"):
         with raises(SystemExit) as e:
             cli.main()
         assert e.value.code == 1
-        assert "No such task: foo" in caplog.messages
+        assert logged("No such task: foo")
 
 
 def test_cli__arg_type_int_greater_than_zero__pass():

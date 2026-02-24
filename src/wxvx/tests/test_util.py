@@ -117,17 +117,17 @@ def test_util_expand_stop_precedes_start(utc):
     assert str(e.value) == "Stop time 2024-12-19 06:00:00 precedes start time 2024-12-19 12:00:00"
 
 
-def test_util_fail(caplog):
+def test_util_fail(caplog, logged):
     caplog.set_level(logging.INFO)
     with raises(SystemExit) as e:
         util.fail()
     assert not caplog.messages
     with raises(SystemExit) as e:
         util.fail("foo")
-    assert "foo" in caplog.messages
+    assert logged("foo")
     with raises(SystemExit) as e:
         util.fail("foo %s", "bar")
-    assert "foo bar" in caplog.messages
+    assert logged("foo bar")
     assert e.value.code == 1
 
 

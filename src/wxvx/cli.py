@@ -38,7 +38,7 @@ def main() -> None:
         initialize_session(args.threads)
         node = task(c, threads=args.threads)
         if args.fail and not node.ready:
-            fail(f"Task '{args.task}' did not fully succeed")
+            fail(f"Task '{args.task}' is incomplete")
     except WXVXError as e:
         for line in traceback.format_exc().strip().split("\n"):
             logging.debug(line)
@@ -91,7 +91,7 @@ def _parse_args(argv: list[str]) -> Namespace:
         "-f",
         "--fail",
         action="store_true",
-        help="Exit with error status if task did not fully succeed",
+        help="Exit with error status if task is incomplete",
     )
     optional.add_argument(
         "-h",
