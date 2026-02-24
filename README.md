@@ -315,6 +315,10 @@ Optional arguments:
       Show version and exit
 ```
 
+In many cases, for example when analyses or observations are not yet available to verify leading-edge forecast leadtimes, `wxvx` will not be able to complete the entire verification workflow in a single invocation, but to make partial progress each time it is iterated, to eventual completion. For this reason, `wxvx` defaults to exiting with `0` (success) status even if the requested task is incomplete.
+
+In some (e.g. retrospective) cases, however, it may expected that the entire workflow will complete in a single invocation, and that failure to do so is an error. In these cases, the `-f` / `--fail` switch may be used to tell `wxvx` to exit with `1` (error) status if the requested task is incomplete.
+
 ### Example
 
 Consider a `config.yaml`
