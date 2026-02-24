@@ -286,7 +286,7 @@ Some values may include Jinja2 expressions, processed at run-time with [`jinja2.
 
 ```
 $ wxvx --help
-usage: wxvx [-c FILE] [-t TASK] [-d] [-h] [-k] [-l] [-n N] [-s] [-v]
+usage: wxvx [-c FILE] [-t TASK] [-d] [-f] [-h] [-k] [-l] [-n N] [-s] [-v]
 
 wxvx
 
@@ -299,6 +299,8 @@ Required arguments:
 Optional arguments:
   -d, --debug
       Log all messages
+  -f, --fail
+      Exit with error status if task is incomplete
   -h, --help
       Show help and exit
   -k, --check
