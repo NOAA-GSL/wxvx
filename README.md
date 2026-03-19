@@ -467,3 +467,5 @@ In the GitHub web interface:
 conda install -y pygrib
 python -c "import pygrib; print(pygrib.open('a.grib2').message(1).projparams)"
 ```
+
+© Regents of the University of Colorado 2026
