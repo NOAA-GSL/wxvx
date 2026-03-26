@@ -82,6 +82,7 @@ def test_workflow_classify_url(expected_scheme, url):
     scheme, new = util.classify_url(url)
     assert scheme == expected_scheme
     if scheme == util.Proximity.LOCAL:
+        assert isinstance(new, Path)
         assert new.is_absolute()
 
 
