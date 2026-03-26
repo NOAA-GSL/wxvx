@@ -425,7 +425,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     yield {"cfgfile": cfgfile, "prepbufr": prepbufr}
     runscript = cfgfile.ref.with_suffix(".sh")
     content = "exec time pb2nc -v 4 {prepbufr} {netcdf} {config} >{log} 2>&1".format(
-        prepbufr=prepbufr.ref,
+        prepbufr=prepbufr.ref.resolve(),
         netcdf=path,
         config=cfgfile.ref,
         log=f"{path.stem}.log",
@@ -515,7 +515,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     export OMP_NUM_THREADS=1
     exec time grid_stat -v 4 {fcst} {obs} {config} >{log} 2>&1
     """.format(
-        fcst=fcst.ref,
+        fcst=fcst.ref.resolve(),
         obs=obs.ref,
         config=config.ref,
         log=f"{path.stem}.log",
@@ -552,7 +552,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yield reqs
     runscript = path.with_suffix(".sh")
     content = "exec time point_stat -v 4 {fcst} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
-        fcst=fcst.ref,
+        fcst=fcst.ref.resolve(),
         obs=obs.ref,
         config=config.ref,
         rundir=rundir,
