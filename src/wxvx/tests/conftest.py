@@ -81,7 +81,7 @@ def config_data():
                 [21.138123, 275.0],
                 [21.138123, 225.90452027],
             ],
-            S.name: "Forecast",
+            S.name: "Forecast Model",
             S.path: "/path/to/forecast-{{ yyyymmdd }}-{{ hh }}-{{ '%03d' % fh }}.nc",
             S.projection: {
                 "a": 6371229,

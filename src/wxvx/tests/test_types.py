@@ -248,7 +248,7 @@ def test_types_Forecast(config_data, forecast):
     assert obj.coords.time.inittime == "time"
     assert obj.coords.time.leadtime == "lead_time"
     assert obj.format is None
-    assert obj.name == "Forecast"
+    assert obj.name == "Forecast Model"
     assert obj.path == "/path/to/forecast-{{ yyyymmdd }}-{{ hh }}-{{ '%03d' % fh }}.nc"
     cfg = config_data[S.forecast]
     other1 = types.Forecast(**cfg)

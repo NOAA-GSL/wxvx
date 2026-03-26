@@ -275,7 +275,7 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
         val = "ADPSFC";
       }
     ];
-    model = "Forecast";
+    model = "Forecast Model";
     obs = {
       field = [
         {
@@ -348,7 +348,7 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
         val = "ADPSFC";
       }
     ];
-    model = "Forecast";
+    model = "Forecast Model";
     obs = {
       field = [
         {
@@ -879,7 +879,7 @@ def test_workflow__stat_reqs(baseline_name, c, statkit, cycle):
     args = (c, statkit.varname, statkit.tc, statkit.var)
     assert _stats_vs_grid.call_args_list[0].args == (
         *args,
-        f"forecast_gh_{statkit.level_type}_{statkit.level:04d}",
+        f"forecast_model_gh_{statkit.level_type}_{statkit.level:04d}",
         Source.FORECAST,
     )
 
@@ -984,7 +984,7 @@ def statkit(tc, testvars):
     return ns(
         level=level,
         level_type=level_type,
-        prefix=f"forecast_gh_{level_type}_{level:04d}",
+        prefix=f"forecast_model_gh_{level_type}_{level:04d}",
         source=Source.FORECAST,
         tc=tc,
         var=testvars[EC.gh],

@@ -670,7 +670,7 @@ def _stat_args(
         cycles = c.cycles
     sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast, Source.TRUTH: c.truth}
     name = cast(Named, sections[source]).name.lower()
-    prefix = lambda var: "%s_%s" % (name, str(var).replace("-", "_"))
+    prefix = lambda var: "%s_%s" % (name.replace(" ", "_"), str(var).replace("-", "_"))
     args = [
         (c, vn, tc, var, prefix(var), source)
         for (var, vn), tc in product(_vxvars(c).items(), gen_timecoords(cycles, c.leadtimes))
