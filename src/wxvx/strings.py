@@ -132,6 +132,7 @@ class _S(_ValsMatchKeys):
     Strings defined by wxvx, plus strings from various other sources.
     """
 
+    GDAS: str = _
     GFS: str = _
     HRRR: str = _
     OBS: str = _

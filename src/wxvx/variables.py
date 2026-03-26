@@ -220,6 +220,12 @@ class GFS(Var):
         return (UNKNOWN, None)
 
 
+class GDAS(GFS):
+    """
+    A GDAS variable.
+    """
+
+
 class HRRR(GFS):
     """
     A HRRR variable.
