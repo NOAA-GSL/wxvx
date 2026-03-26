@@ -111,7 +111,7 @@ def classify_url(url: str) -> tuple[Proximity, str | Path]:
     if p.scheme in {"http", "https"}:
         return Proximity.REMOTE, url
     if p.scheme in {"file", ""}:
-        return Proximity.LOCAL, Path(p.path if p.scheme else url)
+        return Proximity.LOCAL, Path(p.path if p.scheme else url).resolve()
     msg = f"Scheme '{p.scheme}' in '{url}' not supported."
     raise WXVXError(msg)
 

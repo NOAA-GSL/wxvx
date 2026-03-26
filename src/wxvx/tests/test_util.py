@@ -75,11 +75,14 @@ def test_util_classify_data_format__pass_zarr(tmp_path):
         ("http://example.com/path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.REMOTE),
         ("file:///path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
         ("/path/to/gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
+        ("gfs.t00z.pgrb2.0p25.f001", util.Proximity.LOCAL),
     ],
 )
 def test_workflow_classify_url(expected_scheme, url):
-    scheme, _ = util.classify_url(url)
+    scheme, new = util.classify_url(url)
     assert scheme == expected_scheme
+    if scheme == util.Proximity.LOCAL:
+        assert new.is_absolute()
 
 
 def test_workflow_classify_url_unsupported():
