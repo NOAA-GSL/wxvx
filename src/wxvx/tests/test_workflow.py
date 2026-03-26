@@ -275,7 +275,7 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
         val = "ADPSFC";
       }
     ];
-    model = "Forecast Model";
+    model = "Forecast_Model";
     obs = {
       field = [
         {
@@ -348,7 +348,7 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
         val = "ADPSFC";
       }
     ];
-    model = "Forecast Model";
+    model = "Forecast_Model";
     obs = {
       field = [
         {

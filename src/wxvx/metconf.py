@@ -226,8 +226,11 @@ def _top(k: str, v: Any, level: int) -> list[str]:
         case MET.quality_mark_thresh:
             return _kvpair(k, _bare(v), level)
         # Scalar: quoted.
-        case MET.model | MET.obtype | MET.output_prefix | MET.tmp_dir:
+        case MET.obtype | MET.output_prefix | MET.tmp_dir:
             return _kvpair(k, _quoted(v), level)
+        # Scalar: quoted with no whitespace.
+        case MET.model:
+            return _kvpair(k, _quoted(v.replace(" ", "_")), level)
         # Sequence: quoted.
         case MET.message_type | MET.obs_bufr_var:
             return _sequence(k, v, _quoted, level)
