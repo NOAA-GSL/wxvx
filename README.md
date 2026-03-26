@@ -210,7 +210,7 @@ Where to store grids extracted from baseline datasets. When `baseline.name` is `
 
 ### paths.grids.forecast
 
-Where to store grids extracted from netCDF or Zarr forecast datasets. GRIB forecast datasets currently must be local, and grids are processed directly from their containing files without being extracted into separate files.
+Where to store grids extracted from netCDF or Zarr forecast datasets. GRIB forecast datasets currently must be local, and grids are processed directly from their containing files without being extracted into separate files. This value is required for netCDF and Zarr datasets, and ignored for local GRIB datasets.
 
 ### paths.grids.truth
 

@@ -271,12 +271,8 @@ def test_schema_paths_grids(config_data, fs, logged):
     for key in [S.forecast, S.truth]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'string'")
-    # Some values are required:
-    for key in [S.forecast]:
-        assert not ok(with_del(config, key))
-        assert logged(f"'{key}' is a required property")
     # Some values are optional:
-    for key in [S.baseline]:
+    for key in [S.baseline, S.forecast]:
         assert ok(with_del(config, key))
 
 
