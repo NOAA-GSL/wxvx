@@ -19,6 +19,7 @@ requirements:
     - iotaa 1.6.*
     - met2go 11.0.3.*
     - netcdf4 1.7.*
+    - pandas 2.2.*
     - pyproj 3.7.*
     - python-eccodes 2.42.*
     - pyyaml 6.0.*
@@ -35,9 +36,9 @@ test:
     - make 4.4.*
     - mypy 1.19.*
     - pandas-stubs
-    - pyfakefs 5.10.* # undiagnosed race-condition test failure observed with 6.1.*
+    - pyfakefs >=6.1.6
     - pytest 9.0.*
-    - pytest-cov 7.0.*
+    - pytest-cov 7.1.*
     - pytest-randomly 3.15.*
     - pytest-xdist 3.8.*
     - ruff 0.15.*
