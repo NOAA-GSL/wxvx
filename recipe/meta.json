@@ -1,6 +1,6 @@
 {
-  "build": "py_0",
-  "buildnum": 0,
+  "build": "py_1",
+  "buildnum": 1,
   "name": "wxvx",
   "packages": {
     "dev": [
@@ -29,7 +29,7 @@
       "types-PyYAML",
       "types-requests",
       "types-seaborn",
-      "uwtools ==2.13.*",
+      "uwtools >=2.14.0",
       "xarray ==2025.12.*",
       "zarr ==3.1.*"
     ],
@@ -43,7 +43,7 @@
       "pyyaml ==6.0.*",
       "requests ==2.32.*",
       "seaborn ==0.13.*",
-      "uwtools ==2.13.*",
+      "uwtools >=2.14.0",
       "xarray ==2025.12.*",
       "zarr ==3.1.*"
     ]
