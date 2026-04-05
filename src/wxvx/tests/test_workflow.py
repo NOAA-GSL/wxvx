@@ -767,9 +767,7 @@ def test_workflow__forecast_grid__grib(c, tc, testvars):
         req, datafmt = workflow._forecast_grid(
             path=path, c=c, varname="foo", tc=tc, var=testvars[EC.t2]
         )
-    # For GRIB forecast datasets, the entire GRIB file will be accessed by MET, so the requirement
-    # is an existing local path.
-    assert req.taskname.startswith("Existing path")
+    assert req.taskname.startswith("Forecast grid")
     assert datafmt == DataFormat.GRIB
 
 
@@ -799,7 +797,7 @@ def test_workflow__forecast_grid__no_coords(c, fmt, path, tc, testvars):
     with patch.object(workflow, "classify_data_format", return_value=fmt):
         if fmt == DataFormat.GRIB:
             req, datafmt = workflow._forecast_grid(**args)
-            assert req.taskname.startswith("Existing path")
+            assert req.taskname.startswith("Forecast grid")
             assert datafmt == DataFormat.GRIB
         else:
             with raises(WXVXError) as e:
