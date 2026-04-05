@@ -210,7 +210,7 @@ Where to store grids extracted from baseline datasets. When `baseline.name` is `
 
 ### paths.grids.forecast
 
-Where to store grids extracted from netCDF or Zarr forecast datasets. GRIB forecast datasets currently must be local, and grids are processed directly from their containing files without being extracted into separate files. This value is required for netCDF and Zarr datasets, and ignored for local GRIB datasets.
+Where to store grids extracted from forecast datasets.
 
 ### paths.grids.truth
 
@@ -248,7 +248,7 @@ Name of the truth to verify against. Currently supported values are: `GFS`, `HRR
 
 One of `grid` or `point`.
 
-* For `grid`, `url` should point to GRIB data, and `name` should be one of: `GFS`, `HRRR`.
+* For `grid`, `url` should point to GRIB data. Supported `name` are: `GDAS`, `GFS`, `HRRR`.
 
 * For `point`, `url` should point to PREPBUFR data, `name` should be `PREPBUFR`, and `regrid.to` must not be `truth`.
 
