@@ -471,8 +471,11 @@ def test__workflow__grib_messages(c, expected, fakefs, logged, msgs, node, tc, t
             assert logged("Found 2 GRIB messages")
 
 
+@mark.parametrize("source", [Source.FORECAST, Source.TRUTH])
 @mark.parametrize("template", ["{root}/foo", "file://{root}/foo"])
-def test_workflow__grid_grib__local(config_data, fakefs, gen_config, node, tc, template, testvars):
+def test_workflow__grid_grib__local(
+    config_data, fakefs, gen_config, node, source, tc, template, testvars
+):
     config_data[S.truth][S.url] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
     with (
@@ -483,7 +486,7 @@ def test_workflow__grid_grib__local(config_data, fakefs, gen_config, node, tc, t
         codes_index_write.side_effect = lambda _, path: path.touch()
         gid = 42
         node.ref = [gid]
-        grib_node = workflow._grid_grib(c=c, tc=tc, var=testvars[EC.t], source=Source.TRUTH)
+        grib_node = workflow._grid_grib(c=c, tc=tc, var=testvars[EC.t], source=source)
         assert grib_node.ready
         _grib_messages.assert_called_once()
         codes_index_write.assert_called_once_with(gid, grib_node.ref)

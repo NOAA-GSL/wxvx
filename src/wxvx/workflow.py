@@ -345,21 +345,19 @@ def _grib_messages(c: Config, path: Path, tc: TimeCoords, var: Var, source: Sour
 @task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var, source: Source):
     if source is Source.BASELINE and c.baseline.name != S.truth:
+        gridsdir = c.paths.grids_baseline
         template = cast(str, c.baseline.url)
     elif source is Source.FORECAST:
+        gridsdir = c.paths.grids_forecast
         template = cast(str, c.forecast.path)
-    else:  # source is Source.TRUTH
+    else:  # source is Source.TRUTH, or baseline is synonymous with truth
+        gridsdir = c.paths.grids_truth
         template = c.truth.url
     url = render(template, tc, context=c.raw)
     proximity, src = classify_url(url)
     if source is Source.FORECAST:
         assert proximity is Proximity.LOCAL
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    gridsdir = {
-        Source.BASELINE: c.paths.grids_baseline,
-        Source.FORECAST: c.paths.grids_forecast,
-        Source.TRUTH: c.paths.grids_truth,
-    }[source]
     outdir = gridsdir / yyyymmdd / hh / leadtime
     path = outdir / f"{var}.grib2"
     taskname = "%s grid %s" % (source.name.lower().capitalize(), path)
