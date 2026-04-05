@@ -302,7 +302,11 @@ def _grib_index_data_wgrib2(c: Config, outdir: Path, tc: TimeCoords, url: str):
 @task
 def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source: Source):
     yyyymmdd, hh, leadtime = tcinfo(tc)
-    gridsdir = c.paths.grids_truth if source is Source.TRUTH else c.paths.grids_baseline
+    gridsdir = {
+        Source.BASELINE: c.paths.grids_baseline,
+        Source.FORECAST: c.paths.grids_forecast,
+        Source.TRUTH: c.paths.grids_truth,
+    }[source]
     outdir = gridsdir / yyyymmdd / hh / leadtime
     path = outdir / f"{grib_path.name}.ecidx"
     taskname = "GRIB index file %s %s" % (path, _at_validtime(tc))
@@ -317,11 +321,11 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source:
 
 
 @task
-def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var, source: Source):
+def _grib_messages(c: Config, path: Path, tc: TimeCoords, var: Var, source: Source):
     taskname = "GRIB message for %s in %s %s" % (var, path, _at_validtime(tc))
     yield taskname
-    exists = [False]
-    yield Asset(exists, lambda: exists[0])
+    messages: list[int] = []
+    yield Asset(messages, lambda: bool(messages))
     idx = _grib_index_file_eccodes(c, path, tc, source)
     yield idx
     idx = ec.codes_index_read(str(idx.ref))
@@ -331,38 +335,45 @@ def _grib_message_in_file(c: Config, path: Path, tc: TimeCoords, var: Var, sourc
         (S.level, int(var.level) if var.level else 0),
     ]:
         ec.codes_index_select(idx, k, v)
-    count = 0
     while gid := ec.codes_new_from_index(idx):
-        count += 1
-        ec.codes_release(gid)
+        messages.append(gid)
+    count = len(messages)
     if count > 1:
         logging.warning("Found %d GRIB messages matching %s in index %s.", count, var, path)
-    exists[0] = count > 0
 
 
 @task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var, source: Source):
-    assert source in (Source.BASELINE, Source.TRUTH)
-    template = c.truth.url
     if source is Source.BASELINE and c.baseline.name != S.truth:
         template = cast(str, c.baseline.url)
+    elif source is Source.FORECAST:
+        template = cast(str, c.forecast.path)
+    else:  # source is Source.TRUTH
+        template = c.truth.url
     url = render(template, tc, context=c.raw)
     proximity, src = classify_url(url)
+    if source is Source.FORECAST:
+        assert proximity is Proximity.LOCAL
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    gridsdir = {
+        Source.BASELINE: c.paths.grids_baseline,
+        Source.FORECAST: c.paths.grids_forecast,
+        Source.TRUTH: c.paths.grids_truth,
+    }[source]
+    outdir = gridsdir / yyyymmdd / hh / leadtime
+    path = outdir / f"{var}.grib2"
+    taskname = "%s grid %s" % (source.name.lower().capitalize(), path)
+    yield taskname
+    yield Asset(path, path.is_file)
     if proximity == Proximity.LOCAL:
-        yield "GRIB file %s providing %s grid %s" % (src, var, _at_validtime(tc))
-        exists = [False]
-        yield Asset(src, lambda: exists[0])
-        msg = _grib_message_in_file(c, src, tc, var, source)
-        yield msg
-        exists[0] = msg.ready
+        msgs = _grib_messages(c, src, tc, var, source)
+        yield msgs
+        gids = msgs.ref
+        path.parent.mkdir(parents=True, exist_ok=True)
+        ec.codes_index_write(gids[0], path)
+        for gid in gids:
+            ec.codes_release(gid)
     else:
-        yyyymmdd, hh, leadtime = tcinfo(tc)
-        gridsdir = c.paths.grids_truth if source is Source.TRUTH else c.paths.grids_baseline
-        outdir = gridsdir / yyyymmdd / hh / leadtime
-        path = outdir / f"{var}.grib2"
-        taskname = "%s grid %s" % (source.name.lower().capitalize(), path)
-        yield taskname
-        yield Asset(path, path.is_file)
         idxdata = _grib_index_data_wgrib2(c, outdir, tc, url=f"{url}.idx")
         yield idxdata
         var_idx = idxdata.ref[str(var)]
@@ -611,7 +622,7 @@ def _forecast_grid(
     if data_format is DataFormat.UNKNOWN:
         return _missing(path), data_format
     if data_format == DataFormat.GRIB:
-        return _existing(path), data_format
+        return _grid_grib(c, tc, var, Source.FORECAST), data_format
     # Dataset must therefore be netCDF or Zarr:
     if not c.forecast.coords:
         msg = "Set forecast.coords for dataset %s" % path

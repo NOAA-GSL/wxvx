@@ -452,7 +452,7 @@ def test_workflow__grib_index_file_eccodes(c, fakefs, logged, tc):
 
 
 @mark.parametrize(("msgs", "expected"), [(0, False), (1, True), (2, True)])
-def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, node, tc, testvars):
+def test__workflow__grib_messages(c, expected, fakefs, logged, msgs, node, tc, testvars):
     grib_path = fakefs / "foo"
     idx_path = fakefs / "foo.ecidx"
     idx_path.touch()
@@ -463,7 +463,7 @@ def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, node
         patch.object(workflow, "ec") as ec,
     ):
         ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
-        node = workflow._grib_message_in_file(
+        node = workflow._grib_messages(
             c=c, path=grib_path, tc=tc, var=testvars[EC.gh], source=Source.TRUTH
         )
         assert node.ready is expected
@@ -475,11 +475,19 @@ def test__workflow__grib_message_in_file(c, expected, fakefs, logged, msgs, node
 def test_workflow__grid_grib__local(config_data, fakefs, gen_config, node, tc, template, testvars):
     config_data[S.truth][S.url] = template.format(root=fakefs)
     c = gen_config(config_data, fakefs)
-    with patch.object(
-        workflow, "_grib_message_in_file", return_value=node
-    ) as _grib_message_in_file:
-        assert workflow._grid_grib(c=c, tc=tc, var=testvars[EC.t], source=Source.TRUTH).ready
-        _grib_message_in_file.assert_called_once()
+    with (
+        patch.object(workflow, "_grib_messages", return_value=node) as _grib_messages,
+        patch.object(workflow.ec, "codes_index_write") as codes_index_write,
+        patch.object(workflow.ec, "codes_release") as codes_release,
+    ):
+        codes_index_write.side_effect = lambda _, path: path.touch()
+        gid = 42
+        node.ref = [gid]
+        grib_node = workflow._grid_grib(c=c, tc=tc, var=testvars[EC.t], source=Source.TRUTH)
+        assert grib_node.ready
+        _grib_messages.assert_called_once()
+        codes_index_write.assert_called_once_with(gid, grib_node.ref)
+        codes_release.assert_called_once_with(gid)
 
 
 def test_workflow__grid_grib__remote(c, tc, testvars):
