@@ -8,9 +8,8 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from textwrap import indent
-from threading import Event
 from types import SimpleNamespace as ns
-from typing import cast
+from typing import Any, cast
 from unittest.mock import ANY, Mock, patch
 
 import pandas as pd
@@ -451,79 +450,61 @@ def test_workflow__grib_index_file_eccodes(c, fakefs, logged, tc):
     assert logged("Wrote %s" % idx_path)
 
 
-@mark.parametrize(("msgs", "expected"), [(0, False), (1, True), (2, True)])
-def test__workflow__grib_messages(c, expected, fakefs, logged, msgs, node, tc, testvars):
-    grib_path = fakefs / "foo"
-    idx_path = fakefs / "foo.ecidx"
-    idx_path.touch()
-    with (
-        patch.object(
-            workflow, "_grib_index_file_eccodes", return_value=node
-        ) as _grib_index_file_eccodes,
-        patch.object(workflow, "ec") as ec,
-    ):
-        ec.codes_new_from_index.side_effect = [object()] * msgs + [None]
-        node = workflow._grib_messages(
-            c=c, path=grib_path, tc=tc, var=testvars[EC.gh], source=Source.TRUTH
-        )
-        assert node.ready is expected
-        if msgs == 2:
-            assert logged("Found 2 GRIB messages")
-
-
+@mark.parametrize("path", ["/path/to/a.grib2", "file:///path/to/a.grib2"])
 @mark.parametrize("source", [Source.FORECAST, Source.TRUTH])
-@mark.parametrize("template", ["{root}/foo", "file://{root}/foo"])
 def test_workflow__grid_grib__local(
-    config_data, fakefs, gen_config, node, source, tc, template, testvars
+    config_data, fakefs, gen_config, node, path, source, tc, testvars
 ):
-    config_data[S.truth][S.url] = template.format(root=fakefs)
+    node_idxdata = node
+    if source is Source.FORECAST:
+        config_data[S.forecast][S.path] = path
+        pre = "Forecast"
+    else:
+        config_data[S.truth][S.url] = path
+        pre = "Truth"
     c = gen_config(config_data, fakefs)
     with (
-        patch.object(workflow, "_grib_messages", return_value=node) as _grib_messages,
-        patch.object(workflow.ec, "codes_write") as codes_write,
-        patch.object(workflow.ec, "codes_release") as codes_release,
+        patch.object(
+            workflow, "_grib_index_file_eccodes", return_value=node_idxdata
+        ) as _grib_index_file_eccodes,
+        patch.object(workflow, "_grid_grib_from_local") as _grid_grib_from_local,
     ):
-        gid = 42
-        node.ref = [gid]
-        grib_node = workflow._grid_grib(c=c, tc=tc, var=testvars[EC.t], source=source)
-        assert grib_node.ready
-        _grib_messages.assert_called_once()
-        codes_write.assert_called_once_with(gid, ANY)
-        codes_release.assert_called_once_with(gid)
+        node_idxdata.ref = Path("/path/to/a.ecidx")
+        var = testvars[EC.t]
+        gribfile = workflow._grid_grib(c=c, tc=tc, var=var, source=source)
+        path = Path("/path/to/a.grib2")
+        _grib_index_file_eccodes.assert_called_once_with(c, path, tc, source)
+        _grid_grib_from_local.assert_called_once_with(
+            gribfile.ref, node_idxdata.ref, var, "%s grid %s" % (pre, gribfile.ref)
+        )
 
 
-def test_workflow__grid_grib__remote(c, tc, testvars):
-    idxdata = {
-        "gh-isobaricInhPa-0900": variables.HRRR(
-            name=NOAA.HGT, levstr="900 mb", firstbyte=0, lastbyte=0
-        ),
-        "t-isobaricInhPa-0900": variables.HRRR(
-            name=NOAA.TMP, levstr="900 mb", firstbyte=2, lastbyte=2
-        ),
-    }
-    ready = Event()
-
-    @external
-    def mock(*_args, **_kwargs):
-        yield "mock"
-        yield Asset(idxdata, ready.is_set)
-
-    with patch.object(workflow, "_grib_index_data_wgrib2", wraps=mock) as _grib_index_data_wgrib2:
-        node = workflow._grid_grib(c=c, tc=tc, var=testvars[EC.t], source=Source.TRUTH)
-        path = node.ref
-        assert not path.exists()
-        ready.set()
-        with patch.object(workflow, "fetch") as fetch:
-            fetch.side_effect = lambda taskname, url, path, headers: path.touch()  # noqa: ARG005
-            path.parent.mkdir(parents=True, exist_ok=True)
-            workflow._grid_grib(c=c, tc=tc, var=testvars[EC.t], source=Source.TRUTH)
-        assert path.exists()
-    yyyymmdd = tc.yyyymmdd
-    hh = tc.hh
-    fh = int(tc.leadtime.total_seconds() // 3600)
-    outdir = c.paths.grids_truth / tc.yyyymmdd / tc.hh / f"{fh:03d}"
-    url = f"https://some.url/{yyyymmdd}/{hh}/{fh:02d}/a.grib2.idx"
-    _grib_index_data_wgrib2.assert_called_with(c, outdir, tc, url=url)
+@mark.parametrize("source", [Source.BASELINE, Source.TRUTH])
+def test_workflow__grid_grib__remote(c, node, source, tc, testvars):
+    node.ref = idxfile = Path("/path/to/a.idx")
+    var = testvars[EC.t]
+    with (
+        patch.object(workflow, "_grib_index_data_wgrib2") as _grib_index_data_wgrib2,
+        patch.object(workflow, "_grid_grib_from_remote") as _grid_grib_from_remote,
+    ):
+        _grib_index_data_wgrib2.return_value = node
+        gribfile = workflow._grid_grib(c=c, tc=tc, var=var, source=source)
+    if source is Source.BASELINE:
+        outroot = c.paths.grids_baseline
+        pre = "Baseline"
+        template = c.baseline.url
+    else:
+        outroot = c.paths.grids_truth
+        pre = "Truth"
+        template = c.truth.url
+    yyyymmdd, hh, leadtime = tcinfo(tc)
+    outdir = Path(outroot, yyyymmdd, hh, leadtime)
+    url = workflow.render(template, tc, context=c.raw)
+    _grib_index_data_wgrib2.assert_called_once_with(c, outdir, tc, url=f"{url}.idx")
+    path = outdir / f"{var}.grib2"
+    _grid_grib_from_remote.assert_called_once_with(
+        path, idxfile, var, "%s grid %s" % (pre, gribfile.ref), url
+    )
 
 
 def test_workflow__grid_nc(c_real_fs, check_cf_metadata, da_with_leadtime, tc, testvars):
@@ -802,6 +783,74 @@ def test_workflow__forecast_grid__no_coords(c, fmt, path, tc, testvars):
             with raises(WXVXError) as e:
                 workflow._forecast_grid(**args)
             assert str(e.value) == f"Set forecast.coords for dataset {path}"
+
+
+@mark.parametrize("source", [Source.BASELINE, Source.FORECAST, Source.TRUTH])
+def test_workflow__grib_grid_gridsdir_template(c, source):
+    result = workflow._grid_grib_gridsdir_template(c=c, source=source)
+    if source is Source.BASELINE:
+        assert result == (Path(c.paths.grids_baseline), c.baseline.url)
+        # Test special case where baseline is aliased to truth:
+        object.__setattr__(c.baseline, "name", "truth")
+        expected = (Path(c.paths.grids_truth), c.truth.url)
+        assert workflow._grid_grib_gridsdir_template(c=c, source=source) == expected
+    elif source is Source.FORECAST:
+        assert result == (Path(c.paths.grids_forecast), c.forecast.path)
+    else:  # source is Source.TRUTH:
+        assert result == (Path(c.paths.grids_truth), c.truth.url)
+
+
+@mark.parametrize("gids", [[], [11], [11, 22]])
+def test_workflow__grid_grib_from_local(caplog, fakefs, gids, testvars):
+    path = fakefs / "a.grib2"
+    idxfile = fakefs / "a.ecidx"
+    var = testvars[EC.t2]
+    iid = 42
+    with patch.object(workflow, "ec") as ec:
+        ec.codes_index_read.return_value = iid
+        ec.codes_new_from_index.side_effect = [*gids, None]
+        workflow._grid_grib_from_local(path=path, idxfile=idxfile, var=var, taskname="foo")
+    ec.codes_index_read.assert_called_once_with(str(idxfile))
+    expected: Any
+    for expected, actual in zip(
+        [("shortName", "2t"), ("typeOfLevel", "heightAboveGround"), ("level", 2)],
+        ec.codes_index_select.call_args_list,
+        strict=True,
+    ):
+        assert actual.args == (iid, *expected)
+    if gids:
+        ec.codes_write.assert_called_once_with(gids[0], ANY)
+        assert "Wrote gid %s to %s" % (gids[0], path) in caplog.text
+        if len(gids) > 1:
+            assert "%s GRIB messages matched" % len(gids) in caplog.text
+        for gid in gids:
+            assert "Released gid %s" % gid in caplog.text
+    else:
+        ec.codex_write.assert_not_called()
+        assert "No GRIB message matched %s in %s" % (var, idxfile)
+    for expected, actual in zip(gids, ec.codes_release.call_args_list, strict=True):
+        assert actual.args == (expected,)
+    ec.codes_index_release.assert_called_once_with(iid)
+    assert "Released index %s" % iid in caplog.text
+
+
+def test_workflow__grid_grib_from_remote(testvars):
+    idxdata = {
+        "gh-isobaricInhPa-0900": variables.HRRR(
+            name=NOAA.HGT, levstr="900 mb", firstbyte=0, lastbyte=1
+        ),
+        "t-isobaricInhPa-0900": variables.HRRR(
+            name=NOAA.TMP, levstr="900 mb", firstbyte=2, lastbyte=3
+        ),
+    }
+    path = "/path/to/a.grib2"
+    taskname = "foo"
+    url = "https://some.url"
+    with patch.object(workflow, "fetch") as fetch:
+        for key, byterange in [(EC.gh, "0-1"), (EC.t, "2-3")]:
+            kwargs = dict(path=path, idxdata=idxdata, var=testvars[key], taskname=taskname, url=url)
+            workflow._grid_grib_from_remote(**kwargs)
+            fetch.assert_called_with(taskname, url, path, {"Range": f"bytes={byterange}"})
 
 
 def test_workflow__meta(c):

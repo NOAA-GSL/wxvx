@@ -321,40 +321,9 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source:
 
 
 @task
-def _grib_messages(c: Config, path: Path, tc: TimeCoords, var: Var, source: Source):
-    taskname = "GRIB message for %s in %s %s" % (var, path, _at_validtime(tc))
-    yield taskname
-    messages: list[int] = []
-    yield Asset(messages, lambda: bool(messages))
-    idx = _grib_index_file_eccodes(c, path, tc, source)
-    yield idx
-    idx = ec.codes_index_read(str(idx.ref))
-    for k, v in [
-        (S.shortName, var.name),
-        (S.typeOfLevel, var.level_type),
-        (S.level, int(var.level) if var.level else 0),
-    ]:
-        ec.codes_index_select(idx, k, v)
-    while gid := ec.codes_new_from_index(idx):
-        messages.append(gid)
-    count = len(messages)
-    if count > 1:
-        logging.warning("Found %d GRIB messages matching %s in index %s.", count, var, path)
-
-
-@task
 def _grid_grib(c: Config, tc: TimeCoords, var: Var, source: Source):
-    if source is Source.BASELINE and c.baseline.name != S.truth:
-        gridsdir = c.paths.grids_baseline
-        template = cast(str, c.baseline.url)
-    elif source is Source.FORECAST:
-        gridsdir = c.paths.grids_forecast
-        template = cast(str, c.forecast.path)
-    else:  # source is Source.TRUTH, or baseline is synonymous with truth
-        gridsdir = c.paths.grids_truth
-        template = c.truth.url
-    url = render(template, tc, context=c.raw)
-    proximity, src = classify_url(url)
+    gridsdir, template = _grid_grib_gridsdir_template(c, source)
+    proximity, url = classify_url(render(template, tc, context=c.raw))
     if source is Source.FORECAST:
         assert proximity is Proximity.LOCAL
     yyyymmdd, hh, leadtime = tcinfo(tc)
@@ -364,24 +333,15 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var, source: Source):
     yield taskname
     yield Asset(path, path.is_file)
     if proximity == Proximity.LOCAL:
-        # See https://github.com/dtcenter/METplus/discussions/3252 for background on why it's
-        # necessary to extract the grid to a single-message GRIB file instead of pointing MET
-        # at the complete local GRIB file.
-        msgs = _grib_messages(c, src, tc, var, source)
-        yield msgs
-        gids = msgs.ref
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("wb") as f:
-            ec.codes_write(gids[0], f)
-        for gid in gids:
-            ec.codes_release(gid)
+        assert isinstance(url, Path)
+        idxfile = _grib_index_file_eccodes(c, url, tc, source)
+        yield idxfile
+        _grid_grib_from_local(path, idxfile.ref, var, taskname)
     else:
+        assert isinstance(url, str)
         idxdata = _grib_index_data_wgrib2(c, outdir, tc, url=f"{url}.idx")
         yield idxdata
-        var_idx = idxdata.ref[str(var)]
-        fb, lb = var_idx.firstbyte, var_idx.lastbyte
-        headers = {"Range": "bytes=%s" % (f"{fb}-{lb}" if lb else fb)}
-        fetch(taskname, url, path, headers)
+        _grid_grib_from_remote(path, idxdata.ref, var, taskname, url)
 
 
 @task
@@ -630,6 +590,54 @@ def _forecast_grid(
         msg = "Set forecast.coords for dataset %s" % path
         raise WXVXError(msg)
     return _grid_nc(c, varname, tc, var), data_format
+
+
+def _grid_grib_gridsdir_template(c: Config, source: Source) -> tuple[Path, str]:
+    if source is Source.BASELINE and c.baseline.name != S.truth:
+        return c.paths.grids_baseline, cast(str, c.baseline.url)
+    if source is Source.FORECAST:
+        return c.paths.grids_forecast, cast(str, c.forecast.path)
+    # Either source is Source.TRUTH, or source is Source.BASELINE with name 'truth':
+    return c.paths.grids_truth, c.truth.url
+
+
+def _grid_grib_from_local(path: Path, idxfile: Path, var: Var, taskname: str) -> None:
+    # See https://github.com/dtcenter/METplus/discussions/3252 for background on why it's
+    # necessary to extract the grid to a single-message GRIB file instead of pointing MET
+    # at the complete local GRIB file.
+    iid = ec.codes_index_read(str(idxfile))
+    for k, v in [
+        (S.shortName, var.name),
+        (S.typeOfLevel, var.level_type),
+        (S.level, int(var.level) if var.level else 0),
+    ]:
+        ec.codes_index_select(iid, k, v)
+    gids = []
+    while gid := ec.codes_new_from_index(iid):
+        gids.append(gid)
+    if gids:
+        if len(gids) > 1:
+            logging.warning(
+                "%s: %d GRIB messages matched %s in %s", taskname, len(gids), var, idxfile
+            )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("wb") as f:
+            ec.codes_write(gids[0], f)
+        logging.debug("%s: Wrote gid %s to %s", taskname, gids[0], path)
+        for gid in gids:
+            ec.codes_release(gid)
+            logging.debug("%s: Released gid %s", taskname, gid)
+    else:
+        logging.warning("%s: No GRIB message matched %s in %s", taskname, var, idxfile)
+    ec.codes_index_release(iid)
+    logging.debug("%s: Released index %s", taskname, iid)
+
+
+def _grid_grib_from_remote(path: Path, idxdata: dict, var: Var, taskname: str, url: str) -> None:
+    var_idx = idxdata[str(var)]
+    fb, lb = var_idx.firstbyte, var_idx.lastbyte
+    headers = {"Range": "bytes=%s" % (f"{fb}-{lb}" if lb else fb)}
+    fetch(taskname, url, path, headers)
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
