@@ -334,6 +334,9 @@
               "type": "string"
             }
           },
+          "required": [
+            "forecast"
+          ],
           "type": "object"
         },
         "obs": {
