@@ -480,16 +480,15 @@ def test_workflow__grid_grib__local(
     c = gen_config(config_data, fakefs)
     with (
         patch.object(workflow, "_grib_messages", return_value=node) as _grib_messages,
-        patch.object(workflow.ec, "codes_index_write") as codes_index_write,
+        patch.object(workflow.ec, "codes_write") as codes_write,
         patch.object(workflow.ec, "codes_release") as codes_release,
     ):
-        codes_index_write.side_effect = lambda _, path: path.touch()
         gid = 42
         node.ref = [gid]
         grib_node = workflow._grid_grib(c=c, tc=tc, var=testvars[EC.t], source=source)
         assert grib_node.ready
         _grib_messages.assert_called_once()
-        codes_index_write.assert_called_once_with(gid, grib_node.ref)
+        codes_write.assert_called_once_with(gid, ANY)
         codes_release.assert_called_once_with(gid)
 
 

@@ -371,7 +371,8 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var, source: Source):
         yield msgs
         gids = msgs.ref
         path.parent.mkdir(parents=True, exist_ok=True)
-        ec.codes_index_write(gids[0], path)
+        with path.open("wb") as f:
+            ec.codes_write(gids[0], f)
         for gid in gids:
             ec.codes_release(gid)
     else:
