@@ -364,6 +364,9 @@ def _grid_grib(c: Config, tc: TimeCoords, var: Var, source: Source):
     yield taskname
     yield Asset(path, path.is_file)
     if proximity == Proximity.LOCAL:
+        # See https://github.com/dtcenter/METplus/discussions/3252 for background on why it's
+        # necessary to extract the grid to a single-message GRIB file instead of pointing MET
+        # at the complete local GRIB file.
         msgs = _grib_messages(c, src, tc, var, source)
         yield msgs
         gids = msgs.ref
