@@ -436,18 +436,16 @@ def test_workflow__grib_index_data_wgrib2(c, tc, tidy):
     }
 
 
-def test_workflow__grib_index_file_eccodes(c, fakefs, logged, tc):
+def test_workflow__grib_index_file_eccodes(c, caplog, fakefs, tc):
     grib = fakefs / "foo"
     grib.touch()
     with patch.object(workflow, "ec") as ec:
         ec.codes_index_write.side_effect = lambda _idx, p: Path(p).touch()
-        assert workflow._grib_index_file_eccodes(
-            c=c, grib_path=grib, tc=tc, source=Source.TRUTH
-        ).ready
-    yyyymmdd, hh, leadtime = tcinfo(tc)
-    idx_path = c.paths.grids_truth / yyyymmdd / hh / leadtime / f"{grib.name}.ecidx"
-    assert idx_path.is_file()
-    assert logged("Wrote %s" % idx_path)
+        idxfile = workflow._grib_index_file_eccodes(c=c, grib_path=grib, tc=tc, source=Source.TRUTH)
+    assert idxfile.ready
+    assert idxfile.ref.is_file()
+    for s in ["Opened %s" % grib, "Wrote %s" % idxfile.ref, "Released index"]:
+        assert s in caplog.text
 
 
 @mark.parametrize("path", ["/path/to/a.grib2", "file:///path/to/a.grib2"])

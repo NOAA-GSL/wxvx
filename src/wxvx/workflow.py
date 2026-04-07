@@ -314,10 +314,13 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source:
     yield Asset(path, path.is_file)
     yield _existing(grib_path)
     grib_index_keys = [S.shortName, S.typeOfLevel, S.level]
-    idx = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
+    iid = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
+    logging.debug("%s: Opened %s as %s", taskname, grib_path, iid)
     with atomic(path) as tmp:
-        ec.codes_index_write(idx, str(tmp))
-    logging.info("%s: Wrote %s", taskname, path)
+        ec.codes_index_write(iid, str(tmp))
+        logging.info("%s: Wrote %s", taskname, path)
+    ec.codes_index_release(iid)
+    logging.debug("%s: Released index %s", taskname, iid)
 
 
 @task
