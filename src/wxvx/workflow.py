@@ -48,6 +48,7 @@ if TYPE_CHECKING:
 
     from wxvx.types import Config, VarMeta
 
+_EC_LOCK = Lock()
 _PLOT_LOCK = Lock()
 
 # Public tasks
@@ -301,27 +302,28 @@ def _grib_index_data_wgrib2(c: Config, outdir: Path, tc: TimeCoords, url: str):
 
 @task
 def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source: Source):
-    yyyymmdd, hh, leadtime = tcinfo(tc)
     gridsdir = {
         Source.BASELINE: c.paths.grids_baseline,
         Source.FORECAST: c.paths.grids_forecast,
         Source.TRUTH: c.paths.grids_truth,
     }[source]
+    yyyymmdd, hh, leadtime = tcinfo(tc)
     outdir = gridsdir / yyyymmdd / hh / leadtime
     path = outdir / f"{grib_path.name}.ecidx"
     taskname = "GRIB index file %s %s" % (path, _at_validtime(tc))
     yield taskname
     yield Asset(path, path.is_file)
     yield _existing(grib_path)
-    # Keep index creation in-sync with index selection in _grib_index_file_eccodes.
+    # Keep index creation here in-sync with index selection in _grid_grib_from_local.
     keys = [f"{S.shortName}:s", f"{S.typeOfLevel}:s", f"{S.level}:l"]
-    iid = ec.codes_index_new_from_file(str(grib_path), keys)
-    logging.debug("%s: Opened %s as %s", taskname, grib_path, iid)
-    with atomic(path) as tmp:
-        ec.codes_index_write(iid, str(tmp))
+    with _EC_LOCK:
+        iid = ec.codes_index_new_from_file(str(grib_path), keys)
+        logging.debug("%s: Opened %s as %s", taskname, grib_path, iid)
+        with atomic(path) as tmp:
+            ec.codes_index_write(iid, str(tmp))
         logging.info("%s: Wrote %s", taskname, path)
-    ec.codes_index_release(iid)
-    logging.debug("%s: Released index %s", taskname, iid)
+        ec.codes_index_release(iid)
+        logging.debug("%s: Released index %s", taskname, iid)
 
 
 @task
@@ -609,30 +611,31 @@ def _grid_grib_from_local(path: Path, idxfile: Path, var: Var, taskname: str) ->
     # See https://github.com/dtcenter/METplus/discussions/3252 for background on why it's
     # necessary to extract the grid to a single-message GRIB file instead of pointing MET
     # at the complete local GRIB file.
-    iid = ec.codes_index_read(str(idxfile))
-    # Keep index selection in-sync with index creation in _grib_index_file_eccodes.
-    ec.codes_index_select_string(iid, "shortName", var.name)
-    ec.codes_index_select_string(iid, "typeOfLevel", var.level_type)
-    ec.codes_index_select_long(iid, "level", int(var.level) if var.level else 0)
-    gids = []
-    while gid := ec.codes_new_from_index(iid):
-        gids.append(gid)
-    if gids:
-        if len(gids) > 1:
-            logging.warning(
-                "%s: %d GRIB messages matched %s in %s", taskname, len(gids), var, idxfile
-            )
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with atomic(path) as tmp, tmp.open("wb") as f:
-            ec.codes_write(gids[0], f)
-        logging.debug("%s: Wrote gid %s to %s", taskname, gids[0], path)
-        for gid in gids:
-            ec.codes_release(gid)
-            logging.debug("%s: Released gid %s", taskname, gid)
-    else:
-        logging.warning("%s: No GRIB message matched %s in %s", taskname, var, idxfile)
-    ec.codes_index_release(iid)
-    logging.debug("%s: Released index %s", taskname, iid)
+    with _EC_LOCK:
+        iid = ec.codes_index_read(str(idxfile))
+        # Keep index selection here in-sync with index creation in _grib_index_file_eccodes.
+        ec.codes_index_select_string(iid, "shortName", var.name)
+        ec.codes_index_select_string(iid, "typeOfLevel", var.level_type)
+        ec.codes_index_select_long(iid, "level", int(var.level) if var.level else 0)
+        gids = []
+        while gid := ec.codes_new_from_index(iid):
+            gids.append(gid)
+        if gids:
+            if len(gids) > 1:
+                logging.warning(
+                    "%s: %d GRIB messages matched %s in %s", taskname, len(gids), var, idxfile
+                )
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with atomic(path) as tmp, tmp.open("wb") as f:
+                ec.codes_write(gids[0], f)
+            logging.debug("%s: Wrote gid %s to %s", taskname, gids[0], path)
+            for gid in gids:
+                ec.codes_release(gid)
+                logging.debug("%s: Released gid %s", taskname, gid)
+        else:
+            logging.warning("%s: No GRIB message matched %s in %s", taskname, var, idxfile)
+        ec.codes_index_release(iid)
+        logging.debug("%s: Released index %s", taskname, iid)
 
 
 def _grid_grib_from_remote(path: Path, idxdata: dict, var: Var, taskname: str, url: str) -> None:
