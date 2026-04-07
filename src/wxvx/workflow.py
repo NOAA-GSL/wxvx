@@ -621,7 +621,7 @@ def _grid_grib_from_local(path: Path, idxfile: Path, var: Var, taskname: str) ->
                 "%s: %d GRIB messages matched %s in %s", taskname, len(gids), var, idxfile
             )
         path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("wb") as f:
+        with atomic(path) as tmp, tmp.open("wb") as f:
             ec.codes_write(gids[0], f)
         logging.debug("%s: Wrote gid %s to %s", taskname, gids[0], path)
         for gid in gids:
