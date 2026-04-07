@@ -313,8 +313,7 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source:
     yield taskname
     yield Asset(path, path.is_file)
     yield _existing(grib_path)
-    grib_index_keys = [S.shortName, S.typeOfLevel, S.level]
-    iid = ec.codes_index_new_from_file(str(grib_path), grib_index_keys)
+    iid = ec.codes_index_new_from_file(str(grib_path), _GRIB_INDEX_KEYS)
     logging.debug("%s: Opened %s as %s", taskname, grib_path, iid)
     with atomic(path) as tmp:
         ec.codes_index_write(iid, str(tmp))
@@ -540,6 +539,8 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
 
 # Support
 
+_GRIB_INDEX_KEYS = [f"{S.shortName}:s", f"{S.typeOfLevel}:s", f"{S.level}:l"]
+
 
 def _at_validtime(tc: TimeCoords) -> str:
     yyyymmdd, hh, leadtime = tcinfo(tc)
@@ -609,11 +610,11 @@ def _grid_grib_from_local(path: Path, idxfile: Path, var: Var, taskname: str) ->
     # necessary to extract the grid to a single-message GRIB file instead of pointing MET
     # at the complete local GRIB file.
     iid = ec.codes_index_read(str(idxfile))
-    for k, v in [
-        (S.shortName, var.name),
-        (S.typeOfLevel, var.level_type),
-        (S.level, int(var.level) if var.level else 0),
-    ]:
+    for k, v in zip(
+        _GRIB_INDEX_KEYS,
+        [var.name, var.level_type, int(var.level) if var.level else 0],
+        strict=True,
+    ):
         ec.codes_index_select(iid, k, v)
     gids = []
     while gid := ec.codes_new_from_index(iid):

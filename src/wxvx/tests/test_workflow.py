@@ -811,7 +811,7 @@ def test_workflow__grid_grib_from_local(caplog, fakefs, gids, testvars):
     ec.codes_index_read.assert_called_once_with(str(idxfile))
     expected: Any
     for expected, actual in zip(
-        [("shortName", "2t"), ("typeOfLevel", "heightAboveGround"), ("level", 2)],
+        [("shortName:s", "2t"), ("typeOfLevel:s", "heightAboveGround"), ("level:l", 2)],
         ec.codes_index_select.call_args_list,
         strict=True,
     ):
