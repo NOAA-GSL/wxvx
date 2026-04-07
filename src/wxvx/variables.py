@@ -91,7 +91,7 @@ VARMETA = {
             cf_standard_name="eastward_wind",
             level_type=S.heightAboveGround,
             met_stats=[MET.ME, MET.RMSE],
-            name=EC.u_10m,
+            name=EC.u10,
             units="m s-1",
         ),
         VarMeta(
@@ -107,7 +107,7 @@ VARMETA = {
             cf_standard_name="northward_wind",
             level_type=S.heightAboveGround,
             met_stats=[MET.ME, MET.RMSE],
-            name=EC.v_10m,
+            name=EC.v10,
             units="m s-1",
         ),
         VarMeta(
@@ -178,16 +178,16 @@ class GFS(Var):
     @staticmethod
     def varname(name: str) -> str:
         return {
-            EC.t2: NOAA.TMP,
             EC.gh: NOAA.HGT,
             EC.q: NOAA.SPFH,
             EC.refc: NOAA.REFC,
             EC.sp: NOAA.PRES,
+            EC.t2: NOAA.TMP,
             EC.t: NOAA.TMP,
+            EC.u10: NOAA.UGRD,
             EC.u: NOAA.UGRD,
-            EC.u_10m: NOAA.UGRD,
+            EC.v10: NOAA.VGRD,
             EC.v: NOAA.VGRD,
-            EC.v_10m: NOAA.VGRD,
             EC.w: NOAA.VVEL,
         }.get(name, UNKNOWN)
 
@@ -200,9 +200,9 @@ class GFS(Var):
             (NOAA.SPFH, S.isobaricInhPa): EC.q,
             (NOAA.TMP, S.heightAboveGround): EC.t2,
             (NOAA.TMP, S.isobaricInhPa): EC.t,
-            (NOAA.UGRD, S.heightAboveGround): EC.u_10m,
+            (NOAA.UGRD, S.heightAboveGround): EC.u10,
             (NOAA.UGRD, S.isobaricInhPa): EC.u,
-            (NOAA.VGRD, S.heightAboveGround): EC.v_10m,
+            (NOAA.VGRD, S.heightAboveGround): EC.v10,
             (NOAA.VGRD, S.isobaricInhPa): EC.v,
             (NOAA.VVEL, S.isobaricInhPa): EC.w,
         }.get((name, level_type), UNKNOWN)

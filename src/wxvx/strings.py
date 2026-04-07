@@ -33,10 +33,10 @@ class _EC(_ValsMatchKeys):
     sp: str = _
     t2: str = "2t"
     t: str = _
+    u10: str = "10u"
     u: str = _
-    u_10m: str = _
+    v10: str = "10v"
     v: str = _
-    v_10m: str = _
     w: str = _
 
 

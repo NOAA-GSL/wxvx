@@ -78,7 +78,7 @@ variables:
   UGRD10:
     level_type: heightAboveGround
     levels: *levels
-    name: u_10m
+    name: u10
   VGRD:
     level_type: isobaricInhPa
     levels: *levels
@@ -86,7 +86,7 @@ variables:
   VGRD10:
     level_type: heightAboveGround
     levels: *levels
-    name: v_10m
+    name: v10
   VVEL:
     level_type: isobaricInhPa
     levels: *levels
