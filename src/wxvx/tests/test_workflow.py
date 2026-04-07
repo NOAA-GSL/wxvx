@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from textwrap import indent
 from types import SimpleNamespace as ns
-from typing import Any, cast
+from typing import cast
 from unittest.mock import ANY, Mock, patch
 
 import pandas as pd
@@ -809,13 +809,10 @@ def test_workflow__grid_grib_from_local(caplog, fakefs, gids, testvars):
         ec.codes_new_from_index.side_effect = [*gids, None]
         workflow._grid_grib_from_local(path=path, idxfile=idxfile, var=var, taskname="foo")
     ec.codes_index_read.assert_called_once_with(str(idxfile))
-    expected: Any
-    for expected, actual in zip(
-        [("shortName:s", "2t"), ("typeOfLevel:s", "heightAboveGround"), ("level:l", 2)],
-        ec.codes_index_select.call_args_list,
-        strict=True,
-    ):
-        assert actual.args == (iid, *expected)
+    string_calls = [x.args for x in ec.codes_index_select_string.call_args_list]
+    assert (iid, "shortName", "2t") in string_calls
+    assert (iid, "typeOfLevel", "heightAboveGround") in string_calls
+    assert (iid, "level", 2) in [x.args for x in ec.codes_index_select_long.call_args_list]
     if gids:
         ec.codes_write.assert_called_once_with(gids[0], ANY)
         assert "Wrote gid %s to %s" % (gids[0], path) in caplog.text
