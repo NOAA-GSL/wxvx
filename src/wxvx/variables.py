@@ -292,10 +292,10 @@ def da_select(c: Config, ds: xr.Dataset, varname: str, tc: TimeCoords, var: Var)
         if key_inittime in coords:
             da = _narrow(da, key_inittime, dt(tc.cycle))
         key_leadtime = c.forecast.coords.time.leadtime
-        if key_leadtime in coords:
+        if key_leadtime is not None and key_leadtime in coords:
             da = _narrow(da, key_leadtime, np.timedelta64(int(tc.leadtime.total_seconds()), "s"))
         key_validtime = c.forecast.coords.time.validtime
-        if key_validtime in coords:
+        if key_validtime is not None and key_validtime in coords:
             da = _narrow(da, key_validtime, dt(tc.validtime))
         key_level = c.forecast.coords.level
         if key_level in coords and var.level is not None:
