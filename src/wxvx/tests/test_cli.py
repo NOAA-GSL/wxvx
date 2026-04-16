@@ -13,8 +13,8 @@ from pytest import mark, raises
 from uwtools.api.config import get_yaml_config
 
 from wxvx import cli, workflow
+from wxvx.config import Config
 from wxvx.strings import S
-from wxvx.types import Config
 from wxvx.util import WXVXError, pkgname, resource_path
 
 # Tests

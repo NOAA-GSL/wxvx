@@ -5,7 +5,7 @@ from itertools import product
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from wxvx.types import Cycles, Leadtimes
+    from wxvx.config import Cycles, Leadtimes
 
 # Public
 

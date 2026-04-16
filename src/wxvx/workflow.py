@@ -23,11 +23,12 @@ import xarray as xr
 from iotaa import Asset, Node, collection, external, task
 
 from wxvx import variables
+from wxvx.config import Cycles
 from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.strings import MET, S
 from wxvx.times import TimeCoords, gen_timecoords, gen_timecoords_truth, hh, tcinfo, yyyymmdd
-from wxvx.types import Cycles, Named, Source, TruthType
+from wxvx.types import Named, Source, TruthType
 from wxvx.util import (
     LINETYPE,
     DataFormat,
@@ -46,7 +47,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
     from datetime import datetime
 
-    from wxvx.types import Config, VarMeta
+    from wxvx.config import Config
+    from wxvx.types import VarMeta
 
 _EC_LOCK = Lock()
 _PLOT_LOCK = Lock()

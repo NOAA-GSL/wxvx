@@ -11,13 +11,14 @@ import numpy as np
 import xarray as xr
 from pyproj import Proj
 
+from wxvx.config import Coords
 from wxvx.strings import EC, MET, NOAA, S
-from wxvx.types import Coords, VarMeta
+from wxvx.types import VarMeta
 from wxvx.util import WXVXError, render
 
 if TYPE_CHECKING:
+    from wxvx.config import Config
     from wxvx.times import TimeCoords
-    from wxvx.types import Config
 
 # Public
 
@@ -423,7 +424,7 @@ def _da_to_latitude(da: xr.DataArray, dims: list[str]) -> xr.DataArray:
     )
 
 
-def _da_to_longitude(da: xr.DataArray, dims=list[str]) -> xr.DataArray:
+def _da_to_longitude(da: xr.DataArray, dims: list[str]) -> xr.DataArray:
     var = da.longitude
     return xr.DataArray(
         data=var.values,

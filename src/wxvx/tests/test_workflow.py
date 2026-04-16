@@ -18,10 +18,11 @@ from iotaa import Asset, Node, external
 from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
+from wxvx.config import Config
 from wxvx.strings import EC, MET, NOAA, S
 from wxvx.tests.support import with_del
 from wxvx.times import TimeCoords, gen_timecoords, tcinfo
-from wxvx.types import Config, Source, TruthType
+from wxvx.types import Source, TruthType
 from wxvx.util import DataFormat, WXVXError, resource_path
 from wxvx.variables import Var
 

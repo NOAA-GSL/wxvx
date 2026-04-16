@@ -11,8 +11,8 @@ from uwtools.api.config import YAMLConfig, get_yaml_config, validate
 from uwtools.api.logging import use_uwtools_logger
 
 from wxvx import workflow
+from wxvx.config import Config
 from wxvx.net import initialize_session
-from wxvx.types import Config
 from wxvx.util import (
     WXVXError,
     fail,

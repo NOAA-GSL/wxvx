@@ -14,8 +14,8 @@ from iotaa import Node
 from pytest import fixture
 
 from wxvx import times
+from wxvx.config import Config
 from wxvx.strings import NOAA, S
-from wxvx.types import Config
 
 if TYPE_CHECKING:
     from collections.abc import Callable

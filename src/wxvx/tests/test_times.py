@@ -7,8 +7,8 @@ from datetime import timedelta
 from pytest import mark
 
 from wxvx import times
+from wxvx.config import Cycles, Leadtimes
 from wxvx.strings import S
-from wxvx.types import Cycles, Leadtimes
 
 # Tests
 
