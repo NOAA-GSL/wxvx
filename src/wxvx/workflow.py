@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from enum import Enum, auto
 from functools import cache
 from itertools import chain, pairwise, product
 from pathlib import Path
@@ -28,7 +29,7 @@ from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.strings import MET, S
 from wxvx.times import TimeCoords, gen_timecoords, gen_timecoords_truth, hh, tcinfo, yyyymmdd
-from wxvx.types import Source, TruthType
+from wxvx.types import TruthType
 from wxvx.util import (
     LINETYPE,
     DataFormat,
@@ -56,6 +57,12 @@ _PLOT_LOCK = Lock()
 
 class Named(Protocol):
     name: str
+
+
+class Source(Enum):
+    BASELINE = auto()
+    FORECAST = auto()
+    TRUTH = auto()
 
 
 # Public tasks
