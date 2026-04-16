@@ -2,16 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Protocol
 
 from wxvx.strings import MET, S
 from wxvx.util import (
     LINETYPE,
 )
-
-
-class Named(Protocol):
-    name: str
 
 
 class Source(Enum):

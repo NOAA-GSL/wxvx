@@ -8,7 +8,7 @@ from pathlib import Path
 from stat import S_IEXEC
 from textwrap import dedent
 from threading import Lock
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Protocol, cast
 from urllib.parse import urlparse
 from warnings import catch_warnings, simplefilter
 
@@ -28,7 +28,7 @@ from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.strings import MET, S
 from wxvx.times import TimeCoords, gen_timecoords, gen_timecoords_truth, hh, tcinfo, yyyymmdd
-from wxvx.types import Named, Source, TruthType
+from wxvx.types import Source, TruthType
 from wxvx.util import (
     LINETYPE,
     DataFormat,
@@ -52,6 +52,11 @@ if TYPE_CHECKING:
 
 _EC_LOCK = Lock()
 _PLOT_LOCK = Lock()
+
+
+class Named(Protocol):
+    name: str
+
 
 # Public tasks
 
