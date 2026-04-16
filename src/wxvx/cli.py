@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import sys
 import traceback
@@ -5,13 +7,21 @@ from argparse import ArgumentParser, ArgumentTypeError, HelpFormatter, Namespace
 from pathlib import Path
 
 from iotaa import tasknames
-from uwtools.api.config import get_yaml_config
+from uwtools.api.config import YAMLConfig, get_yaml_config, validate
 from uwtools.api.logging import use_uwtools_logger
 
 from wxvx import workflow
 from wxvx.net import initialize_session
-from wxvx.types import validated_config
-from wxvx.util import WXVXError, fail, finalize_pool, initialize_pool, pkgname, version
+from wxvx.types import Config
+from wxvx.util import (
+    WXVXError,
+    fail,
+    finalize_pool,
+    initialize_pool,
+    pkgname,
+    resource_path,
+    version,
+)
 
 # Public
 
@@ -27,7 +37,7 @@ def main() -> None:
             yc.dump()
             if not args.check:
                 sys.exit(0)
-        c = validated_config(yc)
+        c = _validated_config(yc)
         if args.check:
             sys.exit(0)
         logging.info("Preparing task graph for '%s'", args.task)
@@ -155,3 +165,10 @@ def _show_tasks() -> None:
     logging.info("Available tasks:")
     for taskname in tasknames(workflow):
         logging.info("  %s", taskname)
+
+
+def _validated_config(yc: YAMLConfig) -> Config:
+    if not validate(schema_file=resource_path("config.jsonschema"), config_data=yc.data):
+        msg = "Config failed schema validation"
+        raise WXVXError(msg)
+    return Config(yc.data)

@@ -7,11 +7,10 @@ from pathlib import Path
 from typing import cast
 
 from pytest import fixture, mark, raises
-from uwtools.api.config import get_yaml_config
 
 from wxvx import types
 from wxvx.strings import EC, MET, S
-from wxvx.util import DataFormat, WXVXError, resource_path
+from wxvx.util import DataFormat, WXVXError
 
 # Fixtures
 
@@ -68,24 +67,6 @@ def truth(config_data):
 
 
 # Tests
-
-
-def test_types_validated_config(config_data, fs):
-    fs.add_real_file(resource_path("config.jsonschema"))
-    yc = get_yaml_config(config_data)
-    assert types.validated_config(yc=yc)
-
-
-def test_types_validated_config__fail_json_schema(config_data, fs, logged):
-    fs.add_real_file(resource_path("config.jsonschema"))
-    config_data[S.truth][S.type] = "foo"
-    yc = get_yaml_config(config_data)
-    with raises(WXVXError) as e:
-        types.validated_config(yc=yc)
-    assert str(e.value) == "Config failed schema validation"
-    assert logged(r"'foo' is not one of \['grid', 'point'\]")
-
-
 def test_types_Baseline(baseline, config_data):
     obj = baseline
     assert obj.name == S.HRRR

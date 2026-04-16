@@ -9,15 +9,12 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Protocol, cast
 
-from uwtools.api.config import YAMLConfig, validate
-
 from wxvx.strings import MET, S
 from wxvx.util import (
     LINETYPE,
     DataFormat,
     WXVXError,
     expand,
-    resource_path,
     to_datetime,
     to_timedelta,
 )
@@ -48,13 +45,6 @@ class ToGridVal(Enum):
 class TruthType(Enum):
     GRID = auto()
     POINT = auto()
-
-
-def validated_config(yc: YAMLConfig) -> Config:
-    if not validate(schema_file=resource_path("config.jsonschema"), config_data=yc.data):
-        msg = "Config failed schema validation"
-        raise WXVXError(msg)
-    return Config(yc.data)
 
 
 # Below, assert statements relate to config requirements that should have been enforced by a prior
