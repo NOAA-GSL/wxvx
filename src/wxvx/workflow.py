@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from wxvx.config import Config
-    from wxvx.types import VarMeta
+    from wxvx.variables import VarMeta
 
 _EC_LOCK = Lock()
 _PLOT_LOCK = Lock()

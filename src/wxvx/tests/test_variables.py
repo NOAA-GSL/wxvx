@@ -7,7 +7,7 @@ import xarray as xr
 from pytest import fixture, mark, raises
 
 from wxvx import variables
-from wxvx.strings import EC, NOAA, S
+from wxvx.strings import EC, MET, NOAA, S
 from wxvx.util import WXVXError, render
 
 # Fixtures
@@ -23,6 +23,38 @@ def da_flat(da_with_leadtime):
 
 
 # Tests
+
+
+def test_variables_VarMeta():
+    def fails(k, v):
+        with raises(AssertionError):
+            variables.VarMeta(**{**kwargs, k: type(v)()})
+
+    kwargs: dict = dict(
+        cat_thresh=[">=20", ">=30", ">=40"],
+        cf_standard_name="unknown",
+        cnt_thresh=[">15"],
+        description="Composite Reflectivity",
+        level_type=S.atmosphere,
+        met_stats=[MET.FSS, MET.PODY],
+        name=EC.refc,
+        nbrhd_shape=MET.CIRCLE,
+        nbrhd_width=[3, 5, 11],
+        units="dBZ",
+    )
+    x = variables.VarMeta(**kwargs)
+    for k, v in kwargs.items():
+        assert getattr(x, k) == v
+    for k, v in kwargs.items():
+        fails(k, type(v)())
+    for k in ["cf_standard_name", "description", S.level_type, "met_stats", S.name, "units"]:
+        fails(k, None)
+    for k, v in [
+        (S.level_type, "intergalactic"),
+        ("met_stats", ["XYZ"]),
+        (MET.nbrhd_shape, "TRIANGLE"),
+    ]:
+        fails(k, v)
 
 
 @mark.parametrize(S.level_type, [S.atmosphere, S.surface])
@@ -137,8 +169,9 @@ def test_variables_da_construct__lat_lev_lon(config_data, da_with_leadtime, fake
 
 def test_variables_da_select(c, da_with_leadtime, tc):
     var = variables.Var(name=EC.gh, level_type=S.isobaricInhPa, level=900)
-    kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname=NOAA.HGT, tc=tc, var=var)
-    new = variables.da_select(**kwargs)
+    new = variables.da_select(
+        c=c, ds=da_with_leadtime.to_dataset(), varname=NOAA.HGT, tc=tc, var=var
+    )
     # latitude and longitude are unchanged
     assert all(new.latitude == da_with_leadtime.latitude)
     assert all(new.longitude == da_with_leadtime.longitude)
@@ -154,8 +187,7 @@ def test_variables_da_select__attrs_not_coords(c, da_with_leadtime, tc):
     # be executed for these values in the function-under-test.
     da = da_with_leadtime.drop_vars(["lead_time", "level", "time"])
     var = variables.Var(name=EC.gh, level_type=S.isobaricInhPa, level=900)
-    kwargs = dict(c=c, ds=da.to_dataset(), varname=NOAA.HGT, tc=tc, var=var)
-    new = variables.da_select(**kwargs)
+    new = variables.da_select(c=c, ds=da.to_dataset(), varname=NOAA.HGT, tc=tc, var=var)
     # latitude and longitude are unchanged
     assert all(new.latitude == da_with_leadtime.latitude)
     assert all(new.longitude == da_with_leadtime.longitude)
@@ -163,9 +195,8 @@ def test_variables_da_select__attrs_not_coords(c, da_with_leadtime, tc):
 
 def test_variables_da_select__fail_bad_var(c, da_with_leadtime, tc):
     var = variables.Var(name="foo", level_type=S.isobaricInhPa, level=900)
-    kwargs = dict(c=c, ds=da_with_leadtime.to_dataset(), varname="FOO", tc=tc, var=var)
     with raises(WXVXError) as e:
-        variables.da_select(**kwargs)
+        variables.da_select(c=c, ds=da_with_leadtime.to_dataset(), varname="FOO", tc=tc, var=var)
     ts = tc.validtime.isoformat()
     forecast_path = render(c.forecast.path, tc, context=c.raw)
     msg = f"Variable FOO valid at {ts} not found in {forecast_path}"
