@@ -1,21 +1,27 @@
 # Agent Guidelines for wxvx
 
-## Build/Test Commands
-- **Format code**: `make format` or `./format` (runs ruff format, import sorting, docformatter, JSON formatting)
-- **Lint**: `make lint` or `recipe/run_test.sh lint` (uses ruff)
-- **Type check**: `make typecheck` or `recipe/run_test.sh typecheck` (uses mypy)
-- **All tests**: `make test` or `recipe/run_test.sh` (lint + typecheck + unittest + CLI)
-- **Unit tests only**: `make unittest` or `recipe/run_test.sh unittest` (pytest with coverage, 4 parallel workers)
-- **Single test**: `pytest -n 4 src/wxvx/tests/test_<name>.py::<test_function>` from project root
+## General
 
-## Code Style
-- **Imports**: Use `from __future__ import annotations` at top; stdlib → third-party → local; sort with ruff (isort)
-- **Formatting**: Use ruff format (automatically handles line length, indentation, quotes)
-- **Types**: Use type hints everywhere; run mypy for verification; use `TYPE_CHECKING` for circular imports
-- **Naming**: `snake_case` for functions/variables, `PascalCase` for classes, `UPPER_CASE` for constants/Enums
-- **Errors**: Raise `WXVXError` for domain errors; log tracebacks at debug level; use descriptive error messages
-- **Docstrings**: Format with docformatter; use triple-quoted strings for module/class/function docs
-- **Comments**: Use `# Public` and `# Private` sections to separate interface from implementation
-- **Resources**: Access package resources via `wxvx.util.resource()` or `resource_path()`
-- **Logging**: Use Python logging module; avoid print statements
-- **Testing**: Use pytest; mock with `unittest.mock`; organize tests in `src/wxvx/tests/`
+- Access package resources via `wxvx.util.resource()` or `resource_path()`.
+- Raise `WXVXError` for domain errors; log tracebacks at debug level; use descriptive error messages.
+- Use Python's `logging` module; avoid print statements.
+- Use `snake_case` names for functions/variables, `PascalCase` for classes, `UPPER_CASE` for constants/Enums.
+- Use type hints in all Python code; run `make typecheck` for verification; use `TYPE_CHECKING` for circular imports.
+- Follow observed patterns in the codebase.
+- Do not `git commit` anything unless instructed to do so.
+- Always ask the developer questions if you have doubts.
+
+## Formatting
+
+- Use `make format` to enforce project rules for import order and general style.
+- Format `.json` and `.jsonschema` documents by running `make format` (which calls `jq`).
+- Format code by running `make format` (which calls `ruff`) before running tests.
+- Format docstrings by running `make format` (which calls `docformatter`); use triple-quoted strings for module/class/function docs.
+- Use lexicographical ordering for functions in modules, methods in classes, keys in dictionaries, etc. Unless there's a good reason to do otherwise: alphabetize.
+
+## Testing
+
+- Organize unit tests under `src/wxvx/tests/`; mock with `unittest.mock`.
+- In general, iterate by 1. editing code, 2. running `make format && make test`, and 3. fixing any reported errors.
+- If `make test` reports errors, one of the more specific commands `make lint`, `make typecheck`, or `make unittest` can be run to validate fixes after linting, typechecking, or unit testing, respectively, have failed.
+- Feel free to consult `src/pyproject.toml`, the top-level `Makefile`, and `recipe/run_test.sh` to see how the project configures and calls code quality tools, and then make direct calls to those tools yourself using the same settings.
