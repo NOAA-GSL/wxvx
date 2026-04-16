@@ -4,12 +4,18 @@
 
 - Access package resources via `wxvx.util.resource()` or `resource_path()`.
 - Raise `WXVXError` for domain errors; log tracebacks at debug level; use descriptive error messages.
+- Keep module ownership aligned with the current layout:
+- `wxvx.config` owns config models and config validation helpers.
+- `wxvx.variables` owns `VarMeta` and dataset/variable manipulation logic.
+- `wxvx.workflow` owns workflow-only protocols/enums such as `Named` and `Source`.
+- `wxvx.util` owns shared enums/utilities such as `DataFormat`, `ToGridVal`, `TruthType`, resource helpers, and generic helpers.
 - Use Python's `logging` module; avoid print statements.
 - Use `snake_case` names for functions/variables, `PascalCase` for classes, `UPPER_CASE` for constants/Enums.
 - Use type hints in all Python code; run `make typecheck` for verification; use `TYPE_CHECKING` for circular imports.
 - Follow observed patterns in the codebase.
 - Do not `git commit` anything unless instructed to do so.
 - Always ask the developer questions if you have doubts.
+- Treat assertions used after schema validation as internal invariants; user-facing validation errors should raise `WXVXError` instead.
 
 ## Formatting
 
