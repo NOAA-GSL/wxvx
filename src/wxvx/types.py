@@ -22,7 +22,7 @@ from wxvx.util import (
     to_timedelta,
 )
 
-_TRUTH_NAMES_GRID = (S.GFS, S.HRRR)
+_TRUTH_NAMES_GRID = (S.GDAS, S.GFS, S.HRRR)
 _TRUTH_NAMES_POINT = (S.PREPBUFR,)
 _TRUTH_NAMES = tuple(sorted([*_TRUTH_NAMES_GRID, *_TRUTH_NAMES_POINT]))
 
