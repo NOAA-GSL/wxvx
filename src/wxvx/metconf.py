@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, NoReturn
 
 from wxvx.strings import MET
-from wxvx.types import ToGridVal
+from wxvx.util import ToGridVal
 
 if TYPE_CHECKING:
     from collections.abc import Callable

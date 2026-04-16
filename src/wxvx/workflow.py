@@ -29,11 +29,11 @@ from wxvx.metconf import render as render_metconf
 from wxvx.net import fetch
 from wxvx.strings import MET, S
 from wxvx.times import TimeCoords, gen_timecoords, gen_timecoords_truth, hh, tcinfo, yyyymmdd
-from wxvx.types import TruthType
 from wxvx.util import (
     LINETYPE,
     DataFormat,
     Proximity,
+    TruthType,
     WXVXError,
     atomic,
     classify_data_format,

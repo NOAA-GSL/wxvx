@@ -50,6 +50,16 @@ class Proximity(Enum):
     REMOTE = auto()
 
 
+class ToGridVal(Enum):
+    FCST = auto()
+    OBS = auto()
+
+
+class TruthType(Enum):
+    GRID = auto()
+    POINT = auto()
+
+
 LINETYPE = {
     MET.FSS: MET.nbrcnt,
     MET.ME: MET.cnt,

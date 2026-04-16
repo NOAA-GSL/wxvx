@@ -9,8 +9,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from wxvx.strings import MET, S
-from wxvx.types import ToGridVal, TruthType
-from wxvx.util import DataFormat, WXVXError, expand, to_datetime, to_timedelta
+from wxvx.util import DataFormat, ToGridVal, TruthType, WXVXError, expand, to_datetime, to_timedelta
 
 _TRUTH_NAMES_GRID = (S.GDAS, S.GFS, S.HRRR)
 _TRUTH_NAMES_POINT = (S.PREPBUFR,)

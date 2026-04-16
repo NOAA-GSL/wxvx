@@ -4,7 +4,7 @@ from pytest import mark, raises
 
 from wxvx import metconf
 from wxvx.strings import MET
-from wxvx.types import ToGridVal
+from wxvx.util import ToGridVal
 
 # Public
 

@@ -22,8 +22,7 @@ from wxvx.config import Config
 from wxvx.strings import EC, MET, NOAA, S
 from wxvx.tests.support import with_del
 from wxvx.times import TimeCoords, gen_timecoords, tcinfo
-from wxvx.types import TruthType
-from wxvx.util import DataFormat, WXVXError, resource_path
+from wxvx.util import DataFormat, TruthType, WXVXError, resource_path
 from wxvx.variables import Var
 
 Source = workflow.Source

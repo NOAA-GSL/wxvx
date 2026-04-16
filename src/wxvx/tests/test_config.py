@@ -8,9 +8,9 @@ from typing import cast
 
 from pytest import fixture, mark, raises
 
-from wxvx import config, types
+from wxvx import config
 from wxvx.strings import MET, S
-from wxvx.util import DataFormat, WXVXError
+from wxvx.util import DataFormat, ToGridVal, TruthType, WXVXError
 
 
 @fixture
@@ -106,7 +106,7 @@ def test_config_Config(baseline, config_data, cycles, forecast, leadtimes, paths
 def test_config_Config__bad_baseline_name_vs_truth_type(config_data):
     del config_data[S.baseline][S.url]
     config_data[S.baseline][S.name] = S.truth
-    config_data[S.truth][S.type] = types.TruthType.POINT
+    config_data[S.truth][S.type] = TruthType.POINT
     config_data[S.truth][S.name] = S.PREPBUFR
     with raises(WXVXError) as e:
         config.Config(raw=config_data)
@@ -115,7 +115,7 @@ def test_config_Config__bad_baseline_name_vs_truth_type(config_data):
 
 def test_config_Config__bad_ncdiffs_vs_truth_type(config_data):
     config_data[S.ncdiffs] = True
-    config_data[S.truth][S.type] = types.TruthType.POINT
+    config_data[S.truth][S.type] = TruthType.POINT
     config_data[S.truth][S.name] = S.PREPBUFR
     with raises(WXVXError) as e:
         config.Config(raw=config_data)
@@ -293,13 +293,13 @@ def test_config_Paths(paths, config_data):
 def test_config_Regrid(regrid, config_data):
     obj = regrid
     assert obj.method == MET.NEAREST
-    assert str(obj.to) == types.ToGridVal.FCST.name
+    assert str(obj.to) == ToGridVal.FCST.name
     cfg = config_data[S.regrid]
     other1 = config.Regrid(**cfg)
     assert obj == other1
     other2 = config.Regrid(**{**cfg, S.to: S.truth})
     assert obj != other2
-    assert str(other2.to) == types.ToGridVal.OBS.name
+    assert str(other2.to) == ToGridVal.OBS.name
 
 
 def test_config_Time(config_data, time):
@@ -317,15 +317,15 @@ def test_config_Time(config_data, time):
 def test_config_ToGrid():
     for f in [repr, str]:
         f = cast(Callable, f)
-        assert f(config.ToGrid(val=S.forecast)) == types.ToGridVal.FCST.name
-        assert f(config.ToGrid(val=S.truth)) == types.ToGridVal.OBS.name
+        assert f(config.ToGrid(val=S.forecast)) == ToGridVal.FCST.name
+        assert f(config.ToGrid(val=S.truth)) == ToGridVal.OBS.name
         assert f(config.ToGrid(val="G104")) == "G104"
     assert hash(config.ToGrid(val="G104")) == hash(config.ToGrid(val="G104"))
     assert config.ToGrid(val="G104") == config.ToGrid(val="G104")
     assert config.ToGrid(val=S.forecast) != config.ToGrid(val=S.truth)
 
 
-@mark.parametrize("truth_type", [S.grid, types.TruthType.GRID])
+@mark.parametrize("truth_type", [S.grid, TruthType.GRID])
 def test_config_Truth(config_data, truth, truth_type):
     obj = truth
     assert obj.name == S.GFS
@@ -341,9 +341,9 @@ def test_config_Truth(config_data, truth, truth_type):
 @mark.parametrize(
     ("truth_name", "truth_type"),
     [
-        *[(S.GFS, x) for x in (types.TruthType.POINT, S.point)],
-        *[(S.PREPBUFR, x) for x in (types.TruthType.GRID, S.grid)],
-        ("foo", types.TruthType.GRID),
+        *[(S.GFS, x) for x in (TruthType.POINT, S.point)],
+        *[(S.PREPBUFR, x) for x in (TruthType.GRID, S.grid)],
+        ("foo", TruthType.GRID),
     ],
 )
 def test_config_Truth__bad_name(truth_name, truth_type):
