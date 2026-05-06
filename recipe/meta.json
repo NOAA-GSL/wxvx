@@ -1,6 +1,6 @@
 {
-  "build": "py_0",
-  "buildnum": 0,
+  "build": "py_1",
+  "buildnum": 1,
   "name": "wxvx",
   "packages": {
     "dev": [
@@ -32,7 +32,7 @@
       "types-seaborn",
       "uwtools >=2.14.0",
       "xarray ==2025.12.*",
-      "zarr ==3.1.*"
+      "zarr >=2.18,<3.3"
     ],
     "run": [
       "iotaa ==1.6.*",
@@ -47,7 +47,7 @@
       "seaborn ==0.13.*",
       "uwtools >=2.14.0",
       "xarray ==2025.12.*",
-      "zarr ==3.1.*"
+      "zarr >=2.18,<3.3"
     ]
   },
   "version": "0.7.2"

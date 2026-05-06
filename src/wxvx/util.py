@@ -18,7 +18,7 @@ from urllib.parse import urlparse
 
 import jinja2
 import netCDF4
-import zarr
+import zarr  # type: ignore[import-untyped]
 
 from wxvx.strings import MET, S
 from wxvx.times import tcinfo
