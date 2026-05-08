@@ -246,7 +246,7 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
         var=testvars[EC.gh],
         prefix="atm",
         datafmt=fmt,
-        polyfile=None,
+        polyfile=Mock(ref=Path("/path/to/mask.poly")),
     )
     expected = """
     fcst = {
@@ -265,10 +265,10 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
       vld_thresh = 1.0;
     }
     mask = {
-      grid = [
-        "FULL"
+      grid = [];
+      poly = [
+        "/path/to/mask.poly"
       ];
-      poly = [];
     }
     message_type = [
       "ATM"
