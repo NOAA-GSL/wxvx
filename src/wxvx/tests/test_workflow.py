@@ -676,8 +676,9 @@ def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars)
 
 
 @mark.parametrize("datafmt", [DataFormat.NETCDF, DataFormat.ZARR, DataFormat.UNKNOWN])
+@mark.parametrize("mask", [True, False])
 @mark.parametrize("source", [Source.BASELINE, Source.FORECAST])
-def test_workflow__stats_vs_obs(c, datafmt, fakefs, source, tc, testvars):
+def test_workflow__stats_vs_obs(c, datafmt, fakefs, mask, source, tc, testvars):
     @external
     def mock(*_args, **_kwargs):
         yield "mock"
@@ -688,6 +689,8 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, source, tc, testvars):
     rundir = fakefs / S.run / S.stats / "19700101" / "00" / "000"
     var = testvars[EC.t2]
     taskname = "Stats vs obs for %s %s at 19700101 00Z 000" % (source.name.lower(), var)
+    if not mask:
+        c.forecast._mask = None
     kwargs = dict(c=c, varname=NOAA.T2M, tc=tc, var=var, prefix="foo", source=source)
     with patch.object(workflow, "classify_data_format", return_value=datafmt):
         stat = workflow._stats_vs_obs(**kwargs, dry_run=True).ref
