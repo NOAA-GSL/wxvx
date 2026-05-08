@@ -190,10 +190,7 @@ def _config_grid_stat(
     meta = _meta(c, varname)
     config = {
         MET.fcst: {MET.field: [field_fcst]},
-        MET.mask: {
-            MET.grid: [] if polyfile else [MET.FULL],
-            MET.poly: [polyfile.ref] if polyfile else [],
-        },
+        MET.mask: _met_mask(polyfile),
         MET.model: c.truth.name if source == Source.TRUTH else c.forecast.name,
         MET.nc_pairs_flag: {MET.climo: MET.FALSE, MET.raw: MET.FALSE} if c.ncdiffs else MET.FALSE,
         MET.obs: {MET.field: [field_obs]},
@@ -258,10 +255,7 @@ def _config_point_stat(
             MET.type: {MET.method: MET.BILIN, MET.width: 2},
             MET.vld_thresh: 1.0,
         },
-        MET.mask: {
-            MET.grid: [] if polyfile else [MET.FULL],
-            MET.poly: [polyfile.ref] if polyfile else [],
-        },
+        MET.mask: _met_mask(polyfile),
         MET.message_type: [MET.SFC if surface else MET.ATM],
         MET.message_type_group_map: {MET.ATM: "ADPUPA,AIRCAR,AIRCFT", MET.SFC: "ADPSFC"},
         MET.model: cast(Named, sections[source]).name,
@@ -674,6 +668,13 @@ def _maybe_polyfile(c: Config, reqs: list[Node]) -> Node | None:
         reqs.append(polyfile)
         return polyfile
     return None
+
+
+def _met_mask(polyfile: Node | None) -> dict[str, list[str]]:
+    return {
+        MET.grid: [] if polyfile else [MET.FULL],
+        MET.poly: [polyfile.ref] if polyfile else [],
+    }
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
