@@ -246,6 +246,7 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
         var=testvars[EC.gh],
         prefix="atm",
         datafmt=fmt,
+        polyfile=None,
     )
     expected = """
     fcst = {
@@ -262,6 +263,12 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
         width = 2;
       }
       vld_thresh = 1.0;
+    }
+    mask = {
+      grid = [
+        "FULL"
+      ];
+      poly = [];
     }
     message_type = [
       "ATM"
@@ -319,6 +326,7 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
         var=testvars[EC.t2],
         prefix="sfc",
         datafmt=fmt,
+        polyfile=None,
     )
     expected = """
     fcst = {
@@ -335,6 +343,12 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
         width = 2;
       }
       vld_thresh = 1.0;
+    }
+    mask = {
+      grid = [
+        "FULL"
+      ];
+      poly = [];
     }
     message_type = [
       "SFC"
@@ -391,6 +405,7 @@ def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, testv
         var=testvars[EC.gh],
         prefix="atm",
         datafmt=DataFormat.NETCDF,
+        polyfile=None,
     )
     assert not task.ready
     assert not path.is_file()
