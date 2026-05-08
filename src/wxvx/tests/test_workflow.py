@@ -896,6 +896,19 @@ def test_workflow__maybe_polyfile__no_mask(c, fakefs):
     assert not path.exists()
 
 
+def test_workflow__met_mask__polyfile():
+    path = "/path/to/mask.poly"
+    polyfile = Mock(ref=path)
+    expected = {"grid": [], "poly": [path]}
+    assert workflow._met_mask(polyfile=polyfile) == expected
+
+
+def test_workflow__met_mask__no_polyfile():
+    polyfile = None
+    expected = {"grid": ["FULL"], "poly": []}
+    assert workflow._met_mask(polyfile=polyfile) == expected
+
+
 def test_workflow__meta(c):
     meta = workflow._meta(c=c, varname=NOAA.HGT)
     assert meta.cf_standard_name == "geopotential_height"
