@@ -235,7 +235,14 @@ def _config_pb2nc(c: Config, path: Path):
 
 @task
 def _config_point_stat(
-    c: Config, path: Path, source: Source, varname: str, var: Var, prefix: str, datafmt: DataFormat, polyfile: Node | None
+    c: Config,
+    path: Path,
+    source: Source,
+    varname: str,
+    var: Var,
+    prefix: str,
+    datafmt: DataFormat,
+    polyfile: Node | None,
 ):
     taskname = f"Config for point_stat {path}"
     yield taskname
