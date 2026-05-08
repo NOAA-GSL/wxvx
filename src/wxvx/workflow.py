@@ -669,11 +669,11 @@ def _grid_grib_from_remote(path: Path, idxdata: dict, var: Var, taskname: str, u
 
 
 def _maybe_polyfile(c: Config, reqs: list[Node]) -> Node | None:
-    polyfile = None
     if mask := c.forecast.mask:
         polyfile = _polyfile(c.paths.run / S.stats / "mask.poly", mask)
         reqs.append(polyfile)
-    return polyfile
+        return polyfile
+    return None
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
