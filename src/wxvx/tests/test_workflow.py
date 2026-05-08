@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
-from textwrap import indent
+from textwrap import dedent, indent
 from types import SimpleNamespace as ns
 from typing import cast
 from unittest.mock import ANY, Mock, patch
@@ -18,7 +18,7 @@ from iotaa import Asset, Node, external
 from pytest import fixture, mark, raises
 
 from wxvx import variables, workflow
-from wxvx.config import Config
+from wxvx.config import Config, _force
 from wxvx.strings import EC, MET, NOAA, S
 from wxvx.tests.support import with_del
 from wxvx.times import TimeCoords, gen_timecoords, tcinfo
@@ -866,6 +866,34 @@ def test_workflow__grid_grib_from_remote(testvars):
             kwargs = dict(path=path, idxdata=idxdata, var=testvars[key], taskname=taskname, url=url)
             workflow._grid_grib_from_remote(**kwargs)
             fetch.assert_called_with(taskname, url, path, {"Range": f"bytes={byterange}"})
+
+
+def test_workflow__maybe_polyfile__mask(c, fakefs):
+    _force(c.paths, "run", fakefs)
+    c.forecast._mask = [[1, 1], [2, 2], [3, 3]]
+    path = fakefs / "stats" / "mask.poly"
+    reqs: list = []
+    assert not path.exists()
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs)
+    assert isinstance(polyfile, Node)
+    assert polyfile.ref == path
+    expected = """
+    MASK
+    1 1
+    2 2
+    3 3
+    """
+    assert path.read_text().strip() == dedent(expected).strip()
+
+
+def test_workflow__maybe_polyfile__no_mask(c, fakefs):
+    _force(c.paths, "run", fakefs)
+    c.forecast._mask = None
+    path = fakefs / "stats" / "mask.poly"
+    reqs: list = []
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs)
+    assert polyfile is None
+    assert not path.exists()
 
 
 def test_workflow__meta(c):
