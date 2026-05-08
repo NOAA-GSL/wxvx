@@ -235,7 +235,7 @@ def _config_pb2nc(c: Config, path: Path):
 
 @task
 def _config_point_stat(
-    c: Config, path: Path, source: Source, varname: str, var: Var, prefix: str, datafmt: DataFormat
+    c: Config, path: Path, source: Source, varname: str, var: Var, prefix: str, datafmt: DataFormat, polyfile: Node | None
 ):
     taskname = f"Config for point_stat {path}"
     yield taskname
@@ -250,6 +250,10 @@ def _config_point_stat(
             MET.shape: MET.SQUARE,
             MET.type: {MET.method: MET.BILIN, MET.width: 2},
             MET.vld_thresh: 1.0,
+        },
+        MET.mask: {
+            MET.grid: [] if polyfile else [MET.FULL],
+            MET.poly: [polyfile.ref] if polyfile else [],
         },
         MET.message_type: [MET.SFC if surface else MET.ATM],
         MET.message_type_group_map: {MET.ATM: "ADPUPA,AIRCAR,AIRCFT", MET.SFC: "ADPSFC"},
@@ -537,8 +541,12 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
         fcst = _grid_grib(c, tc, var, Source.BASELINE)
         datafmt = DataFormat.GRIB
     reqs.append(fcst)
+    polyfile = None
+    if mask := c.forecast.mask:
+        polyfile = _polyfile(c.paths.run / S.stats / "mask.poly", mask)
+        reqs.append(polyfile)
     config = _config_point_stat(
-        c, path.with_suffix(".config"), source, varname, var, prefix, datafmt
+        c, path.with_suffix(".config"), source, varname, var, prefix, datafmt, polyfile
     )
     if datafmt != DataFormat.UNKNOWN:
         reqs.append(config)
