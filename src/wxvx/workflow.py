@@ -505,10 +505,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
         datafmt = DataFormat.GRIB
     obs = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var, Source.TRUTH)
     reqs = [fcst, obs]
-    polyfile = None
-    if mask := c.forecast.mask:
-        polyfile = _polyfile(c.paths.run / S.stats / "mask.poly", mask)
-        reqs.append(polyfile)
+    polyfile = _maybe_polyfile(c, reqs)
     path_config = path.with_suffix(".config")
     config = _config_grid_stat(c, path_config, source, varname, var, prefix, datafmt, polyfile)
     if datafmt != DataFormat.UNKNOWN:
@@ -548,10 +545,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
         fcst = _grid_grib(c, tc, var, Source.BASELINE)
         datafmt = DataFormat.GRIB
     reqs.append(fcst)
-    polyfile = None
-    if mask := c.forecast.mask:
-        polyfile = _polyfile(c.paths.run / S.stats / "mask.poly", mask)
-        reqs.append(polyfile)
+    polyfile = _maybe_polyfile(c, reqs)
     config = _config_point_stat(
         c, path.with_suffix(".config"), source, varname, var, prefix, datafmt, polyfile
     )
@@ -672,6 +666,14 @@ def _grid_grib_from_remote(path: Path, idxdata: dict, var: Var, taskname: str, u
     fb, lb = var_idx.firstbyte, var_idx.lastbyte
     headers = {"Range": "bytes=%s" % (f"{fb}-{lb}" if lb else fb)}
     fetch(taskname, url, path, headers)
+
+
+def _maybe_polyfile(c: Config, reqs: list[Node]) -> Node | None:
+    polyfile = None
+    if mask := c.forecast.mask:
+        polyfile = _polyfile(c.paths.run / S.stats / "mask.poly", mask)
+        reqs.append(polyfile)
+    return polyfile
 
 
 def _meta(c: Config, varname: str) -> VarMeta:
