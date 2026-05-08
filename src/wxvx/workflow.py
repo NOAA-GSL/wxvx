@@ -505,8 +505,8 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
         datafmt = DataFormat.GRIB
     obs = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var, Source.TRUTH)
     reqs = [fcst, obs]
-    polyfile = _maybe_polyfile(c, reqs)
     path_config = path.with_suffix(".config")
+    polyfile = _maybe_polyfile(c, reqs)
     config = _config_grid_stat(c, path_config, source, varname, var, prefix, datafmt, polyfile)
     if datafmt != DataFormat.UNKNOWN:
         reqs.append(config)
