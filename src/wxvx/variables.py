@@ -91,6 +91,14 @@ VARMETA = {
             units="m",
         ),
         VarMeta(
+            description="Pressure Reduced to Mean Sea Level",
+            cf_standard_name="air_pressure_at_mean_sea_level",
+            level_type=S.surface,
+            met_stats=[MET.ME, MET.RMSE],
+            name=EC.prmsl,
+            units="Pa",
+        ),
+        VarMeta(
             description="Specific Humidity at {level} mb",
             cf_standard_name="specific_humidity",
             level_type=S.isobaricInhPa,
@@ -215,6 +223,7 @@ class GFS(Var):
     def varname(name: str) -> str:
         return {
             EC.gh: NOAA.HGT,
+            EC.prmsl: NOAA.PRMSL,
             EC.q: NOAA.SPFH,
             EC.refc: NOAA.REFC,
             EC.sp: NOAA.PRES,
@@ -232,6 +241,7 @@ class GFS(Var):
         return {
             (NOAA.HGT, S.isobaricInhPa): EC.gh,
             (NOAA.PRES, S.surface): EC.sp,
+            (NOAA.PRMSL, S.surface): EC.prmsl,
             (NOAA.REFC, S.atmosphere): EC.refc,
             (NOAA.SPFH, S.isobaricInhPa): EC.q,
             (NOAA.TMP, S.heightAboveGround): EC.t2,

@@ -28,6 +28,7 @@ class _EC(_ValsMatchKeys):
     """
 
     gh: str = _
+    prmsl: str = _
     q: str = _
     refc: str = _
     sp: str = _
@@ -117,6 +118,7 @@ class _NOAA(_ValsMatchKeys):
 
     HGT: str = _
     PRES: str = _
+    PRMSL: str = _
     REFC: str = _
     SPFH: str = _
     T2M: str = _
