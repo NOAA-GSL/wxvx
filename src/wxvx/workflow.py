@@ -246,7 +246,7 @@ def _config_point_stat(
     yield Asset(path, path.is_file)
     yield None
     field_fcst, field_obs = _config_fields(c, varname, var, datafmt)
-    surface = var.level_type in (S.heightAboveGround, S.surface)
+    surface = var.level_type in (S.heightAboveGround, S.meanSea, S.surface)
     sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast, Source.TRUTH: c.truth}
     config = {
         MET.fcst: {MET.field: [field_fcst]},
@@ -639,9 +639,8 @@ def _grid_grib_from_local(path: Path, idxfile: Path, var: Var, taskname: str) ->
             gids.append(gid)
         if gids:
             if len(gids) > 1:
-                logging.warning(
-                    "%s: %d GRIB messages matched %s in %s", taskname, len(gids), var, idxfile
-                )
+                msg = "%s: %d GRIB messages matched %s in %s"
+                logging.warning(msg, taskname, len(gids), var, idxfile)
             path.parent.mkdir(parents=True, exist_ok=True)
             with atomic(path) as tmp, tmp.open("wb") as f:
                 ec.codes_write(gids[0], f)

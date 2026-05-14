@@ -57,7 +57,7 @@ def test_variables_VarMeta():
         fails(k, v)
 
 
-@mark.parametrize(S.level_type, [S.atmosphere, S.surface])
+@mark.parametrize(S.level_type, [S.atmosphere, S.meanSea, S.surface])
 def test_variables_Var_no_level(level_type):
     var = variables.Var(name="foo", level_type=level_type)
     assert var.name == "foo"
@@ -125,6 +125,7 @@ def test_variables_HRRR__canonicalize(name, level_type, expected):
         ((S.atmosphere, None), "entire atmosphere"),
         ((S.heightAboveGround, 2), "2 m above ground"),
         ((S.isobaricInhPa, 900), "900 mb"),
+        ((S.meanSea, None), "mean sea level"),
         ((S.surface, None), "surface"),
         ((variables.UNKNOWN, None), "something else"),
     ],

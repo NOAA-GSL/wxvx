@@ -264,7 +264,7 @@ For netCDF- or Zarr-formatted forecast datasets, each key is used to select the 
 
 ### variables.*.level_type
 
-Currently supported level types are: `atmosphere`, `heightAboveGround`, `isobaricInhPa`, `surface`.
+Currently supported level types are: `atmosphere`, `heightAboveGround`, `isobaricInhPa`, `meanSea`, `surface`.
 
 ### variables.*.levels
 

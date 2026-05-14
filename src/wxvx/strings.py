@@ -169,6 +169,7 @@ class _S(_ValsMatchKeys):
     levels: str = _
     longitude: str = _
     mask: str = _
+    meanSea: str = _
     method: str = _
     name: str = _
     ncdiffs: str = _

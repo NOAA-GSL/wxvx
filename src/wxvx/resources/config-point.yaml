@@ -53,6 +53,9 @@ variables:
   surface_pressure:
     level_type: surface
     name: sp
+  surface_pressure_at_mean_sea_level:
+    level_type: meanSea
+    name: prmsl
   specific_humidity:
     level_type: isobaricInhPa
     levels: [850]

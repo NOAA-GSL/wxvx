@@ -56,6 +56,9 @@ variables:
   PRES:
     level_type: surface
     name: sp
+  PRMSL:
+    level_type: meanSea
+    name: prmsl
   REFC:
     level_type: atmosphere
     name: refc

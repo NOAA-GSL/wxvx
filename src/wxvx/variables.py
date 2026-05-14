@@ -40,7 +40,7 @@ class VarMeta:
     def __post_init__(self):
         assert self.cf_standard_name
         assert self.description
-        assert self.level_type in (S.atmosphere, S.heightAboveGround, S.isobaricInhPa, S.surface)
+        assert self.level_type in (S.atmosphere, S.heightAboveGround, S.isobaricInhPa, S.meanSea, S.surface)
         assert self.met_stats
         assert self.name
         assert self.units
@@ -93,7 +93,7 @@ VARMETA = {
         VarMeta(
             description="Pressure Reduced to Mean Sea Level",
             cf_standard_name="air_pressure_at_mean_sea_level",
-            level_type=S.surface,
+            level_type=S.meanSea,
             met_stats=[MET.ME, MET.RMSE],
             name=EC.prmsl,
             units="Pa",
@@ -241,7 +241,7 @@ class GFS(Var):
         return {
             (NOAA.HGT, S.isobaricInhPa): EC.gh,
             (NOAA.PRES, S.surface): EC.sp,
-            (NOAA.PRMSL, S.surface): EC.prmsl,
+            (NOAA.PRMSL, S.meanSea): EC.prmsl,
             (NOAA.REFC, S.atmosphere): EC.refc,
             (NOAA.SPFH, S.isobaricInhPa): EC.q,
             (NOAA.TMP, S.heightAboveGround): EC.t2,
@@ -261,6 +261,8 @@ class GFS(Var):
             return (S.heightAboveGround, _levelstr2num(m[1]))
         if m := re.match(r"^(\d+(\.\d+)?) mb$", levstr):
             return (S.isobaricInhPa, _levelstr2num(m[1]))
+        if m := re.match(r"^mean sea level$", levstr):
+            return (S.meanSea, None)
         if m := re.match(r"^surface$", levstr):
             return (S.surface, None)
         return (UNKNOWN, None)
@@ -394,6 +396,7 @@ def metlevel(level_type: str, level: float | None) -> str:
             S.atmosphere: "L",
             S.heightAboveGround: "Z",
             S.isobaricInhPa: "P",
+            S.meanSea: "Z",
             S.surface: "Z",
         }[level_type]
     except KeyError as e:
