@@ -220,6 +220,7 @@ def _config_pb2nc(c: Config, path: Path):
     config: dict = {
         MET.mask: {MET.grid: c.regrid.to if re.match(r"^G\d{3}$", str(c.regrid.to)) else ""},
         MET.message_type: ["ADPSFC", "ADPUPA", "AIRCAR", "AIRCFT"],
+        MET.obs_bufr_map: {"PMO": "PRMSL"},
         MET.obs_bufr_var: ["PMO", "POB", "QOB", "TOB", "UOB", "VOB", "ZOB"],
         MET.obs_window: {MET.beg: -1800, MET.end: 1800},
         MET.quality_mark_thresh: 9,

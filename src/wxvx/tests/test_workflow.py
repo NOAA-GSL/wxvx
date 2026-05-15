@@ -188,6 +188,12 @@ def test_workflow__config_pb2nc(c, fakefs, tidy):
       "AIRCAR",
       "AIRCFT"
     ];
+    obs_bufr_map = [
+      {
+        key = "PMO";
+        val = "PRMSL";
+      }
+    ];
     obs_bufr_var = [
       "PMO",
       "POB",
