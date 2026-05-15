@@ -189,6 +189,7 @@ def test_workflow__config_pb2nc(c, fakefs, tidy):
       "AIRCFT"
     ];
     obs_bufr_var = [
+      "PMO",
       "POB",
       "QOB",
       "TOB",

@@ -89,6 +89,7 @@ class _MET(_ValsMatchKeys):
     nbrhd_width: str = _
     nc_pairs_flag: str = _
     obs: str = _
+    obs_bufr_map: str = _
     obs_bufr_var: str = _
     obs_var: str = _
     obs_window: str = _
