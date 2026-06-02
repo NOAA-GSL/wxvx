@@ -241,7 +241,7 @@ def test_schema_paths(config_data, fs, logged):
     # Basic correctness:
     assert ok(config)
     # Certain top-level keys are required:
-    for key in [S.run]:
+    for key in [S.grids, S.run]:
         assert not ok(with_del(config, key))
         assert logged(f"'{key}' is a required property")
     # Additional keys are not allowed:
