@@ -167,7 +167,7 @@ def _quoted(v: str) -> str:
 def _regrid(k: str, v: Any, level: int) -> list[str]:
     match k:
         # Scalar: bare.
-        case MET.method | MET.width:
+        case MET.method | MET.shape | MET.vld_thresh | MET.width:
             return _kvpair(k, _bare(v), level)
         # Scalar: custom.
         case MET.to_grid:
@@ -223,7 +223,7 @@ def _top(k: str, v: Any, level: int) -> list[str]:
         case MET.time_summary:
             return _mapping(k, _collect(_time_summary, v, level + 1), level)
         # Scalar: bare.
-        case MET.quality_mark_thresh:
+        case MET.duplicate_flag | MET.obs_summary | MET.quality_mark_thresh:
             return _kvpair(k, _bare(v), level)
         # Scalar: quoted.
         case MET.obtype | MET.output_prefix | MET.tmp_dir:

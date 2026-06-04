@@ -65,12 +65,14 @@ class _MET(_ValsMatchKeys):
     RMSE: str = _
     SFC: str = _
     SQUARE: str = _
+    UNIQUE: str = _
     beg: str = _
     cat_thresh: str = _
     climo: str = _
     cnt: str = _
     cnt_thresh: str = _
     cts: str = _
+    duplicate_flag: str = _
     end: str = _
     fcst: str = _
     field: str = _
@@ -91,6 +93,7 @@ class _MET(_ValsMatchKeys):
     obs: str = _
     obs_bufr_map: str = _
     obs_bufr_var: str = _
+    obs_summary: str = _
     obs_var: str = _
     obs_window: str = _
     obtype: str = _

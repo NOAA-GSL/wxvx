@@ -256,6 +256,7 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
         polyfile=Mock(ref=Path("/path/to/mask.poly")),
     )
     expected = """
+    duplicate_flag = UNIQUE;
     fcst = {
       field = [
         {
@@ -301,6 +302,7 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
         }
       ];
     }
+    obs_summary = NEAREST;
     obs_window = {
       beg = -1800;
       end = 1800;
@@ -311,7 +313,9 @@ def test_workflow__config_point_stat__atm(c, fakefs, fmt, testvars, tidy):
     output_prefix = "atm";
     regrid = {
       method = NEAREST;
+      shape = SQUARE;
       to_grid = FCST;
+      vld_thresh = 0.5;
       width = 1;
     }
     tmp_dir = "/test";
@@ -336,6 +340,7 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
         polyfile=None,
     )
     expected = """
+    duplicate_flag = UNIQUE;
     fcst = {
       field = [
         {
@@ -381,6 +386,7 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
         }
       ];
     }
+    obs_summary = NEAREST;
     obs_window = {
       beg = -900;
       end = 900;
@@ -391,7 +397,9 @@ def test_workflow__config_point_stat__sfc(c, fakefs, fmt, testvars, tidy):
     output_prefix = "sfc";
     regrid = {
       method = NEAREST;
+      shape = SQUARE;
       to_grid = FCST;
+      vld_thresh = 0.5;
       width = 1;
     }
     tmp_dir = "/test";

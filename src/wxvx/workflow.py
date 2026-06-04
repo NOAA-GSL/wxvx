@@ -250,6 +250,7 @@ def _config_point_stat(
     surface = var.level_type in (S.heightAboveGround, S.meanSea, S.surface)
     sections = {Source.BASELINE: c.baseline, Source.FORECAST: c.forecast, Source.TRUTH: c.truth}
     config = {
+        MET.duplicate_flag: MET.UNIQUE,
         MET.fcst: {MET.field: [field_fcst]},
         MET.interp: {
             MET.shape: MET.SQUARE,
@@ -261,12 +262,15 @@ def _config_point_stat(
         MET.message_type_group_map: {MET.ATM: "ADPUPA,AIRCAR,AIRCFT", MET.SFC: "ADPSFC"},
         MET.model: cast(Named, sections[source]).name,
         MET.obs: {MET.field: [field_obs]},
+        MET.obs_summary: MET.NEAREST,
         MET.obs_window: {MET.beg: -900 if surface else -1800, MET.end: 900 if surface else 1800},
         MET.output_flag: {MET.cnt: MET.BOTH},
         MET.output_prefix: f"{prefix}",
         MET.regrid: {
             MET.method: c.regrid.method,
+            MET.shape: MET.SQUARE,
             MET.to_grid: c.regrid.to,
+            MET.vld_thresh: 0.5,
             MET.width: _regrid_width(c),
         },
         MET.tmp_dir: path.parent,
