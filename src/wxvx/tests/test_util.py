@@ -128,7 +128,7 @@ def test_util_fail(caplog, logged):
     assert not caplog.messages
     with raises(SystemExit) as e:
         util.fail("foo")
-    assert logged("foo")
+    assert logged("foo", reset=True)
     with raises(SystemExit) as e:
         util.fail("foo %s", "bar")
     assert logged("foo bar")

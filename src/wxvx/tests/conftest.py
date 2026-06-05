@@ -213,9 +213,10 @@ def gen_config():
 
 @fixture
 def logged(caplog):
-    def logged(s: str):
+    def logged(s: str, reset: bool = False):  # noqa: FBT002
         found = any(re.match(rf"^.*{s}.*$", message) for message in caplog.messages)
-        caplog.clear()
+        if reset:
+            caplog.clear()
         return found
 
     return logged
