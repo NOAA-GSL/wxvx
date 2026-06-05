@@ -152,10 +152,9 @@ If this optional value is omitted, `wxvx` will introspect forecast datasets to d
 
 ### forecast.mask
 
-Either:
-
-- A sequence of latitude/longitude pairs describing a masking polygon. See the [Example](#example), or
-- A path to a `.poly` or `.nc` mask file.
+- A sequence of latitude/longitude pairs describing a masking polygon (see the [Example](#example)), or
+- A path to a built-in MET mask file relative to `$MET_DATA/poly/` (e.g. `CONUS.poly` or `NCEP_masks/CONUS_mask.nc`), or
+- A path to an arbitrary `.poly` or `.nc` mask file.
 
 The specified mask will be applied to forecast, baseline, or truth grids before verification.
 
