@@ -161,13 +161,22 @@
           ]
         },
         "mask": {
-          "items": {
-            "items": {
-              "type": "number"
+          "oneOf": [
+            {
+              "description": "List of lat/lon pairs",
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
             },
-            "type": "array"
-          },
-          "type": "array"
+            {
+              "description": "Path to mask file",
+              "type": "string"
+            }
+          ]
         },
         "name": {
           "type": "string"
