@@ -51,7 +51,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │       leadtime:    │       Forecast leadtime                   │
 │       validtime:   │       Forecast validtime                  │
 │   format:          │   'grib', 'netcdf', or 'zarr' (optional)  │
-│   mask:            │   Sequence of [lat, lon] pairs (optional) │
+│   mask:            │   Region mask (optional)                  │
 │   name:            │   Dataset descriptive name                │
 │   path:            │   Filesystem path to Zarr/netCDF dataset  │
 │   projection:      │   Projection information (optional)       │
@@ -152,7 +152,12 @@ If this optional value is omitted, `wxvx` will introspect forecast datasets to d
 
 ### forecast.mask
 
-A sequence of latitude/longitude pairs describing a masking polygon. See the [Example](#example). The specified mask will be applied to forecast, baseline, or truth grids before verification.
+Either:
+
+- A sequence of latitude/longitude pairs describing a masking polygon. See the [Example](#example), or
+- A path to a `.poly` or `.nc` mask file.
+
+The specified mask will be applied to forecast, baseline, or truth grids before verification.
 
 The `forecast.mask` value may be omitted, or set to the YAML value `null`, in which case no masking will be applied.
 
