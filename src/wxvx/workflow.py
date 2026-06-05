@@ -667,8 +667,13 @@ def _grid_grib_from_remote(path: Path, idxdata: dict, var: Var, taskname: str, u
 
 
 def _maybe_polyfile(c: Config, reqs: list[Node]) -> Node | None:
+    polyfile: Node
     if mask := c.forecast.mask:
-        polyfile = _polyfile_from_lat_lon_pairs(c.paths.run / S.stats / "mask.poly", mask)
+        assert isinstance(mask, (list, str))
+        if isinstance(mask, list):
+            polyfile = _polyfile_from_lat_lon_pairs(c.paths.run / S.stats / "mask.poly", mask)
+        elif isinstance(mask, str):
+            polyfile = _existing(mask)
         reqs.append(polyfile)
         return polyfile
     return None
