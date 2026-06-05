@@ -468,7 +468,7 @@ def test_workflow__grib_index_data_wgrib2(c, tc, tidy):
     }
 
 
-def test_workflow__grib_index_file_eccodes(c, caplog, fakefs, tc):
+def test_workflow__grib_index_file_eccodes(c, fakefs, logged, tc):
     grib = fakefs / "foo"
     grib.touch()
     with patch.object(workflow, "ec") as ec:
@@ -477,7 +477,7 @@ def test_workflow__grib_index_file_eccodes(c, caplog, fakefs, tc):
     assert idxfile.ready
     assert idxfile.ref.is_file()
     for s in ["Opened %s" % grib, "Wrote %s" % idxfile.ref, "Released index"]:
-        assert s in caplog.text
+        assert logged(s)
 
 
 @mark.parametrize("path", ["/path/to/a.grib2", "file:///path/to/a.grib2"])
@@ -834,7 +834,7 @@ def test_workflow__grib_grid_gridsdir_template(c, source):
 
 
 @mark.parametrize("gids", [[], [11], [11, 22]])
-def test_workflow__grid_grib_from_local(caplog, fakefs, gids, testvars):
+def test_workflow__grid_grib_from_local(fakefs, gids, logged, testvars):
     path = fakefs / "a.grib2"
     idxfile = fakefs / "a.ecidx"
     var = testvars[EC.t2]
@@ -850,18 +850,18 @@ def test_workflow__grid_grib_from_local(caplog, fakefs, gids, testvars):
     assert (iid, "level", 2) in [x.args for x in ec.codes_index_select_long.call_args_list]
     if gids:
         ec.codes_write.assert_called_once_with(gids[0], ANY)
-        assert "Wrote gid %s to %s" % (gids[0], path) in caplog.text
+        assert logged("Wrote gid %s to %s" % (gids[0], path))
         if len(gids) > 1:
-            assert "%s GRIB messages matched" % len(gids) in caplog.text
+            assert logged("%s GRIB messages matched" % len(gids))
         for gid in gids:
-            assert "Released gid %s" % gid in caplog.text
+            assert logged("Released gid %s" % gid)
     else:
         ec.codex_write.assert_not_called()
         assert "No GRIB message matched %s in %s" % (var, idxfile)
     for expected, actual in zip(gids, ec.codes_release.call_args_list, strict=True):
         assert actual.args == (expected,)
     ec.codes_index_release.assert_called_once_with(iid)
-    assert "Released index %s" % iid in caplog.text
+    assert logged("Released index %s" % iid)
 
 
 def test_workflow__grid_grib_from_remote(testvars):
