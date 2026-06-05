@@ -673,7 +673,7 @@ def _maybe_polyfile(c: Config, reqs: list[Node]) -> Node | None:
         assert isinstance(mask, (list, str))
         if isinstance(mask, list):
             polyfile = _polyfile_from_lat_lon_pairs(c.paths.run / S.stats / "mask.poly", mask)
-        elif isinstance(mask, str):
+        else:  # mask is a str
             path = Path(mask)
             if not path.is_file():
                 logging.debug("Mask %s not found, checking MET masks", path)
