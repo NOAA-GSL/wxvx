@@ -913,6 +913,36 @@ def test_workflow__maybe_polyfile__mask_str(c, fakefs):
     assert reqs == [polyfile]
 
 
+def test_workflow__maybe_polyfile__mask_str_met(c, fs, logged):
+    d = Path(os.environ["MET_DATA"], "poly")
+    fs.add_real_directory(d)
+    name = "CONUS.poly"
+    c.forecast._mask = name
+    reqs: list = []
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs)
+    path = d / name
+    assert isinstance(polyfile, Node)
+    assert polyfile.ref == path
+    assert reqs == [polyfile]
+    assert logged("Mask %s not found, checking MET masks" % name)
+    assert logged("Using MET mask %s" % path)
+
+
+def test_workflow__maybe_polyfile__mask_str_met_missing(c, fs, logged):
+    d = Path(os.environ["MET_DATA"], "poly")
+    fs.add_real_directory(d)
+    name = "MISSING.poly"
+    c.forecast._mask = name
+    reqs: list = []
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs)
+    path = d / name
+    assert isinstance(polyfile, Node)
+    assert polyfile.ref == Path(name)
+    assert reqs == [polyfile]
+    assert logged("Mask %s not found, checking MET masks" % name)
+    assert logged("MET mask %s not found" % path)
+
+
 def test_workflow__maybe_polyfile__no_mask(c, fakefs):
     _force(c.paths, "run", fakefs)
     c.forecast._mask = None

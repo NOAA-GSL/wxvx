@@ -676,11 +676,13 @@ def _maybe_polyfile(c: Config, reqs: list[Node]) -> Node | None:
         elif isinstance(mask, str):
             path = Path(mask)
             if not path.is_file():
-                logging.debug("No mask found at %s, checking MET masks", path)
+                logging.debug("Mask %s not found, checking MET masks", path)
                 metmask = Path(os.environ["MET_DATA"], "poly", mask)
                 if metmask.is_file():
                     logging.debug("Using MET mask %s", metmask)
                     path = metmask
+                else:
+                    logging.debug("MET mask %s not found", metmask)
             polyfile = _existing(path)
         reqs.append(polyfile)
         return polyfile
