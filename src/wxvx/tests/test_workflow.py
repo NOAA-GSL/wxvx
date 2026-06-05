@@ -634,11 +634,11 @@ def test_workflow__plot(c, dictkey, fakefs, fs):
     xticks.assert_called_once_with(ticks=[0, 6, 12], labels=["000", "006", "012"], rotation=90)
 
 
-def test_workflow__polyfile(fakefs, tidy):
+def test_workflow__polyfile_from_lat_lon_pairs(fakefs, tidy):
     path = fakefs / "a.poly"
     assert not path.is_file()
     mask = ((52.6, 225.9), (52.6, 255.0), (21.1, 255.0), (21.1, 225.9))
-    polyfile = workflow._polyfile(path=path, mask=mask)
+    polyfile = workflow._polyfile_from_lat_lon_pairs(path=path, mask=mask)
     assert polyfile.ready
     expected = """
     MASK
