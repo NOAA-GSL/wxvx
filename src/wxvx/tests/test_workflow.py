@@ -901,6 +901,18 @@ def test_workflow__maybe_polyfile__mask(c, fakefs):
     assert path.read_text().strip() == dedent(expected).strip()
 
 
+def test_workflow__maybe_polyfile__mask_str(c, fakefs):
+    _force(c.paths, "run", fakefs)
+    path = fakefs / "mask.poly"
+    path.touch()
+    c.forecast._mask = str(path)
+    reqs: list = []
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs)
+    assert isinstance(polyfile, Node)
+    assert polyfile.ref == path
+    assert reqs == [polyfile]
+
+
 def test_workflow__maybe_polyfile__no_mask(c, fakefs):
     _force(c.paths, "run", fakefs)
     c.forecast._mask = None

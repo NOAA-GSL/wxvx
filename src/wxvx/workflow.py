@@ -673,7 +673,7 @@ def _maybe_polyfile(c: Config, reqs: list[Node]) -> Node | None:
         if isinstance(mask, list):
             polyfile = _polyfile_from_lat_lon_pairs(c.paths.run / S.stats / "mask.poly", mask)
         elif isinstance(mask, str):
-            polyfile = _existing(mask)
+            polyfile = _existing(Path(mask))
         reqs.append(polyfile)
         return polyfile
     return None
