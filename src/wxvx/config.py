@@ -208,7 +208,7 @@ class Forecast:
         path: str,
         coords: Coords | dict | None = None,
         format: DataFormat | str | None = None,  # noqa: A002
-        mask: list[list[float]] | None = None,
+        mask: list[list[float]] | str | None = None,
         projection: dict | None = None,
     ):
         self._name = name
@@ -249,7 +249,7 @@ class Forecast:
         return self._coords
 
     @property
-    def mask(self) -> list[list[float]] | None:
+    def mask(self) -> list[list[float]] | str | None:
         return self._mask
 
     @property
