@@ -167,12 +167,15 @@ def test_schema_forecast_coords_time(logged, config_data, fs):
         assert logged("is not valid")
 
 
-def test_schema_forecast_mask(logged, config_data, fs):
+def test_schema_forecast_mask(caplog, logged, config_data, fs):
     ok = validator(fs, S.properties, S.forecast, S.properties, S.mask)
     config = config_data[S.forecast][S.mask]
-    assert ok(config)
-    assert not ok("string")
-    assert logged("'string' is not of type 'array'")
+    assert ok(config)  # list of lat/lon pairs
+    assert ok("/path/to/mask.poly")  # path to mask file
+    assert not ok(42)
+    assert "42 is not of type 'array'" in caplog.text
+    assert "42 is not of type 'string'" in caplog.text
+    assert logged("42 is not valid")
 
 
 def test_schema_forecast_projection(logged, config_data, fs):
