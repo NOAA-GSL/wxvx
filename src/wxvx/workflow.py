@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 from enum import Enum, auto
 from functools import cache
@@ -673,7 +674,14 @@ def _maybe_polyfile(c: Config, reqs: list[Node]) -> Node | None:
         if isinstance(mask, list):
             polyfile = _polyfile_from_lat_lon_pairs(c.paths.run / S.stats / "mask.poly", mask)
         elif isinstance(mask, str):
-            polyfile = _existing(Path(mask))
+            path = Path(mask)
+            if not path.is_file():
+                logging.debug("No mask found at %s, checking MET masks", path)
+                metmask = Path(os.environ["MET_DATA"], "poly", mask)
+                if metmask.is_file():
+                    logging.debug("Using MET mask %s", metmask)
+                    path = metmask
+            polyfile = _existing(path)
         reqs.append(polyfile)
         return polyfile
     return None
