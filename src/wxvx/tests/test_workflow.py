@@ -886,10 +886,10 @@ def test_workflow__grid_grib_from_remote(testvars):
 def test_workflow__maybe_polyfile__mask(c, fakefs):
     _force(c.paths, "run", fakefs)
     c.forecast._mask = [[1, 1], [2, 2], [3, 3]]
-    path = fakefs / "stats" / "mask.poly"
+    path = fakefs / "mask.poly"
     reqs: list = []
     assert not path.exists()
-    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs)
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, path=path)
     assert isinstance(polyfile, Node)
     assert polyfile.ref == path
     expected = """
@@ -907,7 +907,7 @@ def test_workflow__maybe_polyfile__mask_str(c, fakefs):
     path.touch()
     c.forecast._mask = str(path)
     reqs: list = []
-    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs)
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, path=Path("unused"))
     assert isinstance(polyfile, Node)
     assert polyfile.ref == path
     assert reqs == [polyfile]
@@ -919,7 +919,7 @@ def test_workflow__maybe_polyfile__mask_str_met(c, fs, logged):
     name = "CONUS.poly"
     c.forecast._mask = name
     reqs: list = []
-    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs)
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, path=Path("unused"))
     path = d / name
     assert isinstance(polyfile, Node)
     assert polyfile.ref == path
@@ -934,7 +934,7 @@ def test_workflow__maybe_polyfile__mask_str_met_missing(c, fs, logged):
     name = "MISSING.poly"
     c.forecast._mask = name
     reqs: list = []
-    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs)
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, path=Path("unused"))
     path = d / name
     assert isinstance(polyfile, Node)
     assert polyfile.ref == Path(name)
@@ -946,9 +946,9 @@ def test_workflow__maybe_polyfile__mask_str_met_missing(c, fs, logged):
 def test_workflow__maybe_polyfile__no_mask(c, fakefs):
     _force(c.paths, "run", fakefs)
     c.forecast._mask = None
-    path = fakefs / "stats" / "mask.poly"
+    path = fakefs / "mask.poly"
     reqs: list = []
-    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs)
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, path=Path("unused"))
     assert polyfile is None
     assert not path.exists()
 
