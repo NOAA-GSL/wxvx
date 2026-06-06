@@ -889,7 +889,7 @@ def test_workflow__maybe_polyfile__mask(c, fakefs):
     path = fakefs / "mask.poly"
     reqs: list = []
     assert not path.exists()
-    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, path=path)
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, statpath=path.with_suffix(".stat"))
     assert isinstance(polyfile, Node)
     assert polyfile.ref == path
     expected = """
@@ -907,7 +907,7 @@ def test_workflow__maybe_polyfile__mask_str(c, fakefs):
     path.touch()
     c.forecast._mask = str(path)
     reqs: list = []
-    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, path=Path("unused"))
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, statpath=Path("unused"))
     assert isinstance(polyfile, Node)
     assert polyfile.ref == path
     assert reqs == [polyfile]
@@ -919,7 +919,7 @@ def test_workflow__maybe_polyfile__mask_str_met(c, fs, logged):
     name = "CONUS.poly"
     c.forecast._mask = name
     reqs: list = []
-    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, path=Path("unused"))
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, statpath=Path("unused"))
     path = d / name
     assert isinstance(polyfile, Node)
     assert polyfile.ref == path
@@ -934,7 +934,7 @@ def test_workflow__maybe_polyfile__mask_str_met_missing(c, fs, logged):
     name = "MISSING.poly"
     c.forecast._mask = name
     reqs: list = []
-    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, path=Path("unused"))
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, statpath=Path("unused"))
     path = d / name
     assert isinstance(polyfile, Node)
     assert polyfile.ref == Path(name)
@@ -948,7 +948,7 @@ def test_workflow__maybe_polyfile__no_mask(c, fakefs):
     c.forecast._mask = None
     path = fakefs / "mask.poly"
     reqs: list = []
-    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, path=Path("unused"))
+    polyfile = workflow._maybe_polyfile(c=c, reqs=reqs, statpath=Path("unused"))
     assert polyfile is None
     assert not path.exists()
 

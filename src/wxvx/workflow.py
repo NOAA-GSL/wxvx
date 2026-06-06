@@ -506,7 +506,7 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     obs = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var, Source.TRUTH)
     reqs = [fcst, obs]
     path_config = path.with_suffix(".config")
-    polyfile = _maybe_polyfile(c, reqs, path.with_suffix(".poly"))
+    polyfile = _maybe_polyfile(c, reqs, path)
     config = _config_grid_stat(c, path_config, source, varname, var, prefix, datafmt, polyfile)
     if datafmt != DataFormat.UNKNOWN:
         reqs.append(config)
@@ -545,7 +545,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
         fcst = _grid_grib(c, tc, var, Source.BASELINE)
         datafmt = DataFormat.GRIB
     reqs.append(fcst)
-    polyfile = _maybe_polyfile(c, reqs, path.with_suffix(".poly"))
+    polyfile = _maybe_polyfile(c, reqs, path)
     config = _config_point_stat(
         c, path.with_suffix(".config"), source, varname, var, prefix, datafmt, polyfile
     )
@@ -667,12 +667,12 @@ def _grid_grib_from_remote(path: Path, idxdata: dict, var: Var, taskname: str, u
     fetch(taskname, url, path, headers)
 
 
-def _maybe_polyfile(c: Config, reqs: list[Node], path: Path) -> Node | None:
+def _maybe_polyfile(c: Config, reqs: list[Node], statpath: Path) -> Node | None:
     polyfile: Node
     if mask := c.forecast.mask:
         assert isinstance(mask, (list, str))
         if isinstance(mask, list):
-            polyfile = _polyfile_from_lat_lon_pairs(path, mask)
+            polyfile = _polyfile_from_lat_lon_pairs(statpath.with_suffix(".poly"), mask)
         else:  # mask is a str
             path = Path(mask)
             if not path.is_file():
