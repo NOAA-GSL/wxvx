@@ -103,6 +103,14 @@ def test_config_Config(baseline, config_data, cycles, forecast, leadtimes, paths
         assert re.match(r"^Config(.*)$", f(obj))
 
 
+def test_config_Config__atemporal(config_data):
+    obj = config.Config(raw=config_data)
+    assert obj.atemporal is False
+    config_data[S.atemporal] = True
+    obj = config.Config(raw=config_data)
+    assert obj.atemporal is True
+
+
 def test_config_Config__bad_baseline_name_vs_truth_type(config_data):
     del config_data[S.baseline][S.url]
     config_data[S.baseline][S.name] = S.truth

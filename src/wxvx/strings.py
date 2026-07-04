@@ -143,6 +143,7 @@ class _S(_ValsMatchKeys):
     HRRR: str = _
     OBS: str = _
     PREPBUFR: str = _
+    atemporal: str = _
     atmosphere: str = _
     baseline: str = _
     coords: str = _

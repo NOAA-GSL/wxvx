@@ -46,6 +46,7 @@ class Config:
         baseline = raw.get(S.baseline, {S.name: None})
         paths = raw[S.paths]
         grids = paths[S.grids]
+        self.atemporal: bool = raw.get(S.atemporal, False)
         self.baseline = Baseline(**baseline)
         self.cycles = Cycles(raw.get(S.cycles))
         self.forecast = Forecast(**raw[S.forecast])

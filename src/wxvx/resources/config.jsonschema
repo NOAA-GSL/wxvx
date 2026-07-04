@@ -57,6 +57,9 @@
     }
   ],
   "properties": {
+    "atemporal": {
+      "type": "boolean"
+    },
     "baseline": {
       "additionalProperties": false,
       "allOf": [

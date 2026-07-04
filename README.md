@@ -34,6 +34,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 ┌────────────────────┬───────────────────────────────────────────┐
 │ Key                │ Description                               │
 ├────────────────────┼───────────────────────────────────────────┤
+│ atemporal:         │ Try to verify future validtimes           │
 │ baseline:          │ Description of the baseline dataset       │
 │   name:            │   Name of the baseline model or 'truth'   │
 │   url:             │   Template for baseline GRIB location     │
@@ -50,17 +51,17 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │       inittime:    │       Forecast initialization time        │
 │       leadtime:    │       Forecast leadtime                   │
 │       validtime:   │       Forecast validtime                  │
-│   format:          │   'grib', 'netcdf', or 'zarr' (optional)  │
-│   mask:            │   Region mask (optional)                  │
+│   format:          │   'grib', 'netcdf', or 'zarr'             │
+│   mask:            │   Region mask                             │
 │   name:            │   Dataset descriptive name                │
 │   path:            │   Filesystem path to Zarr/netCDF dataset  │
-│   projection:      │   Projection information (optional)       │
+│   projection:      │   Projection information                  │
 │ leadtimes:         │ Leadtimes to verify                       │
 │   start:           │   First leadtime                          │
 │   step:            │   Interval between leadtimes              │
 │   stop:            │   Last leadtime                           │
-│ meta:              │ Free-form data section (optional)         │
-│ ncdiffs:           │ Create diffs .nc files (optional)         │
+│ meta:              │ Free-form data section                    │
+│ ncdiffs:           │ Create diffs .nc files                    │
 │ paths:             │ Paths                                     │
 │   grids:           │   Where to store...                       │
 │     baseline:      │     Baseline grids                        │
@@ -83,6 +84,10 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │     name:          │     Canonical variable name               │
 └────────────────────┴───────────────────────────────────────────┘
 ```
+
+### atemporal
+
+Set to `true` to try to verify future validtimes. By default, `wxvx` skips verification for cycle/leadtime combinations whose validtimes are in the future, since truth data is unlikely to be available. When `atemporal` is `true`, `wxvx` will attempt to verify all configured cycle/leadtime pairs regardless of their validtimes.
 
 ### baseline
 
@@ -155,7 +160,7 @@ If this optional value is omitted, `wxvx` will introspect forecast datasets to d
 
 ### forecast.mask
 
-This value should be one of
+This optional value can be one of
 
 - A sequence of latitude/longitude pairs describing a masking polygon (see the [Example](#example)), or
 - A path to a built-in MET mask file relative to `$MET_DATA/poly/` (e.g. `CONUS.poly` or `NCEP_masks/CONUS_mask.nc`), or
@@ -205,11 +210,11 @@ leadtimes: [3, 6, 9]
 
 ### meta
 
-The `meta:` block may contain, for example, values tagged with YAML anchors referenced elsewhere via aliases (see the _Aliases_ section [here](https://pyyaml.org/wiki/PyYAMLDocumentation)), or values referenced elsewhere in Jinja2 expressions to be rendered by `uwtools` (see examples in [here](https://uwtools.readthedocs.io/en/stable/sections/user_guide/cli/tools/config.html#realize)).
+The optional `meta:` block may contain, for example, values tagged with YAML anchors referenced elsewhere via aliases (see the _Aliases_ section [here](https://pyyaml.org/wiki/PyYAMLDocumentation)), or values referenced elsewhere in Jinja2 expressions to be rendered by `uwtools` (see examples in [here](https://uwtools.readthedocs.io/en/stable/sections/user_guide/cli/tools/config.html#realize)).
 
 ### ncdiffs
 
-Set to `true` to instruct MET's `grid_stat` tool to create, alongside each `.stat` file, an `.nc` file containing a grid of forecast-vs-truth differences (errors). Must be set to `false`, or omitted, when `truth.type` is `point`.
+The optional `ncdiffs` key may be set to `true` to instruct MET's `grid_stat` tool to create, alongside each `.stat` file, an `.nc` file containing a grid of forecast-vs-truth differences (errors). Must be set to `false`, or omitted, when `truth.type` is `point`.
 
 ### paths
 
