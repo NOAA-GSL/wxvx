@@ -782,6 +782,18 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, mask, source, tc, testvars):
             mpexec.assert_called_once_with(f"/usr/bin/env bash {runscript}", rundir, taskname)
 
 
+@mark.parametrize("atemporal", [True, False])
+def test_workflow__timegate(atemporal, utc):
+    past = utc(2000, 1, 1)
+    future = utc(9999, 12, 31)
+    # A past validtime is always ready:
+    node = workflow._timegate(atemporal=atemporal, validtime=past)
+    assert node.ready
+    # A future validtime is ready only when atemporal is True:
+    node = workflow._timegate(atemporal=atemporal, validtime=future)
+    assert node.ready == atemporal
+
+
 # Support Tests
 
 
