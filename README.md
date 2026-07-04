@@ -31,58 +31,58 @@ The activated virtual environment includes the [`met2go`](https://github.com/mad
 An overview of the content of the YAML configuration file specified via `-c` / `--config` is described in the table below. See the subsections below for more detailed information.
 
 ```
-┌────────────────────┬───────────────────────────────────────────┐
-│ Key                │ Description                               │
-├────────────────────┼───────────────────────────────────────────┤
-│ atemporal:         │ Try to verify future validtimes           │
-│ baseline:          │ Description of the baseline dataset       │
-│   name:            │   Name of the baseline model or 'truth'   │
-│   url:             │   Template for baseline GRIB location     │
-│ cycles:            │ Cycles to verify                          │
-│   start:           │   First cycle                             │
-│   step:            │   Interval between cycles                 │
-│   stop:            │   Last cycle                              │
-│ forecast:          │ Description of the forecast dataset       │
-│   coords:          │   Names of coordinate variables           │
-│     latitude:      │     Latitude variable                     │
-│     level:         │     Level variable                        │
-│     longitude:     │     Longitude variable                    │
-│     time:          │     Names of time variables               │
-│       inittime:    │       Forecast initialization time        │
-│       leadtime:    │       Forecast leadtime                   │
-│       validtime:   │       Forecast validtime                  │
-│   format:          │   'grib', 'netcdf', or 'zarr'             │
-│   mask:            │   Region mask                             │
-│   name:            │   Dataset descriptive name                │
-│   path:            │   Filesystem path to Zarr/netCDF dataset  │
-│   projection:      │   Projection information                  │
-│ leadtimes:         │ Leadtimes to verify                       │
-│   start:           │   First leadtime                          │
-│   step:            │   Interval between leadtimes              │
-│   stop:            │   Last leadtime                           │
-│ meta:              │ Free-form data section                    │
-│ ncdiffs:           │ Create diffs .nc files                    │
-│ paths:             │ Paths                                     │
-│   grids:           │   Where to store...                       │
-│     baseline:      │     Baseline grids                        │
-│     forecast:      │     Forecast grids                        │
-│     truth:         │     Truth grids                           │
-│   obs:             │   Where to store observations             │
-│   run:             │   Where to store run data                 │
-│ regrid:            │ MET regrid options                        │
-│   method:          │   Regridding method                       │
-│   to:              │   Destination grid                        │
-│ timepairs:         │ Explicit cycle/leadtime pairs to verify   │
-│ truth:             │ Description of the truth dataset          │
-│   name:            │   Dataset descriptive name                │
-│   type:            │   Either 'grid' or 'point'                │
-│   url:             │   Template for grid or point truth files  │
-│ variables:         │ Mapping describing variables to verify    │
-│   VAR:             │   Forecast-dataset variable name          │
-│     level_type:    │     Generic level type                    │
-│     levels:        │     Sequence of level values              │
-│     name:          │     Canonical variable name               │
-└────────────────────┴───────────────────────────────────────────┘
+┌────────────────────┬──────────────────────────────────────────┐
+│ Key                │ Description                              │
+├────────────────────┼──────────────────────────────────────────┤
+│ atemporal:         │ Try to verify future validtimes          │
+│ baseline:          │ Description of the baseline dataset      │
+│   name:            │   Name of the baseline model or 'truth'  │
+│   url:             │   Template for baseline GRIB location    │
+│ cycles:            │ Cycles to verify                         │
+│   start:           │   First cycle                            │
+│   step:            │   Interval between cycles                │
+│   stop:            │   Last cycle                             │
+│ forecast:          │ Description of the forecast dataset      │
+│   coords:          │   Names of coordinate variables          │
+│     latitude:      │     Latitude variable                    │
+│     level:         │     Level variable                       │
+│     longitude:     │     Longitude variable                   │
+│     time:          │     Names of time variables              │
+│       inittime:    │       Forecast initialization time       │
+│       leadtime:    │       Forecast leadtime                  │
+│       validtime:   │       Forecast validtime                 │
+│   format:          │   'grib', 'netcdf', or 'zarr'            │
+│   mask:            │   Region mask                            │
+│   name:            │   Dataset descriptive name               │
+│   path:            │   Filesystem path to Zarr/netCDF dataset │
+│   projection:      │   Projection information                 │
+│ leadtimes:         │ Leadtimes to verify                      │
+│   start:           │   First leadtime                         │
+│   step:            │   Interval between leadtimes             │
+│   stop:            │   Last leadtime                          │
+│ meta:              │ Free-form data section                   │
+│ ncdiffs:           │ Create diffs .nc files                   │
+│ paths:             │ Paths                                    │
+│   grids:           │   Where to store...                      │
+│     baseline:      │     Baseline grids                       │
+│     forecast:      │     Forecast grids                       │
+│     truth:         │     Truth grids                          │
+│   obs:             │   Where to store observations            │
+│   run:             │   Where to store run data                │
+│ regrid:            │ MET regrid options                       │
+│   method:          │   Regridding method                      │
+│   to:              │   Destination grid                       │
+│ timepairs:         │ Explicit cycle/leadtime pairs to verify  │
+│ truth:             │ Description of the truth dataset         │
+│   name:            │   Dataset descriptive name               │
+│   type:            │   Either 'grid' or 'point'               │
+│   url:             │   Template for grid or point truth files │
+│ variables:         │ Mapping describing variables to verify   │
+│   VAR:             │   Forecast-dataset variable name         │
+│     level_type:    │     Generic level type                   │
+│     levels:        │     Sequence of level values             │
+│     name:          │     Canonical variable name              │
+└────────────────────┴──────────────────────────────────────────┘
 ```
 
 ### atemporal
