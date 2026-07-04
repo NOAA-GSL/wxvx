@@ -577,7 +577,7 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
 def _timegate(atemporal: bool, validtime: datetime):
     taskname = "Validtime %s: %s" % (validtime, "Ignored" if atemporal else "Reached")
     yield taskname
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=timezone.utc).replace(tzinfo=None)
     yield Asset(now, lambda: atemporal or now >= validtime)
 
 
