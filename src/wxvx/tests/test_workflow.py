@@ -5,7 +5,7 @@ Tests for wxvx.workflow.
 import os
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from textwrap import dedent, indent
 from types import SimpleNamespace as ns
@@ -783,9 +783,10 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, mask, source, tc, testvars):
 
 
 @mark.parametrize("atemporal", [True, False])
-def test_workflow__timegate(atemporal, utc):
-    past = utc(2000, 1, 1)
-    future = utc(9999, 12, 31)
+def test_workflow__timegate(atemporal):
+    now = datetime.now(tz=timezone.utc).replace(tzinfo=None)
+    past = now - timedelta(days=1)
+    future = now + timedelta(days=1)
     # A past validtime is always ready:
     node = workflow._timegate(atemporal=atemporal, validtime=past)
     assert node.ready
