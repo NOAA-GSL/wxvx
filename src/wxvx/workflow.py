@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+from datetime import datetime, timezone
 from enum import Enum, auto
 from functools import cache
 from itertools import chain, pairwise, product
@@ -46,7 +47,7 @@ from wxvx.variables import VARMETA, Var, da_construct, da_select, ds_construct, 
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
-    from datetime import datetime, timedelta
+    from datetime import timedelta
 
     from wxvx.config import Config
     from wxvx.variables import VarMeta
@@ -510,7 +511,8 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
         fcst = _grid_grib(c, tc, var, source)
         datafmt = DataFormat.GRIB
     obs = _grid_grib(c, TimeCoords(cycle=tc.validtime, leadtime=0), var, Source.TRUTH)
-    reqs = [fcst, obs]
+    timegate = _timegate(c.atemporal, tc.validtime)
+    reqs = [fcst, obs, timegate]
     path_config = path.with_suffix(".config")
     polyfile = _maybe_polyfile(c, reqs, path)
     config = _config_grid_stat(c, path_config, source, varname, var, prefix, datafmt, polyfile)
@@ -543,7 +545,8 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     path = rundir / (template % (prefix, int(leadtime), yyyymmdd_valid, hh_valid))
     yield Asset(path, path.is_file)
     obs = _netcdf_from_obs(c, TimeCoords(tc.validtime))
-    reqs: list[Node] = [obs]
+    timegate = _timegate(c.atemporal, tc.validtime)
+    reqs: list[Node] = [obs, timegate]
     if source is Source.FORECAST:
         location = Path(render(c.forecast.path, tc, context=c.raw))
         fcst, datafmt = _forecast_grid(location, c, varname, tc, var)
@@ -568,6 +571,14 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     )
     _write_runscript(runscript, content)
     mpexec(_bash(runscript), rundir, taskname)
+
+
+@external
+def _timegate(atemporal: bool, validtime: datetime):
+    taskname = "Validtime %s: %s" % (validtime, "Ignored" if atemporal else "Reached")
+    yield taskname
+    now = datetime.now(tz=timezone.utc)
+    yield Asset(now, lambda: atemporal or now >= validtime)
 
 
 # Support
