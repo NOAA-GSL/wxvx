@@ -602,15 +602,20 @@ def test_workflow__grid_nc__no_paths_grids_forecast(config_data, tc, testvars):
     assert str(e.value) == "Specify path.grids.forecast when forecast dataset is netCDF or Zarr"
 
 
-def test_workflow__local_file_from_http(c):
+def test_workflow__local_file_from_http(c, utc):
+    past = utc(2000, 1, 1)
     url = f"{c.truth.url}.idx"
-    node = workflow._local_file_from_http(outdir=c.paths.grids_truth, url=url, desc="Test")
+    node = workflow._local_file_from_http(
+        outdir=c.paths.grids_truth, url=url, desc="Test", atemporal=False, validtime=past
+    )
     path: Path = node.ref
     assert not path.exists()
     path.parent.mkdir(parents=True, exist_ok=True)
     with patch.object(workflow, "fetch") as fetch:
         fetch.side_effect = lambda taskname, url, path: path.touch()  # noqa: ARG005
-        workflow._local_file_from_http(outdir=c.paths.grids_truth, url=url, desc="Test")
+        workflow._local_file_from_http(
+            outdir=c.paths.grids_truth, url=url, desc="Test", atemporal=False, validtime=past
+        )
     fetch.assert_called_once_with(ANY, url, ANY)
     assert path.exists()
 
@@ -1063,12 +1068,17 @@ def test_workflow__prepare_plot_data(dictkey):
         assert tdf[MET.INTERP_PNTS].eq(width**2).all()
 
 
-def test_workflow__prepbufr(fakefs):
-    assert not workflow._prepbufr(url="https://example.com/prepbufr.nr", outdir=fakefs).ready
+def test_workflow__prepbufr(fakefs, utc):
+    past = utc(2000, 1, 1)
+    assert not workflow._prepbufr(
+        url="https://example.com/prepbufr.nr", outdir=fakefs, atemporal=False, validtime=past
+    ).ready
     path = fakefs / "prepbufr.nr"
     path.touch()
-    assert workflow._prepbufr(url=str(path), outdir=fakefs).ready
-    assert workflow._prepbufr(url=f"file://{path}", outdir=fakefs).ready
+    assert workflow._prepbufr(url=str(path), outdir=fakefs, atemporal=False, validtime=past).ready
+    assert workflow._prepbufr(
+        url=f"file://{path}", outdir=fakefs, atemporal=False, validtime=past
+    ).ready
 
 
 def test_workflow__regrid_width(c):
