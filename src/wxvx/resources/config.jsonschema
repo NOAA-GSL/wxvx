@@ -424,6 +424,9 @@
       },
       "type": "object"
     },
+    "timegate": {
+      "type": "boolean"
+    },
     "timepairs": {
       "items": {
         "maxItems": 2,

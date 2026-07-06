@@ -5,7 +5,7 @@ Tests for wxvx.workflow.
 import os
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from textwrap import dedent, indent
 from types import SimpleNamespace as ns
@@ -602,15 +602,20 @@ def test_workflow__grid_nc__no_paths_grids_forecast(config_data, tc, testvars):
     assert str(e.value) == "Specify path.grids.forecast when forecast dataset is netCDF or Zarr"
 
 
-def test_workflow__local_file_from_http(c):
+def test_workflow__local_file_from_http(c, utc):
+    past = utc(2000, 1, 1)
     url = f"{c.truth.url}.idx"
-    node = workflow._local_file_from_http(outdir=c.paths.grids_truth, url=url, desc="Test")
+    node = workflow._local_file_from_http(
+        outdir=c.paths.grids_truth, url=url, desc="Test", timegate=True, validtime=past
+    )
     path: Path = node.ref
     assert not path.exists()
     path.parent.mkdir(parents=True, exist_ok=True)
     with patch.object(workflow, "fetch") as fetch:
         fetch.side_effect = lambda taskname, url, path: path.touch()  # noqa: ARG005
-        workflow._local_file_from_http(outdir=c.paths.grids_truth, url=url, desc="Test")
+        workflow._local_file_from_http(
+            outdir=c.paths.grids_truth, url=url, desc="Test", timegate=True, validtime=past
+        )
     fetch.assert_called_once_with(ANY, url, ANY)
     assert path.exists()
 
@@ -780,6 +785,23 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, mask, source, tc, testvars):
             assert cfgfile.is_file()
             assert runscript.is_file()
             mpexec.assert_called_once_with(f"/usr/bin/env bash {runscript}", rundir, taskname)
+
+
+@mark.parametrize("timegate", [True, False])
+def test_workflow__timegate(caplog, timegate):
+    now = datetime.now(tz=timezone.utc).replace(tzinfo=None)
+    past = now - timedelta(days=1)
+    future = now + timedelta(days=1)
+    node = workflow._timegate(timegate=timegate, validtime=past)
+    assert node.ready
+    assert f"Validtime {past} reached: Ready" in caplog.text
+    caplog.clear()
+    # A future validtime is ready only when timegate is False:
+    node = workflow._timegate(timegate=timegate, validtime=future)
+    assert node.ready == (not timegate)
+    prefix = f"Validtime {future} reached"
+    s = "%s%s" % (prefix, " (ignored): Ready" if not timegate else ": Not ready")
+    assert s in caplog.text
 
 
 # Support Tests
@@ -1045,12 +1067,17 @@ def test_workflow__prepare_plot_data(dictkey):
         assert tdf[MET.INTERP_PNTS].eq(width**2).all()
 
 
-def test_workflow__prepbufr(fakefs):
-    assert not workflow._prepbufr(url="https://example.com/prepbufr.nr", outdir=fakefs).ready
+def test_workflow__prepbufr(fakefs, utc):
+    past = utc(1970, 1, 1)
+    assert not workflow._prepbufr(
+        url="https://example.com/prepbufr.nr", outdir=fakefs, timegate=True, validtime=past
+    ).ready
     path = fakefs / "prepbufr.nr"
     path.touch()
-    assert workflow._prepbufr(url=str(path), outdir=fakefs).ready
-    assert workflow._prepbufr(url=f"file://{path}", outdir=fakefs).ready
+    assert workflow._prepbufr(url=str(path), outdir=fakefs, timegate=True, validtime=past).ready
+    assert workflow._prepbufr(
+        url=f"file://{path}", outdir=fakefs, timegate=True, validtime=past
+    ).ready
 
 
 def test_workflow__regrid_width(c):

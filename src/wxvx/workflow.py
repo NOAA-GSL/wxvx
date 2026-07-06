@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+from datetime import datetime, timezone
 from enum import Enum, auto
 from functools import cache
 from itertools import chain, pairwise, product
@@ -46,7 +47,7 @@ from wxvx.variables import VARMETA, Var, da_construct, da_select, ds_construct, 
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
-    from datetime import datetime, timedelta
+    from datetime import timedelta
 
     from wxvx.config import Config
     from wxvx.variables import VarMeta
@@ -142,7 +143,7 @@ def obs(c: Config):
         tc_valid = TimeCoords(tc.validtime)
         url = render(c.truth.url, tc_valid, context=c.raw)
         yyyymmdd, hh, _ = tcinfo(tc_valid)
-        reqs.append(_prepbufr(url, c.paths.obs / yyyymmdd / hh))
+        reqs.append(_prepbufr(url, c.paths.obs / yyyymmdd / hh, c.timegate, tc.validtime))
     yield reqs
 
 
@@ -308,7 +309,7 @@ def _grib_index_data_wgrib2(c: Config, outdir: Path, tc: TimeCoords, url: str):
     yield taskname
     idxdata: dict[str, Var] = {}
     yield Asset(idxdata, lambda: bool(idxdata))
-    idxfile = _local_file_from_http(outdir, url, "GRIB index file")
+    idxfile = _local_file_from_http(outdir, url, "GRIB index file", c.timegate, tc.validtime)
     yield idxfile
     lines = idxfile.ref.read_text(encoding="utf-8").strip().split("\n")
     lines.append(":-1:::::")  # end marker
@@ -338,7 +339,7 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source:
     taskname = "GRIB index file %s %s" % (path, _at_validtime(tc))
     yield taskname
     yield Asset(path, path.is_file)
-    yield _existing(grib_path)
+    yield [_timegate(c.timegate, tc.validtime), _existing(grib_path)]
     # Keep index creation here in-sync with index selection in _grid_grib_from_local.
     keys = [f"{S.shortName}:s", f"{S.typeOfLevel}:s", f"{S.level}:l"]
     with _EC_LOCK:
@@ -396,12 +397,12 @@ def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
 
 
 @task
-def _local_file_from_http(outdir: Path, url: str, desc: str):
+def _local_file_from_http(outdir: Path, url: str, desc: str, timegate: bool, validtime: datetime):
     path = outdir / Path(urlparse(url).path).name
     taskname = "%s %s" % (desc, path)
     yield taskname
     yield Asset(path, path.is_file)
-    yield None
+    yield _timegate(timegate, validtime)
     fetch(taskname, url, path)
 
 
@@ -425,7 +426,7 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     yield Asset(path, path.is_file)
     rundir = c.paths.run / "pb2nc" / yyyymmdd / hh
     cfgfile = _config_pb2nc(c, rundir / path.with_suffix(".config").name)
-    prepbufr = _prepbufr(url, path.parent)
+    prepbufr = _prepbufr(url, path.parent, c.timegate, tc.validtime)
     yield {"cfgfile": cfgfile, "prepbufr": prepbufr}
     runscript = cfgfile.ref.with_suffix(".sh")
     content = "exec time pb2nc -v 4 {prepbufr} {netcdf} {config} >{log} 2>&1".format(
@@ -568,6 +569,16 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     )
     _write_runscript(runscript, content)
     mpexec(_bash(runscript), rundir, taskname)
+
+
+@external
+def _timegate(timegate: bool, validtime: datetime):
+    now = datetime.now(tz=timezone.utc).replace(tzinfo=None)
+    reached = now >= validtime
+    qualifier = " (ignored)" if not reached and not timegate else ""
+    taskname = "Validtime %s reached%s" % (validtime, qualifier)
+    yield taskname
+    yield Asset(None, lambda: reached or not timegate)
 
 
 # Support
@@ -734,11 +745,11 @@ def _prepare_plot_data(reqs: Sequence[Node], stat: str, width: int | None) -> pd
     return plot_data
 
 
-def _prepbufr(url: str, outdir: Path) -> Node:
+def _prepbufr(url: str, outdir: Path, timegate: bool, validtime: datetime) -> Node:
     proximity, src = classify_url(url)
     if proximity == Proximity.LOCAL:
         return _existing(src)
-    return _local_file_from_http(outdir, url, "prepbufr file")
+    return _local_file_from_http(outdir, url, "prepbufr file", timegate, validtime)
 
 
 def _regrid_width(c: Config) -> int:

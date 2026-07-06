@@ -112,6 +112,7 @@ def config_data():
             S.method: "NEAREST",
             S.to: "forecast",
         },
+        S.timegate: True,
         S.truth: {
             S.name: "GFS",
             S.type: "grid",

@@ -180,6 +180,14 @@ def test_config_Config__paths_grids_baseline_ignored(config_data, ignore, logged
     assert warned if ignore else not warned
 
 
+def test_config_Config__timegate(config_data):
+    obj = config.Config(raw=config_data)
+    assert obj.timegate is True
+    config_data[S.timegate] = False
+    obj = config.Config(raw=config_data)
+    assert obj.timegate is False
+
+
 def test_config_Coords(config_data, coords):
     obj = coords
     assert hash(obj)
