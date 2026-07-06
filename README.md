@@ -34,7 +34,6 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 ┌────────────────────┬──────────────────────────────────────────┐
 │ Key                │ Description                              │
 ├────────────────────┼──────────────────────────────────────────┤
-│ atemporal:         │ Try to verify future validtimes          │
 │ baseline:          │ Description of the baseline dataset      │
 │   name:            │   Name of the baseline model or 'truth'  │
 │   url:             │   Template for baseline GRIB location    │
@@ -72,6 +71,7 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │ regrid:            │ MET regrid options                       │
 │   method:          │   Regridding method                      │
 │   to:              │   Destination grid                       │
+│ timegate:          │ Verify future validtimes (optional)      │
 │ timepairs:         │ Explicit cycle/leadtime pairs to verify  │
 │ truth:             │ Description of the truth dataset         │
 │   name:            │   Dataset descriptive name               │
@@ -84,10 +84,6 @@ An overview of the content of the YAML configuration file specified via `-c` / `
 │     name:          │     Canonical variable name              │
 └────────────────────┴──────────────────────────────────────────┘
 ```
-
-### atemporal
-
-Set to `true` to try to verify future validtimes. By default, `wxvx` skips verification for cycle/leadtime combinations whose validtimes are in the future, since truth data is unlikely to be available. When `atemporal` is `true`, `wxvx` will attempt to verify all configured cycle/leadtime pairs regardless of their validtimes.
 
 ### baseline
 
@@ -251,6 +247,10 @@ Options are listed [here](https://metplus.readthedocs.io/projects/met/en/main_v1
 ### regrid.to
 
 Regrid grids and observations to the specified grid. Options are `truth`, `forecast`, or a [GNNN grid ID](https://metplus.readthedocs.io/projects/met/en/main_v11.0/Users_Guide/appendixB.html#grids) (default: `forecast`). Option `truth` must not be used when `truth.type` is `point`.
+
+### timegate
+
+Set to `false` to try to verify future validtimes. By default (`true`), `wxvx` skips verification for cycle/leadtime combinations whose validtimes are in the future, since truth data is unlikely to be available. When `timegate` is `false`, `wxvx` will attempt to verify all configured cycle/leadtime pairs regardless of their validtimes.
 
 ### timepairs
 

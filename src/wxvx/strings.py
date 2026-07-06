@@ -143,7 +143,6 @@ class _S(_ValsMatchKeys):
     HRRR: str = _
     OBS: str = _
     PREPBUFR: str = _
-    atemporal: str = _
     atmosphere: str = _
     baseline: str = _
     coords: str = _
@@ -197,6 +196,7 @@ class _S(_ValsMatchKeys):
     stop: str = _
     surface: str = _
     time: str = _
+    timegate: str = _
     timepairs: str = _
     to: str = _
     truth: str = _

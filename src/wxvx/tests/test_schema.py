@@ -38,7 +38,7 @@ def test_schema(logged, config_data, fs):
     assert not ok(with_set(config, 42, "n"))
     assert logged("'n' was unexpected", reset=True)
     # Some keys have boolean values:
-    for key in [S.atemporal, S.ncdiffs]:
+    for key in [S.ncdiffs, S.timegate]:
         assert not ok(with_set(config, None, key))
         assert logged("None is not of type 'boolean'", reset=True)
     # Some keys have object values:

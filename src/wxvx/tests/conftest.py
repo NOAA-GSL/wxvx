@@ -56,7 +56,6 @@ def c_real_fs(config_data, gen_config, tmp_path):
 @fixture
 def config_data():
     return {
-        S.atemporal: False,
         S.baseline: {
             S.name: "HRRR",
             S.url: "https://some.url/{{ yyyymmdd }}/{{ hh }}/{{ '%02d' % fh }}/a.grib2",
@@ -113,6 +112,7 @@ def config_data():
             S.method: "NEAREST",
             S.to: "forecast",
         },
+        S.timegate: True,
         S.truth: {
             S.name: "GFS",
             S.type: "grid",

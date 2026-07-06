@@ -5,7 +5,7 @@ Tests for wxvx.workflow.
 import os
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from textwrap import dedent, indent
 from types import SimpleNamespace as ns
@@ -606,7 +606,7 @@ def test_workflow__local_file_from_http(c, utc):
     past = utc(2000, 1, 1)
     url = f"{c.truth.url}.idx"
     node = workflow._local_file_from_http(
-        outdir=c.paths.grids_truth, url=url, desc="Test", atemporal=False, validtime=past
+        outdir=c.paths.grids_truth, url=url, desc="Test", timegate=True, validtime=past
     )
     path: Path = node.ref
     assert not path.exists()
@@ -614,7 +614,7 @@ def test_workflow__local_file_from_http(c, utc):
     with patch.object(workflow, "fetch") as fetch:
         fetch.side_effect = lambda taskname, url, path: path.touch()  # noqa: ARG005
         workflow._local_file_from_http(
-            outdir=c.paths.grids_truth, url=url, desc="Test", atemporal=False, validtime=past
+            outdir=c.paths.grids_truth, url=url, desc="Test", timegate=True, validtime=past
         )
     fetch.assert_called_once_with(ANY, url, ANY)
     assert path.exists()
@@ -787,21 +787,20 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, mask, source, tc, testvars):
             mpexec.assert_called_once_with(f"/usr/bin/env bash {runscript}", rundir, taskname)
 
 
-@mark.parametrize("atemporal", [True, False])
-def test_workflow__timegate(atemporal, caplog, utc):
-    now = utc(2026, 7, 4, 12)
+@mark.parametrize("timegate", [True, False])
+def test_workflow__timegate(caplog, timegate):
+    now = datetime.now(tz=timezone.utc).replace(tzinfo=None)
     past = now - timedelta(days=1)
     future = now + timedelta(days=1)
-    # A past validtime is always ready:
-    node = workflow._timegate(atemporal=atemporal, validtime=past)
+    node = workflow._timegate(timegate=timegate, validtime=past)
     assert node.ready
-    assert "Validtime 2026-07-03 12:00:00 reached: Ready" in caplog.text
+    assert f"Validtime {past} reached: Ready" in caplog.text
     caplog.clear()
-    # A future validtime is ready only when atemporal is True:
-    node = workflow._timegate(atemporal=atemporal, validtime=future)
-    assert node.ready == atemporal
-    prefix = "Validtime 2026-07-05 12:00:00 reached"
-    s = "%s%s" % (prefix, " (ignored): Ready" if atemporal else ": Not ready")
+    # A future validtime is ready only when timegate is False:
+    node = workflow._timegate(timegate=timegate, validtime=future)
+    assert node.ready == (not timegate)
+    prefix = f"Validtime {future} reached"
+    s = "%s%s" % (prefix, " (ignored): Ready" if not timegate else ": Not ready")
     assert s in caplog.text
 
 
@@ -1071,13 +1070,13 @@ def test_workflow__prepare_plot_data(dictkey):
 def test_workflow__prepbufr(fakefs, utc):
     past = utc(2000, 1, 1)
     assert not workflow._prepbufr(
-        url="https://example.com/prepbufr.nr", outdir=fakefs, atemporal=False, validtime=past
+        url="https://example.com/prepbufr.nr", outdir=fakefs, timegate=True, validtime=past
     ).ready
     path = fakefs / "prepbufr.nr"
     path.touch()
-    assert workflow._prepbufr(url=str(path), outdir=fakefs, atemporal=False, validtime=past).ready
+    assert workflow._prepbufr(url=str(path), outdir=fakefs, timegate=True, validtime=past).ready
     assert workflow._prepbufr(
-        url=f"file://{path}", outdir=fakefs, atemporal=False, validtime=past
+        url=f"file://{path}", outdir=fakefs, timegate=True, validtime=past
     ).ready
 
 

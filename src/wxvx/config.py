@@ -46,7 +46,6 @@ class Config:
         baseline = raw.get(S.baseline, {S.name: None})
         paths = raw[S.paths]
         grids = paths[S.grids]
-        self.atemporal: bool = raw.get(S.atemporal, False)
         self.baseline = Baseline(**baseline)
         self.cycles = Cycles(raw.get(S.cycles))
         self.forecast = Forecast(**raw[S.forecast])
@@ -61,6 +60,7 @@ class Config:
         )
         self.raw = raw
         self.regrid = Regrid(**raw.get(S.regrid, {}))
+        self.timegate: bool = raw.get(S.timegate, True)
         self.timepairs = Timepairs(raw.get(S.timepairs))
         self.truth = Truth(**raw[S.truth])
         self.variables = raw[S.variables]

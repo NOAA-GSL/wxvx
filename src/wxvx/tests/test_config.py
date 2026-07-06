@@ -103,14 +103,6 @@ def test_config_Config(baseline, config_data, cycles, forecast, leadtimes, paths
         assert re.match(r"^Config(.*)$", f(obj))
 
 
-def test_config_Config__atemporal(config_data):
-    obj = config.Config(raw=config_data)
-    assert obj.atemporal is False
-    config_data[S.atemporal] = True
-    obj = config.Config(raw=config_data)
-    assert obj.atemporal is True
-
-
 def test_config_Config__bad_baseline_name_vs_truth_type(config_data):
     del config_data[S.baseline][S.url]
     config_data[S.baseline][S.name] = S.truth
@@ -186,6 +178,14 @@ def test_config_Config__paths_grids_baseline_ignored(config_data, ignore, logged
     config.Config(raw=config_data)
     warned = logged("Ignoring paths.grids.baseline when baseline.name is 'truth'")
     assert warned if ignore else not warned
+
+
+def test_config_Config__timegate(config_data):
+    obj = config.Config(raw=config_data)
+    assert obj.timegate is True
+    config_data[S.timegate] = False
+    obj = config.Config(raw=config_data)
+    assert obj.timegate is False
 
 
 def test_config_Coords(config_data, coords):
