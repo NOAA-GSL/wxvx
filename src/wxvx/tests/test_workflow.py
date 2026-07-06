@@ -1068,7 +1068,7 @@ def test_workflow__prepare_plot_data(dictkey):
 
 
 def test_workflow__prepbufr(fakefs, utc):
-    past = utc(2000, 1, 1)
+    past = utc(1970, 1, 1)
     assert not workflow._prepbufr(
         url="https://example.com/prepbufr.nr", outdir=fakefs, timegate=True, validtime=past
     ).ready
