@@ -233,7 +233,7 @@ Where to store raw PREPBUFR files when they must be downloaded, and where to sto
 
 ### paths.run
 
-Where to store run directories for various `wxvx` workflow tasks: run directories for MET programs `pb2nc`, `grid_stat`, and `point_stat`, as well as those for plots.
+Where to store run directories for various `wxvx` workflow tasks: run directories for MET programs `pb2nc`, `grid_stat`, and `point_stat`, plots, and the SQLite statistics database written by the `stats` task as `wxvx.db`.
 
 ### regrid
 
@@ -429,7 +429,21 @@ Three variables -- geopotential height, composite reflectivity, and 2-meter temp
 
 Finally, because `baseline.name` is set to `truth`, `HRRR` forecasts with validtimes matching those of the `ML` model's forecasts will be verified against `HRRR` analysis, producing MET statistics. If the `plots` task is requested, the `ML` and `HRRR` stats will be plotted together.
 
-Invoking `wxvx -c config.yaml -t grids_truth` would stage the truth grids to disk, only; `-t grids_forecast` would stage the forecast grids; `-t grids` would stage both. Specifying `-t metstats` would produce statistics via MET tools, but also stage grids if they are not already available, since the grids are required by the MET processes. Specifying `-t plots` would plot statistics, but also _produce_ statistics (and stage grids) if they are not already available.
+Invoking `wxvx -c config.yaml -t grids_truth` would stage the truth grids to disk, only; `-t grids_forecast` would stage the forecast grids; `-t grids` would stage both. Specifying `-t metstats` would produce statistics via MET tools, but also stage grids if they are not already available, since the grids are required by the MET processes. Specifying `-t stats` would produce those statistics as needed and import them into a SQLite database. Specifying `-t plots` would plot statistics, but also _produce_ statistics (and stage grids) if they are not already available.
+
+### Statistics Database
+
+The `stats` task creates a SQLite database at `paths.run/wxvx.db` and imports MET line-type output from the `metstats` task into its `stats` table. The table includes columns from the MET output supported by `wxvx`, with null values for fields that do not apply to a particular line type. It also includes `wxvx` metadata columns: `cycle`, `leadtime`, `level`, `leveltype`, `model`, `validtime`, and `varname`.
+
+Repeated invocations of `stats` do not reimport records that have the same cycle, leadtime, level, level type, model, variable, and MET `LINE_TYPE`.
+
+For example, inspect the database schema and record counts with:
+
+``` bash
+sqlite3 /path/to/workdir/run/wxvx.db '.schema stats'
+sqlite3 /path/to/workdir/run/wxvx.db \
+  'select LINE_TYPE, count(*) from stats group by LINE_TYPE;'
+```
 
 ## Miscellaneous
 

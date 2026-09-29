@@ -302,17 +302,6 @@ def _config_point_stat(
         tmp.write_text("%s\n" % render_metconf(config))
 
 
-# @task
-# def _db_con(path: Path):
-#     yield "Database connection to %s" % path
-#     ref: list[sqlite3.Connection] = []
-#     yield Asset(ref, lambda: bool(ref))
-#     dbfile = _db_file(path)
-#     yield dbfile
-#     assert sqlite3.threadsafety == 3
-#     ref.append(sqlite3.connect(dbfile.ref, check_same_thread=False))
-
-
 @task
 def _db_file(path: Path):
     yield "Database file %s" % path
