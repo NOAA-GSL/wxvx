@@ -442,12 +442,10 @@ The `stats` task creates a SQLite database at `paths.run/wxvx.db` and imports st
 
 Repeated invocations of `stats` do not reimport records that have the same cycle, leadtime, level, level type, model, variable, and MET `LINE_TYPE`.
 
-For example, inspect the database schema and record counts with:
+For example, summarize available model, cycle, leadtime, and variable combinations with:
 
 ``` bash
-sqlite3 /path/to/workdir/run/wxvx.db '.schema stats'
-sqlite3 /path/to/workdir/run/wxvx.db \
-  'select LINE_TYPE, count(*) from stats group by LINE_TYPE;'
+sqlite3 /path/to/workdir/run/wxvx.db 'select model, cycle, leadtime, varname, count(*) as records from stats group by model, cycle, leadtime, varname order by model, cycle, leadtime, varname;'
 ```
 
 ## Miscellaneous
