@@ -60,6 +60,7 @@ class Config:
         )
         self.raw = raw
         self.regrid = Regrid(**raw.get(S.regrid, {}))
+        self.timegate: bool = raw.get(S.timegate, True)
         self.timepairs = Timepairs(raw.get(S.timepairs))
         self.truth = Truth(**raw[S.truth])
         self.variables = raw[S.variables]
