@@ -372,6 +372,13 @@ def _db_row(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node):
         df.to_sql(name="stats", con=con, if_exists="append", index=False)
 
 
+def _db_row_ready(dbfile: Node, stmt: str, params: tuple) -> bool:
+    if not dbfile.ready:
+        return False
+    with closing(sqlite3.connect(dbfile.ref)) as con:
+        return not pd.read_sql(sql=stmt, con=con, params=params).empty
+
+
 @external
 def _existing(path: Path):
     taskname = "Existing path %s" % path
@@ -849,29 +856,6 @@ def _regrid_width(c: Config) -> int:
         raise WXVXError(msg) from e
 
 
-def _db_row_ready(dbfile: Node, stmt: str, params: tuple) -> bool:
-    if not dbfile.ready:
-        return False
-    with closing(sqlite3.connect(dbfile.ref)) as con:
-        return not pd.read_sql(sql=stmt, con=con, params=params).empty
-
-
-def _stat_assets(
-    path: Path,
-    linetypes: Sequence[str],
-    source: Source,
-    tc: TimeCoords,
-    var: Var,
-    varname: str,
-) -> dict[str, Asset]:
-    txt = lambda lt: path.parent / f"{path.stem}_{lt}.txt"
-    meta = ns(path=path, source=source, tc=tc, var=var, varname=varname)
-    return {
-        "stat": Asset(meta, path.is_file),
-        **{lt: Asset(txt(lt), txt(lt).is_file) for lt in linetypes},
-    }
-
-
 def _stat_args(
     c: Config,
     varname: str,
@@ -890,6 +874,22 @@ def _stat_args(
         if vn == varname and var.level == level
     ]
     return iter(sorted(args))
+
+
+def _stat_assets(
+    path: Path,
+    linetypes: Sequence[str],
+    source: Source,
+    tc: TimeCoords,
+    var: Var,
+    varname: str,
+) -> dict[str, Asset]:
+    txt = lambda lt: path.parent / f"{path.stem}_{lt}.txt"
+    meta = ns(path=path, source=source, tc=tc, var=var, varname=varname)
+    return {
+        "stat": Asset(meta, path.is_file),
+        **{lt: Asset(txt(lt), txt(lt).is_file) for lt in linetypes},
+    }
 
 
 def _stat_reqs(
