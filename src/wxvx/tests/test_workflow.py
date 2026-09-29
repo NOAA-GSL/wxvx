@@ -492,17 +492,6 @@ def test_workflow__cycle_leadtimes_map__timepairs_dedup(config_data, fakefs, gen
     assert workflow._cycle_leadtimes_map(c) == expected
 
 
-def test_workflow__db_con(tmp_path):
-    path = tmp_path / "wxvx.db"
-    node = workflow._db_con(path=path)
-    assert node.ready
-    con = node.ref[0]
-    assert isinstance(con, sqlite3.Connection)
-    cur = con.execute("select name from sqlite_master where type='table'")
-    assert cur.fetchone()[0] == "stats"
-    con.close()
-
-
 def test_workflow__db_file(tmp_path):
     path = tmp_path / "wxvx.db"
     assert not path.is_file()

@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import sqlite3
+from contextlib import closing
 from enum import Enum, auto
 from functools import cache
 from itertools import chain, pairwise, product
@@ -301,15 +302,15 @@ def _config_point_stat(
         tmp.write_text("%s\n" % render_metconf(config))
 
 
-@task
-def _db_con(path: Path):
-    yield "Database connection to %s" % path
-    ref: list[sqlite3.Connection] = []
-    yield Asset(ref, lambda: bool(ref))
-    dbfile = _db_file(path)
-    yield dbfile
-    assert sqlite3.threadsafety == 3
-    ref.append(sqlite3.connect(dbfile.ref, check_same_thread=False))
+# @task
+# def _db_con(path: Path):
+#     yield "Database connection to %s" % path
+#     ref: list[sqlite3.Connection] = []
+#     yield Asset(ref, lambda: bool(ref))
+#     dbfile = _db_file(path)
+#     yield dbfile
+#     assert sqlite3.threadsafety == 3
+#     ref.append(sqlite3.connect(dbfile.ref, check_same_thread=False))
 
 
 @task
@@ -347,7 +348,7 @@ def _db_row(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node):
         "select 1 from stats where"
         " cycle = ?"
         " and leadtime = ?"
-        " and level = ?"
+        " and level is ?"
         " and leveltype = ?"
         " and LINE_TYPE = ?"
         " and model = ?"
@@ -362,12 +363,11 @@ def _db_row(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node):
         model,
         meta.var.name,
     )
-    dbcon = _db_con(c.paths.run / "wxvx.db")
-    ready = lambda: dbcon.ready and not pd.read_sql(sql=stmt, con=dbcon.ref[0], params=params).empty
-    yield Asset(None, ready)
-    yield [dbcon, stat_req]
+    dbfile = _db_file(c.paths.run / "wxvx.db")
+    yield Asset(None, lambda: _db_row_ready(dbfile, stmt, params))
+    yield [dbfile, stat_req]
     df = pd.read_csv(txtfile, sep=r"\s+")
-    df = df.drop(columns=["MODEL", "SI_BCL.1"])
+    df = df.drop(columns=["MODEL", "SI_BCL.1"], errors="ignore")
     custom_fields = {
         "cycle": cycle,
         "leadtime": leadtime,
@@ -378,7 +378,8 @@ def _db_row(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node):
         "varname": meta.var.name,
     }
     df = df.assign(**custom_fields)
-    df.to_sql(name="stats", con=dbcon.ref[0], if_exists="append", index=False)
+    with closing(sqlite3.connect(dbfile.ref)) as con, con:
+        df.to_sql(name="stats", con=con, if_exists="append", index=False)
 
 
 @external
@@ -846,6 +847,13 @@ def _regrid_width(c: Config) -> int:
     except KeyError as e:
         msg = "Could not determine 'width' value for regrid method '%s'" % c.regrid.method
         raise WXVXError(msg) from e
+
+
+def _db_row_ready(dbfile: Node, stmt: str, params: tuple) -> bool:
+    if not dbfile.ready:
+        return False
+    with closing(sqlite3.connect(dbfile.ref)) as con:
+        return not pd.read_sql(sql=stmt, con=con, params=params).empty
 
 
 def _stat_assets(
