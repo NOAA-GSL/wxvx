@@ -183,11 +183,11 @@ def stats(c: Config):
     for varname, level in _varnames_levels(c):
         for cycle, leadtimes in _cycle_leadtimes_map(c).items():
             for stat_req in _stat_reqs(c, varname, level, cycle, leadtimes):
-                meta = stat_req.ref["stat"]
+                meta = stat_req.ref[S.stat]
                 reqs.extend(
                     _db_row(c, meta, linetype, stat_req.ref[linetype], stat_req)
                     for linetype in stat_req.ref
-                    if linetype != "stat"
+                    if linetype != S.stat
                 )
     yield reqs
 
@@ -358,7 +358,7 @@ def _db_row(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node):
     yield [dbfile, stat_req]
     df = pd.read_csv(txtfile, sep=r"\s+")
     # MET may write duplicate SI_BCL headers instead of SI_BCL and SI_BCU.
-    # pandas renames the duplicate SI_BCL.1. Remove when present. 
+    # pandas renames the duplicate SI_BCL.1. Remove when present.
     # MET Issue: https://github.com/dtcenter/MET/issues/2730
     df = df.drop(columns=["MODEL", "SI_BCL.1"], errors="ignore")
     custom_fields = {
@@ -885,7 +885,7 @@ def _stat_assets(
     txt = lambda linetype: path.parent / f"{path.stem}_{linetype}.txt"
     meta = ns(path=path, source=source, tc=tc, var=var, varname=varname)
     return {
-        "stat": Asset(meta, path.is_file),
+        S.stat: Asset(meta, path.is_file),
         **{linetype: Asset(txt(linetype), txt(linetype).is_file) for linetype in linetypes},
     }
 
