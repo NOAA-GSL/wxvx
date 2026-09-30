@@ -30,8 +30,6 @@ def test_cli_main(config_data, logged, switch_c, switch_n, switch_t, threads, tm
     argv = [pkgname, switch_c, str(cfgfile), switch_n, str(threads), switch_t, S.plots]
     with (
         patch.object(cli, "_parse_args", wraps=cli._parse_args) as _parse_args,
-        patch.object(cli, "initialize_pool"),
-        patch.object(cli, "finalize_pool"),
         patch.object(cli, "tasknames", return_value=["plots"]) as plots,
         patch.object(cli, "use_uwtools_logger") as use_uwtools_logger,
         patch.object(cli.sys, "argv", argv),
@@ -98,8 +96,6 @@ def test_cli_main__fail(config_data, switch, tmp_path):
     cfgfile.write_text(yaml.safe_dump(config_data))
     argv = [pkgname, "-c", str(cfgfile), "-t", "bad", switch]
     with (
-        patch.object(cli, "initialize_pool"),
-        patch.object(cli, "finalize_pool"),
         patch.object(cli.sys, "argv", list(filter(None, argv))),
         patch.object(workflow, "bad", create=True, new=bad),
     ):

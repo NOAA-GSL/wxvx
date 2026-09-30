@@ -877,12 +877,7 @@ def _stat_args(
 
 
 def _stat_assets(
-    path: Path,
-    linetypes: Sequence[str],
-    source: Source,
-    tc: TimeCoords,
-    var: Var,
-    varname: str
+    path: Path, linetypes: Sequence[str], source: Source, tc: TimeCoords, var: Var, varname: str
 ) -> dict[str, Asset]:
     txt = lambda linetype: path.parent / f"{path.stem}_{linetype}.txt"
     meta = ns(path=path, source=source, tc=tc, var=var, varname=varname)
