@@ -801,9 +801,9 @@ def test_workflow__stats_vs_grid(c, datafmt, fakefs, mask, source, tc, testvars)
     kwargs = dict(c=c, varname=NOAA.T2M, tc=tc, var=testvars[EC.t2], prefix="foo", source=source)
     with patch.object(workflow, "classify_data_format", return_value=datafmt):
         refs = taskfunc(**kwargs, dry_run=True).ref
-        assert "stat" in refs
+        assert S.stat in refs
         assert MET.cnt in refs
-        stat = refs["stat"].path
+        stat = refs[S.stat].path
         cfgfile = stat.with_suffix(".config")
         runscript = stat.with_suffix(".sh")
         assert not stat.is_file()
@@ -842,9 +842,9 @@ def test_workflow__stats_vs_obs(c, datafmt, fakefs, mask, source, tc, testvars):
     kwargs = dict(c=c, varname=NOAA.T2M, tc=tc, var=var, prefix="foo", source=source)
     with patch.object(workflow, "classify_data_format", return_value=datafmt):
         refs = workflow._stats_vs_obs(**kwargs, dry_run=True).ref
-        assert "stat" in refs
+        assert S.stat in refs
         assert MET.cnt in refs
-        stat = refs["stat"].path
+        stat = refs[S.stat].path
         cfgfile = stat.with_suffix(".config")
         runscript = stat.with_suffix(".sh")
         assert not stat.is_file()
@@ -1188,16 +1188,16 @@ def test_workflow__stat_assets(tmp_path):
     assets = workflow._stat_assets(
         path=path, linetypes=linetypes, source=Source.FORECAST, tc=tc, var=var, varname="TMP"
     )
-    assert set(assets) == {"stat", MET.cnt, MET.nbrcnt}
-    assert assets["stat"].ref.path == path
-    assert assets["stat"].ref.source is Source.FORECAST
-    assert assets["stat"].ref.varname == "TMP"
+    assert set(assets) == {S.stat, MET.cnt, MET.nbrcnt}
+    assert assets[S.stat].ref.path == path
+    assert assets[S.stat].ref.source is Source.FORECAST
+    assert assets[S.stat].ref.varname == "TMP"
     assert assets[MET.cnt].ref == tmp_path / "grid_stat_foo_060000L_19700101_000000V_cnt.txt"
     assert assets[MET.nbrcnt].ref == tmp_path / "grid_stat_foo_060000L_19700101_000000V_nbrcnt.txt"
-    assert not assets["stat"].ready()
+    assert not assets[S.stat].ready()
     assert not assets[MET.cnt].ready()
     path.touch()
-    assert assets["stat"].ready()
+    assert assets[S.stat].ready()
     assert not assets[MET.cnt].ready()
     assets[MET.cnt].ref.touch()
     assert assets[MET.cnt].ready()
