@@ -191,6 +191,7 @@ class _S(_ValsMatchKeys):
     session: str = _
     shortName: str = _
     start: str = _
+    stat: str = _
     stats: str = _
     step: str = _
     stop: str = _
