@@ -168,15 +168,15 @@ def test_workflow_plots(c, noop):
 
 
 def test_workflow_stats(c, noop):
-    with patch.object(workflow, "_db_row", noop):
+    with patch.object(workflow, "_db_import", noop):
         node = workflow.stats(c=c)
-    # 60 stat runs, each yielding one _db_row per linetype:
+    # 60 stat runs, each yielding one _db_import per linetype:
     #   gh:   cnt         -> 1
     #   refc: cts, nbrcnt -> 2
     #   q:    cnt         -> 1 (x2 levels)
     #   2t:   cnt         -> 1
     # Per source/cycle/leadtime: (1 + 2 + 1 + 1 + 1) = 6 linetypes
-    # x 2 sources x 2 cycles x 3 leadtimes = 72 _db_row nodes
+    # x 2 sources x 2 cycles x 3 leadtimes = 72 _db_import nodes
     assert len(node.ref) == 72
 
 
@@ -507,7 +507,7 @@ def test_workflow__db_file(tmp_path):
     assert expected_wxvx | expected_met <= set(columns)
 
 
-def test_workflow__db_row(c_real_fs):
+def test_workflow__db_import(c_real_fs):
     c = c_real_fs
     tc = TimeCoords(cycle=datetime(1970, 1, 1, tzinfo=timezone.utc), leadtime=timedelta(hours=6))
     var = Var(NOAA.T2M, "heightAboveGround", 2)
@@ -525,7 +525,7 @@ def test_workflow__db_row(c_real_fs):
         yield Asset(None, lambda: True)
 
     stat_req = mock_stat_req()
-    node = workflow._db_row(c=c, meta=meta, linetype=MET.cnt, txtfile=txtfile, stat_req=stat_req)
+    node = workflow._db_import(c=c, meta=meta, linetype=MET.cnt, txtfile=txtfile, stat_req=stat_req)
     assert node.ready
     dbpath = c.paths.run / "wxvx.db"
     con = sqlite3.connect(dbpath)

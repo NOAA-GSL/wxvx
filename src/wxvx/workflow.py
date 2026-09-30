@@ -185,7 +185,7 @@ def stats(c: Config):
             for stat_req in _stat_reqs(c, varname, level, cycle, leadtimes):
                 meta = stat_req.ref[S.stat]
                 reqs.extend(
-                    _db_row(c, meta, linetype, stat_req.ref[linetype], stat_req)
+                    _db_import(c, meta, linetype, stat_req.ref[linetype], stat_req)
                     for linetype in stat_req.ref
                     if linetype != S.stat
                 )
@@ -319,7 +319,7 @@ def _db_file(path: Path):
 
 
 @task
-def _db_row(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node):
+def _db_import(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node):
     source = (
         c.forecast
         if meta.source is Source.FORECAST
@@ -331,7 +331,13 @@ def _db_row(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node):
     cyclestr = f"{yyyymmdd(meta.tc.cycle)} {hh(meta.tc.cycle)}Z"
     vardesc = _varmeta(c, meta.varname).description.format(level=meta.var.level)
     leadtime = hms(meta.tc.leadtime)
-    taskname = "Database row %s %s %s %s %s" % (model, vardesc, cyclestr, leadtime, txtfile.name)
+    taskname = "Database import of MET %s statistics %s %s %s %s" % (
+        linetype.upper(),
+        model,
+        vardesc,
+        cyclestr,
+        leadtime,
+    )
     yield taskname
     cycle = meta.tc.cycle.isoformat()
     stmt = (
