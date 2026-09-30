@@ -357,6 +357,9 @@ def _db_row(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node):
     yield Asset(None, lambda: _db_row_ready(dbfile, stmt, params))
     yield [dbfile, stat_req]
     df = pd.read_csv(txtfile, sep=r"\s+")
+    # MET may write duplicate SI_BCL headers instead of SI_BCL and SI_BCU.
+    # pandas renames the duplicate SI_BCL.1. Remove when present. 
+    # MET Issue: https://github.com/dtcenter/MET/issues/2730
     df = df.drop(columns=["MODEL", "SI_BCL.1"], errors="ignore")
     custom_fields = {
         "cycle": cycle,
