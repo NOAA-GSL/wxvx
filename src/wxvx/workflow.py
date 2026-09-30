@@ -185,9 +185,9 @@ def stats(c: Config):
             for stat_req in _stat_reqs(c, varname, level, cycle, leadtimes):
                 meta = stat_req.ref["stat"]
                 reqs.extend(
-                    _db_row(c, meta, lt, stat_req.ref[lt], stat_req)
-                    for lt in stat_req.ref
-                    if lt != "stat"
+                    _db_row(c, meta, linetype, stat_req.ref[linetype], stat_req)
+                    for linetype in stat_req.ref
+                    if linetype != "stat"
                 )
     yield reqs
 
@@ -882,13 +882,13 @@ def _stat_assets(
     source: Source,
     tc: TimeCoords,
     var: Var,
-    varname: str,
+    varname: str
 ) -> dict[str, Asset]:
-    txt = lambda lt: path.parent / f"{path.stem}_{lt}.txt"
+    txt = lambda linetype: path.parent / f"{path.stem}_{linetype}.txt"
     meta = ns(path=path, source=source, tc=tc, var=var, varname=varname)
     return {
         "stat": Asset(meta, path.is_file),
-        **{lt: Asset(txt(lt), txt(lt).is_file) for lt in linetypes},
+        **{linetype: Asset(txt(linetype), txt(linetype).is_file) for linetype in linetypes},
     }
 
 

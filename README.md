@@ -445,7 +445,7 @@ Repeated invocations of `stats` do not reimport records that have the same cycle
 For example, summarize available model, cycle, leadtime, and variable combinations with:
 
 ``` bash
-sqlite3 /path/to/workdir/run/wxvx.db 'select model, cycle, leadtime, varname, count(*) as records from stats group by model, cycle, leadtime, varname;'
+sqlite3 paths.run/wxvx.db 'select model, cycle, leadtime, varname, count(*) as records from stats group by model, cycle, leadtime, varname;'
 ```
 
 ## Miscellaneous
