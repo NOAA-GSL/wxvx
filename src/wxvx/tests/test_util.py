@@ -154,10 +154,7 @@ def test_util_finalize_pool(pool_defined):
 def test_util_mpexec(env, tmp_path):
     path = tmp_path / "out"
     cmd = 'echo "$PI" | tee %s' % path
-    mock_pool = Mock()
-    mock_pool.apply = lambda func, args=(), kwds=None: func(*args, **(kwds or {}))
-    with patch.object(util, "Pool", return_value=mock_pool):
-        util.initialize_pool(processes=1)
+    util.initialize_pool(processes=1)
     result = util.mpexec(cmd=cmd, rundir=tmp_path, taskname="foo", env=env)
     util.finalize_pool()
     assert result.stderr == ""
@@ -167,10 +164,7 @@ def test_util_mpexec(env, tmp_path):
 
 
 def test_util_mpexec__fail(tmp_path):
-    mock_pool = Mock()
-    mock_pool.apply = lambda func, args=(), kwds=None: func(*args, **(kwds or {}))
-    with patch.object(util, "Pool", return_value=mock_pool):
-        util.initialize_pool(processes=1)
+    util.initialize_pool(processes=1)
     result = util.mpexec(cmd="echo good && echo bad >&2 && false", rundir=tmp_path, taskname="foo")
     util.finalize_pool()
     assert result.stdout.strip() == "good"
