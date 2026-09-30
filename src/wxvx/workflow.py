@@ -354,7 +354,14 @@ def _db_row(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node):
         meta.var.name,
     )
     dbfile = _db_file(c.paths.run / "wxvx.db")
-    yield Asset(None, lambda: _db_row_ready(dbfile, stmt, params))
+
+    def ready() -> bool:
+        if not dbfile.ready:
+            return False
+        with closing(sqlite3.connect(dbfile.ref)) as con:
+            return not pd.read_sql(sql=stmt, con=con, params=params).empty
+
+    yield Asset(None, ready)
     yield [dbfile, stat_req]
     df = pd.read_csv(txtfile, sep=r"\s+")
     # MET may write duplicate SI_BCL headers instead of SI_BCL and SI_BCU.
@@ -373,13 +380,6 @@ def _db_row(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node):
     df = df.assign(**custom_fields)
     with closing(sqlite3.connect(dbfile.ref)) as con, con:
         df.to_sql(name="stats", con=con, if_exists="append", index=False)
-
-
-def _db_row_ready(dbfile: Node, stmt: str, params: tuple) -> bool:
-    if not dbfile.ready:
-        return False
-    with closing(sqlite3.connect(dbfile.ref)) as con:
-        return not pd.read_sql(sql=stmt, con=con, params=params).empty
 
 
 @external
