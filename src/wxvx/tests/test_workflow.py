@@ -1067,7 +1067,7 @@ def test_workflow__maybe_polyfile__mask_str(c, fakefs):
 
 
 def test_workflow__maybe_polyfile__mask_str_met(c, fs, logged):
-    d = Path(os.environ["MET_DATA"], "poly")
+    d = Path(os.environ["MET_BASE"], "poly")
     fs.add_real_directory(d)
     name = "CONUS.poly"
     c.forecast._mask = name
@@ -1082,7 +1082,7 @@ def test_workflow__maybe_polyfile__mask_str_met(c, fs, logged):
 
 
 def test_workflow__maybe_polyfile__mask_str_met_missing(c, fs, logged):
-    d = Path(os.environ["MET_DATA"], "poly")
+    d = Path(os.environ["MET_BASE"], "poly")
     fs.add_real_directory(d)
     name = "MISSING.poly"
     c.forecast._mask = name

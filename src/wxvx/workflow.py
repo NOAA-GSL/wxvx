@@ -811,7 +811,7 @@ def _maybe_polyfile(c: Config, reqs: list[Node], statpath: Path) -> Node | None:
             path = Path(mask)
             if not path.is_file():
                 logging.debug("Mask %s not found, checking MET masks", path)
-                metmask = Path(os.environ["MET_DATA"], "poly", mask)
+                metmask = Path(os.environ["MET_BASE"], "poly", mask)
                 if metmask.is_file():
                     logging.debug("Using MET mask %s", metmask)
                     path = metmask
