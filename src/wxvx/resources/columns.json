@@ -230,6 +230,7 @@
     "SEDS_NCU": "REAL",
     "SI": "REAL",
     "SI_BCL": "REAL",
+    "SI_BCU": "REAL",
     "SP_CORR": "REAL",
     "TOTAL": "INTEGER",
     "UFSS": "REAL",
