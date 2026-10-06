@@ -3,10 +3,9 @@ from __future__ import annotations
 import logging
 import re
 import sys
-from collections.abc import Hashable
 from dataclasses import dataclass
 from functools import cache
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal
 
 import netCDF4  # noqa: F401 # import before xarray cf. https://github.com/pydata/xarray/issues/7259
 import numpy as np
@@ -420,12 +419,14 @@ def model_class(name: str) -> Any:
 
 @cache
 def model_names(current: type = Var) -> set[str]:
-    s = set()
-    subclasses: list[type[Any]] = current.__subclasses__()
-    for subclass in subclasses:
-        s.add(subclass.__name__)
-        s |= model_names(cast(Hashable, subclass))
-    return s
+    def names(cls: type[object]) -> set[str]:
+        s = set()
+        for subclass in cls.__subclasses__():
+            s.add(subclass.__name__)
+            s |= names(subclass)
+        return s
+
+    return names(current)
 
 
 # Private
