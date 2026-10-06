@@ -149,6 +149,7 @@
     "ME_BCU": "REAL",
     "ME_NCL": "REAL",
     "ME_NCU": "REAL",
+    "MODEL": "TEXT",
     "MSE": "REAL",
     "MSESS": "REAL",
     "MSESS_BCL": "REAL",
@@ -242,7 +243,7 @@
     "leadtime": "TEXT",
     "level": "REAL",
     "leveltype": "TEXT",
-    "model": "TEXT",
+    "modelname": "TEXT",
     "validtime": "TEXT",
     "varname": "TEXT"
   }

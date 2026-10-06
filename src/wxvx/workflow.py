@@ -327,13 +327,13 @@ def _db_import(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node
         if meta.source == Source.TRUTH
         else c.baseline
     )
-    model = cast(str, source.name)
+    modelname = cast(str, source.name)
     cyclestr = f"{yyyymmdd(meta.tc.cycle)} {hh(meta.tc.cycle)}Z"
     vardesc = _varmeta(c, meta.varname).description.format(level=meta.var.level)
     leadtime = hms(meta.tc.leadtime)
     taskname = "Database import of MET %s statistics %s %s %s %s" % (
         linetype.upper(),
-        model,
+        modelname,
         vardesc,
         cyclestr,
         leadtime,
@@ -347,7 +347,7 @@ def _db_import(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node
         " and level is ?"
         " and leveltype = ?"
         " and LINE_TYPE = ?"
-        " and model = ?"
+        " and modelname = ?"
         " and varname = ?"
     )
     params = (
@@ -356,7 +356,7 @@ def _db_import(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node
         meta.var.level,
         meta.var.level_type,
         linetype.upper(),
-        model,
+        modelname,
         meta.var.name,
     )
     dbfile = _db_file(c.paths.run / "wxvx.db")
@@ -370,16 +370,12 @@ def _db_import(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node
     yield Asset(None, ready)
     yield [dbfile, stat_req]
     df = pd.read_csv(txtfile, sep=r"\s+")
-    # MET may write duplicate SI_BCL headers instead of SI_BCL and SI_BCU.
-    # pandas renames the duplicate SI_BCL.1. Remove when present.
-    # MET Issue: https://github.com/dtcenter/MET/issues/2730
-    df = df.drop(columns=["MODEL", "SI_BCL.1"], errors="ignore")
     custom_fields = {
         "cycle": cycle,
         "leadtime": leadtime,
         "level": meta.var.level,
         "leveltype": meta.var.level_type,
-        "model": model,
+        "modelname": modelname,
         "validtime": meta.tc.validtime,
         "varname": meta.var.name,
     }
