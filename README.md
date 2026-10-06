@@ -438,14 +438,14 @@ Invoking `wxvx -c config.yaml -t grids_truth` would stage the truth grids to dis
 
 ### Statistics Database
 
-The `stats` task creates a SQLite database at `paths.run/wxvx.db` and imports statistics produced by the `metstats` task into its `stats` table. The table includes columns from the MET output supported by `wxvx`, with null values for fields that do not apply to a particular line type. It also includes `wxvx` metadata columns: `cycle`, `leadtime`, `level`, `leveltype`, `model`, `validtime`, and `varname`.
+The `stats` task creates a SQLite database at `paths.run/wxvx.db` and imports statistics produced by the `metstats` task into its `stats` table. The table includes columns from the MET output supported by `wxvx`, with null values for fields that do not apply to a particular line type. It also includes `wxvx` metadata columns: `cycle`, `leadtime`, `level`, `leveltype`, `modelname`, `validtime`, and `varname`.
 
-Repeated invocations of `stats` do not reimport records that have the same cycle, leadtime, level, level type, model, variable, and MET `LINE_TYPE`.
+Repeated invocations of `stats` do not reimport records that have the same cycle, leadtime, level, level type, model name, variable, and MET `LINE_TYPE`.
 
-For example, summarize available model, cycle, leadtime, and variable combinations with:
+For example, summarize available model name, cycle, leadtime, and variable combinations with:
 
 ``` bash
-sqlite3 paths.run/wxvx.db 'select model, cycle, leadtime, varname, count(*) as records from stats group by model, cycle, leadtime, varname;'
+sqlite3 paths.run/wxvx.db 'select modelname, cycle, leadtime, varname, count(*) as records from stats group by modelname, cycle, leadtime, varname;'
 ```
 
 ## Miscellaneous
