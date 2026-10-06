@@ -540,6 +540,7 @@ def test_workflow__db_import(c_real_fs):
     assert row["modelname"] == "Forecast Model"
     assert row["varname"] == NOAA.T2M
     assert row["LINE_TYPE"] == "CNT"
+    assert row["MODEL"] == "Forecast_Model"
     assert row["ME"] == 0.5
     con.close()
 
