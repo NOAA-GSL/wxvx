@@ -499,7 +499,7 @@ def _grid_nc(c: Config, varname: str, tc: TimeCoords, var: Var):
     da = da_construct(c, src)
     ds = ds_construct(c, da, taskname, var.level)
     with atomic(path) as tmp:
-        ds.to_netcdf(tmp, encoding={varname: {"zlib": True, "complevel": 9}})
+        ds.to_netcdf(tmp, encoding={varname: {"zlib": True, "complevel": 9}}, engine="h5netcdf")
     logging.info("%s: Wrote %s", taskname, path)
 
 

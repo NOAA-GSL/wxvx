@@ -16,6 +16,7 @@ requirements:
     - setuptools
     - {{ python }}
   run:
+    - h5netcdf 1.8.*
     - metplus 6.2.1.* # provides MET 12.2.2
     - netcdf4 1.7.*
     - pandas 2.2.*
