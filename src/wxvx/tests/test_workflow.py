@@ -515,8 +515,8 @@ def test_workflow__db_import(c_real_fs):
     txtfile = c.paths.run / "point_stat_foo_060000L_19700101_060000V_cnt.txt"
     txtfile.parent.mkdir(parents=True, exist_ok=True)
     txtfile.write_text(
-        "VERSION MODEL FCST_LEAD LINE_TYPE TOTAL ME RMSE SI_BCL\n"
-        "V12.0 Forecast_Model 60000 CNT 100 0.5 1.2 0.1\n"
+        "VERSION MODEL FCST_LEAD LINE_TYPE TOTAL ME RMSE SI_BCL SI_BCU\n"
+        "V12.0 Forecast_Model 60000 CNT 100 0.5 1.2 0.1 0.2\n"
     )
 
     @external
@@ -542,6 +542,8 @@ def test_workflow__db_import(c_real_fs):
     assert row["LINE_TYPE"] == "CNT"
     assert row["MODEL"] == "Forecast_Model"
     assert row["ME"] == 0.5
+    assert row["SI_BCL"] == 0.1
+    assert row["SI_BCU"] == 0.2
     con.close()
 
 
