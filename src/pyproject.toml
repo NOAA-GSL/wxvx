@@ -47,6 +47,7 @@ ignore = [
   "C408",    # unnecessary-collection-call
   "C901",    # complex-structure
   "COM812",  # missing-trailing-comma
+  "CPY001",  # missing-copyright-notice
   "D100",    # undocumented-public-module
   "D101",    # undocumented-public-class
   "D102",    # undocumented-public-method
@@ -67,6 +68,7 @@ ignore = [
   "PLR0911", # too-many-return-statements
   "PLR0912", # too-many-branches
   "PLR0913", # too-many-arguments
+  "PLR0917", # too-many-positional-arguments
   "PLR2004", # magic-value-comparison
   "PLW0108", # unnecessary-lambda
   "S101",    # assert
