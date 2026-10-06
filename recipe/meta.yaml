@@ -16,7 +16,7 @@ requirements:
     - setuptools
     - {{ python }}
   run:
-    - met2go 11.0.3.*
+    - metplus 6.2.1.* # provides MET 12.2.2
     - netcdf4 1.7.*
     - pandas 2.2.*
     - pyproj 3.7.*
@@ -33,14 +33,14 @@ test:
     - docformatter 1.7.*
     - jq 1.8.*
     - make 4.4.*
-    - mypy 2.1.*
+    - mypy 2.4.*
     - pandas-stubs
     - pyfakefs 6.2.*
-    - pytest 9.0.*
+    - pytest 9.1.*
     - pytest-cov 7.1.*
-    - pytest-randomly 3.15.*
+    - pytest-randomly 5.0.*
     - pytest-xdist 3.8.*
-    - ruff 0.15.*
+    - ruff 0.16.*
     - types-PyYAML
     - types-requests
     - types-seaborn
