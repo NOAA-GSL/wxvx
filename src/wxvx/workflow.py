@@ -807,7 +807,10 @@ def _maybe_polyfile(c: Config, reqs: list[Node], statpath: Path) -> Node | None:
             path = Path(mask)
             if not path.is_file():
                 logging.debug("Mask %s not found, checking MET masks", path)
-                metmask = Path(os.environ["MET_BASE"], "poly", mask)
+                if not (met_base := os.environ.get("MET_BASE")):
+                    msg = "Mask %s not found, and MET_BASE is not set to locate MET masks" % mask
+                    raise WXVXError(msg)
+                metmask = Path(met_base, "poly", mask)
                 if metmask.is_file():
                     logging.debug("Using MET mask %s", metmask)
                     path = metmask

@@ -1082,6 +1082,16 @@ def test_workflow__maybe_polyfile__mask_str_met(c, fs, logged):
     assert logged("Using MET mask %s" % path)
 
 
+def test_workflow__maybe_polyfile__mask_str_met_base_unset(c, fakefs):
+    name = "CONUS.poly"
+    c.forecast._mask = name
+    with (
+        patch.dict(os.environ, {}, clear=True),
+        raises(WXVXError, match="Mask %s not found, and MET_BASE is not set" % name),
+    ):
+        workflow._maybe_polyfile(c=c, reqs=[], statpath=fakefs / "unused")
+
+
 def test_workflow__maybe_polyfile__mask_str_met_missing(c, fs, logged):
     d = Path(os.environ["MET_BASE"], "poly")
     fs.add_real_directory(d)
