@@ -350,8 +350,7 @@ def _db_import(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node
         "LINE_TYPE = ?": linetype.upper(),
     }
     params = tuple(term_param_map.values())
-    terms = " and ".join(term_param_map.keys())
-    stmt = f"select 1 from stats where {terms}"  # noqa: S608
+    stmt = "select 1 from stats where %s" % " and ".join(term_param_map.keys())  # noqa: S608
     dbfile = _db_file(c.paths.run / "wxvx.db")
 
     def ready() -> bool:
