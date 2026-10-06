@@ -340,25 +340,18 @@ def _db_import(c: Config, meta: ns, linetype: str, txtfile: Path, stat_req: Node
     )
     yield taskname
     cycle = meta.tc.cycle.isoformat()
-    stmt = (
-        "select 1 from stats where"
-        " cycle = ?"
-        " and leadtime = ?"
-        " and level is ?"
-        " and leveltype = ?"
-        " and LINE_TYPE = ?"
-        " and modelname = ?"
-        " and varname = ?"
-    )
-    params = (
-        cycle,
-        leadtime,
-        meta.var.level,
-        meta.var.level_type,
-        linetype.upper(),
-        modelname,
-        meta.var.name,
-    )
+    term_param_map = {
+        "cycle = ?": cycle,
+        "leadtime = ?": leadtime,
+        "level is ?": meta.var.level,
+        "leveltype = ?": meta.var.level_type,
+        "modelname = ?": modelname,
+        "varname = ?": meta.var.name,
+        "LINE_TYPE = ?": linetype.upper(),
+    }
+    params = tuple(term_param_map.values())
+    terms = " and ".join(term_param_map.keys())
+    stmt = f"select 1 from stats where {terms}"  # noqa: S608
     dbfile = _db_file(c.paths.run / "wxvx.db")
 
     def ready() -> bool:
