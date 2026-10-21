@@ -797,15 +797,6 @@ def _forecast_grid(
     return _grid_nc(c, varname, tc, var), data_format
 
 
-def _grid_grib_gridsdir_template(c: Config, source: Source) -> tuple[Path, str]:
-    if source is Source.BASELINE and c.baseline.name != S.truth:
-        return c.paths.grids_baseline, cast(str, c.baseline.url)
-    if source is Source.FORECAST:
-        return c.paths.grids_forecast, cast(str, c.forecast.path)
-    # Either source is Source.TRUTH, or source is Source.BASELINE with name 'truth':
-    return c.paths.grids_truth, c.truth.url
-
-
 def _grid_grib_from_local(
     path: Path, idxfile: Path, var: Var, *, source: Source, tc: TimeCoords, taskname: str
 ) -> None:
@@ -849,6 +840,26 @@ def _grid_grib_from_remote(path: Path, idxdata: dict, var: Var, taskname: str, u
     fetch(taskname, url, path, headers)
 
 
+def _grid_grib_gridsdir_template(c: Config, source: Source) -> tuple[Path, str]:
+    if source is Source.BASELINE and c.baseline.name != S.truth:
+        return c.paths.grids_baseline, cast(str, c.baseline.url)
+    if source is Source.FORECAST:
+        return c.paths.grids_forecast, cast(str, c.forecast.path)
+    # Either source is Source.TRUTH, or source is Source.BASELINE with name 'truth':
+    return c.paths.grids_truth, c.truth.url
+
+
+def _matches_accumulation_period(record: Sequence[str], leadtime: timedelta) -> bool:
+    if len(record) < 6:
+        return False
+    match = re.fullmatch(r"(\d+)-(\d+) (hour|day) acc fcst", record[5])
+    if not match:
+        return False
+    start, end = (int(match.group(i)) for i in (1, 2))
+    scale = 24 if match.group(3) == "day" else 1
+    return start == 0 and end * scale == int(leadtime.total_seconds() / 3600)
+
+
 def _maybe_polyfile(c: Config, reqs: list[Node], statpath: Path) -> Node | None:
     polyfile: Node
     if mask := c.forecast.mask:
@@ -872,17 +883,6 @@ def _maybe_polyfile(c: Config, reqs: list[Node], statpath: Path) -> Node | None:
         reqs.append(polyfile)
         return polyfile
     return None
-
-
-def _matches_accumulation_period(record: Sequence[str], leadtime: timedelta) -> bool:
-    if len(record) < 6:
-        return False
-    match = re.fullmatch(r"(\d+)-(\d+) (hour|day) acc fcst", record[5])
-    if not match:
-        return False
-    start, end = (int(match.group(i)) for i in (1, 2))
-    scale = 24 if match.group(3) == "day" else 1
-    return start == 0 and end * scale == int(leadtime.total_seconds() / 3600)
 
 
 def _met_mask(polyfile: Node | None) -> dict[str, list[str]]:

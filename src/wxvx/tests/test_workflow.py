@@ -503,49 +503,6 @@ def test_workflow__config_point_stat__unsupported_regrid_method(c, fakefs, testv
     assert not path.is_file()
 
 
-def test_workflow__cycle_leadtimes_map__cycles_leadtimes(c, utc):
-    expected = {
-        utc(2024, 12, 19, 18): [timedelta(hours=0), timedelta(hours=6), timedelta(hours=12)],
-        utc(2024, 12, 20, 6): [timedelta(hours=0), timedelta(hours=6), timedelta(hours=12)],
-    }
-    assert workflow._cycle_leadtimes_map(c) == expected
-
-
-def test_workflow__cycle_leadtimes_map__timepairs(config_data, fakefs, gen_config, utc):
-    data = with_del(with_del(config_data, S.cycles), S.leadtimes)
-    data[S.timepairs] = [
-        ["2024-12-19T18:00:00", "06:00:00"],
-        ["2024-12-19T18:00:00", "12:00:00"],
-        ["2024-12-20T06:00:00", "00:00:00"],
-        ["2024-12-20T06:00:00", "06:00:00"],
-    ]
-    c = gen_config(data, fakefs)
-    expected = {
-        utc(2024, 12, 19, 18): [timedelta(hours=6), timedelta(hours=12)],
-        utc(2024, 12, 20, 6): [timedelta(hours=0), timedelta(hours=6)],
-    }
-    assert workflow._cycle_leadtimes_map(c) == expected
-
-
-def test_workflow__cycle_leadtimes_map__timepairs_dedup(config_data, fakefs, gen_config, utc):
-    # Duplicate cycle/leadtime pairs in the timepairs list are de-duplicated: Each cycle maps to a
-    # sorted list of unique leadtimes.
-    data = with_del(with_del(config_data, S.cycles), S.leadtimes)
-    data[S.timepairs] = [
-        ["2024-12-19T18:00:00", "06:00:00"],
-        ["2024-12-19T18:00:00", "06:00:00"],
-        ["2024-12-19T18:00:00", "12:00:00"],
-        ["2024-12-20T06:00:00", "00:00:00"],
-        ["2024-12-20T06:00:00", "00:00:00"],
-    ]
-    c = gen_config(data, fakefs)
-    expected = {
-        utc(2024, 12, 19, 18): [timedelta(hours=6), timedelta(hours=12)],
-        utc(2024, 12, 20, 6): [timedelta(hours=0)],
-    }
-    assert workflow._cycle_leadtimes_map(c) == expected
-
-
 def test_workflow__db_file(tmp_path):
     path = tmp_path / "wxvx.db"
     assert not path.is_file()
@@ -669,20 +626,6 @@ def test_workflow__grib_index_data_wgrib2__accumulation_period(c, tc, tidy):
     var = node.ref["tp-surface"]
     assert var.firstbyte == 100
     assert var.lastbyte == 199
-
-
-def test_workflow__matches_accumulation_period__invalid_record():
-    leadtime = timedelta(hours=6)
-    assert not workflow._matches_accumulation_period([], leadtime)
-    assert not workflow._matches_accumulation_period([""] * 6, leadtime)
-
-
-@mark.parametrize(
-    ("period", "leadtime"),
-    [("0-6 hour acc fcst", timedelta(hours=6)), ("0-1 day acc fcst", timedelta(days=1))],
-)
-def test_workflow__matches_accumulation_period(period, leadtime):
-    assert workflow._matches_accumulation_period([""] * 5 + [period], leadtime)
 
 
 def test_workflow__grib_index_file_eccodes(c, fakefs, logged, tc):
@@ -842,6 +785,45 @@ def test_workflow__netcdf_from_obs__no_path(c, tc):
     assert expected in str(e.value)
 
 
+@mark.parametrize("remote", [False, True])
+def test_workflow__netcdf_from_stageiv(c, fakefs, remote):
+    tc = TimeCoords(datetime(2026, 6, 16, 9, tzinfo=timezone.utc))
+    var = Var(name=EC.tp, level_type=S.surface)
+    source_dir = fakefs / "stageiv"
+    template = source_dir / "st4_conus.{{ yyyymmdd }}{{ hh }}.01h.grb2"
+    if remote:
+        url = "https://example.com/st4_conus.{{ yyyymmdd }}{{ hh }}.01h.grb2"
+    else:
+        url = str(template)
+        source_dir.mkdir()
+        for hour in range(4, 10):
+            Path(str(template).replace("{{ yyyymmdd }}{{ hh }}", f"20260616{hour:02d}")).touch()
+    c.truth = replace(c.truth, name=S.STAGEIV, url=url)
+    path = c.paths.grids_truth / "20260616" / "09" / "000" / "tp-surface.nc"
+
+    def fetch(_taskname, _url, target):
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.touch()
+
+    with (
+        patch.object(workflow, "fetch", side_effect=fetch) as fetch_mock,
+        patch.object(workflow, "mpexec", side_effect=lambda *_: Path(f"{path}.tmp").touch()),
+    ):
+        node = workflow._netcdf_from_stageiv(c=c, tc=tc, var=var)
+
+    assert node.ready
+    assert path.is_file()
+    assert fetch_mock.call_count == (6 if remote else 0)
+    runscript = c.paths.run / "pcp_combine" / "20260616" / "09" / "000" / "tp-surface.sh"
+    content = runscript.read_text()
+    assert "pcp_combine -add" in content
+    assert "2026061604" in content
+    assert "2026061609" in content
+    assert "2026061603" not in content
+    assert "2026061610" not in content
+    assert '-field \'name="APCP"; level="A1";\' -name APCP' in content
+
+
 @mark.parametrize("dictkey", ["foo", "bar", "baz"])
 def test_workflow__plot(c, dictkey, fakefs, fs):
     @external
@@ -892,61 +874,6 @@ def test_workflow__polyfile_from_lat_lon_pairs(fakefs, tidy):
     21.1 225.9
     """
     assert path.read_text().strip() == tidy(expected)
-
-
-@mark.parametrize("remote", [False, True])
-def test_workflow__netcdf_from_stageiv(c, fakefs, remote):
-    tc = TimeCoords(datetime(2026, 6, 16, 9, tzinfo=timezone.utc))
-    var = Var(name=EC.tp, level_type=S.surface)
-    source_dir = fakefs / "stageiv"
-    template = source_dir / "st4_conus.{{ yyyymmdd }}{{ hh }}.01h.grb2"
-    if remote:
-        url = "https://example.com/st4_conus.{{ yyyymmdd }}{{ hh }}.01h.grb2"
-    else:
-        url = str(template)
-        source_dir.mkdir()
-        for hour in range(4, 10):
-            Path(str(template).replace("{{ yyyymmdd }}{{ hh }}", f"20260616{hour:02d}")).touch()
-    c.truth = replace(c.truth, name=S.STAGEIV, url=url)
-    path = c.paths.grids_truth / "20260616" / "09" / "000" / "tp-surface.nc"
-
-    def fetch(_taskname, _url, target):
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.touch()
-
-    with (
-        patch.object(workflow, "fetch", side_effect=fetch) as fetch_mock,
-        patch.object(workflow, "mpexec", side_effect=lambda *_: Path(f"{path}.tmp").touch()),
-    ):
-        node = workflow._netcdf_from_stageiv(c=c, tc=tc, var=var)
-
-    assert node.ready
-    assert path.is_file()
-    assert fetch_mock.call_count == (6 if remote else 0)
-    runscript = c.paths.run / "pcp_combine" / "20260616" / "09" / "000" / "tp-surface.sh"
-    content = runscript.read_text()
-    assert "pcp_combine -add" in content
-    assert "2026061604" in content
-    assert "2026061609" in content
-    assert "2026061603" not in content
-    assert "2026061610" not in content
-    assert '-field \'name="APCP"; level="A1";\' -name APCP' in content
-
-
-def test_workflow__stageiv_files__crosses_midnight(c, noop):
-    tc = TimeCoords(datetime(2026, 6, 17, 2, tzinfo=timezone.utc))
-    var = Var(name=EC.tp, level_type=S.surface)
-    with patch.object(workflow, "_stageiv_file", side_effect=noop) as stageiv_file:
-        result = workflow._stageiv_files(c, tc, var)
-    assert len(result) == 6
-    assert [x.args[1].validtime.isoformat() for x in stageiv_file.call_args_list] == [
-        "2026-06-16T21:00:00",
-        "2026-06-16T22:00:00",
-        "2026-06-16T23:00:00",
-        "2026-06-17T00:00:00",
-        "2026-06-17T01:00:00",
-        "2026-06-17T02:00:00",
-    ]
 
 
 @mark.parametrize("datafmt", [DataFormat.NETCDF, DataFormat.UNKNOWN])
@@ -1076,6 +1003,49 @@ def test_workflow__config_fields__stageiv(c):
     }
 
 
+def test_workflow__cycle_leadtimes_map__cycles_leadtimes(c, utc):
+    expected = {
+        utc(2024, 12, 19, 18): [timedelta(hours=0), timedelta(hours=6), timedelta(hours=12)],
+        utc(2024, 12, 20, 6): [timedelta(hours=0), timedelta(hours=6), timedelta(hours=12)],
+    }
+    assert workflow._cycle_leadtimes_map(c) == expected
+
+
+def test_workflow__cycle_leadtimes_map__timepairs(config_data, fakefs, gen_config, utc):
+    data = with_del(with_del(config_data, S.cycles), S.leadtimes)
+    data[S.timepairs] = [
+        ["2024-12-19T18:00:00", "06:00:00"],
+        ["2024-12-19T18:00:00", "12:00:00"],
+        ["2024-12-20T06:00:00", "00:00:00"],
+        ["2024-12-20T06:00:00", "06:00:00"],
+    ]
+    c = gen_config(data, fakefs)
+    expected = {
+        utc(2024, 12, 19, 18): [timedelta(hours=6), timedelta(hours=12)],
+        utc(2024, 12, 20, 6): [timedelta(hours=0), timedelta(hours=6)],
+    }
+    assert workflow._cycle_leadtimes_map(c) == expected
+
+
+def test_workflow__cycle_leadtimes_map__timepairs_dedup(config_data, fakefs, gen_config, utc):
+    # Duplicate cycle/leadtime pairs in the timepairs list are de-duplicated: Each cycle maps to a
+    # sorted list of unique leadtimes.
+    data = with_del(with_del(config_data, S.cycles), S.leadtimes)
+    data[S.timepairs] = [
+        ["2024-12-19T18:00:00", "06:00:00"],
+        ["2024-12-19T18:00:00", "06:00:00"],
+        ["2024-12-19T18:00:00", "12:00:00"],
+        ["2024-12-20T06:00:00", "00:00:00"],
+        ["2024-12-20T06:00:00", "00:00:00"],
+    ]
+    c = gen_config(data, fakefs)
+    expected = {
+        utc(2024, 12, 19, 18): [timedelta(hours=6), timedelta(hours=12)],
+        utc(2024, 12, 20, 6): [timedelta(hours=0)],
+    }
+    assert workflow._cycle_leadtimes_map(c) == expected
+
+
 def test_workflow__enforce_point_truth_type(c):
     c.truth = replace(c.truth, type=S.grid)
     with raises(WXVXError) as e:
@@ -1151,21 +1121,6 @@ def test_workflow__forecast_grid__no_coords(c, fmt, path, tc, testvars):
             with raises(WXVXError) as e:
                 workflow._forecast_grid(**args)
             assert str(e.value) == f"Set forecast.coords for dataset {path}"
-
-
-@mark.parametrize("source", [Source.BASELINE, Source.FORECAST, Source.TRUTH])
-def test_workflow__grib_grid_gridsdir_template(c, source):
-    result = workflow._grid_grib_gridsdir_template(c=c, source=source)
-    if source is Source.BASELINE:
-        assert result == (Path(c.paths.grids_baseline), c.baseline.url)
-        # Test special case where baseline is aliased to truth:
-        object.__setattr__(c.baseline, "name", "truth")
-        expected = (Path(c.paths.grids_truth), c.truth.url)
-        assert workflow._grid_grib_gridsdir_template(c=c, source=source) == expected
-    elif source is Source.FORECAST:
-        assert result == (Path(c.paths.grids_forecast), c.forecast.path)
-    else:  # source is Source.TRUTH:
-        assert result == (Path(c.paths.grids_truth), c.truth.url)
 
 
 @mark.parametrize("gids", [[], [11], [11, 22]])
@@ -1267,6 +1222,35 @@ def test_workflow__grid_grib_from_remote(testvars):
             kwargs = dict(path=path, idxdata=idxdata, var=testvars[key], taskname=taskname, url=url)
             workflow._grid_grib_from_remote(**kwargs)
             fetch.assert_called_with(taskname, url, path, {"Range": f"bytes={byterange}"})
+
+
+@mark.parametrize("source", [Source.BASELINE, Source.FORECAST, Source.TRUTH])
+def test_workflow__grib_grid_gridsdir_template(c, source):
+    result = workflow._grid_grib_gridsdir_template(c=c, source=source)
+    if source is Source.BASELINE:
+        assert result == (Path(c.paths.grids_baseline), c.baseline.url)
+        # Test special case where baseline is aliased to truth:
+        object.__setattr__(c.baseline, "name", "truth")
+        expected = (Path(c.paths.grids_truth), c.truth.url)
+        assert workflow._grid_grib_gridsdir_template(c=c, source=source) == expected
+    elif source is Source.FORECAST:
+        assert result == (Path(c.paths.grids_forecast), c.forecast.path)
+    else:  # source is Source.TRUTH:
+        assert result == (Path(c.paths.grids_truth), c.truth.url)
+
+
+@mark.parametrize(
+    ("period", "leadtime"),
+    [("0-6 hour acc fcst", timedelta(hours=6)), ("0-1 day acc fcst", timedelta(days=1))],
+)
+def test_workflow__matches_accumulation_period(period, leadtime):
+    assert workflow._matches_accumulation_period([""] * 5 + [period], leadtime)
+
+
+def test_workflow__matches_accumulation_period__invalid_record():
+    leadtime = timedelta(hours=6)
+    assert not workflow._matches_accumulation_period([], leadtime)
+    assert not workflow._matches_accumulation_period([""] * 6, leadtime)
 
 
 def test_workflow__maybe_polyfile__mask(c, fakefs):
@@ -1407,53 +1391,20 @@ def test_workflow__regrid_width(c):
     assert str(e.value) == "Could not determine 'width' value for regrid method 'FOO'"
 
 
-@mark.parametrize(
-    ("truth_name", "name", "expected_leadtime"),
-    [
-        (S.GFS, EC.t2, timedelta(0)),
-        (S.GFS, EC.tp, timedelta(hours=6)),
-        (S.HRRR, EC.tp, timedelta(hours=6)),
-        (S.STAGEIV, EC.tp, timedelta(0)),
-    ],
-)
-def test_workflow__truth_timecoords(c, truth_name, name, expected_leadtime, tc):
-    c.truth = replace(c.truth, name=truth_name)
-    tc = TimeCoords(cycle=tc.cycle, leadtime=timedelta(hours=6))
-    result = workflow._truth_timecoords(c, tc, Var(name=name, level_type=S.surface))
-    assert result.cycle == tc.validtime - expected_leadtime
-    assert result.leadtime == expected_leadtime
-    assert result.validtime == tc.validtime
-
-
-@mark.parametrize("truth_name", [S.GFS, S.STAGEIV])
-def test_workflow__truth_grid(c, noop, tc, truth_name):
-    c.truth = replace(c.truth, name=truth_name)
+def test_workflow__stageiv_files__crosses_midnight(c, noop):
+    tc = TimeCoords(datetime(2026, 6, 17, 2, tzinfo=timezone.utc))
     var = Var(name=EC.tp, level_type=S.surface)
-    with (
-        patch.object(workflow, "_grid_grib", side_effect=noop) as grid_grib,
-        patch.object(workflow, "_netcdf_from_stageiv", side_effect=noop) as netcdf_from_stageiv,
-    ):
-        workflow._truth_grid(c, tc, var)
-    if truth_name == S.STAGEIV:
-        netcdf_from_stageiv.assert_called_once_with(c, tc, var)
-        grid_grib.assert_not_called()
-    else:
-        grid_grib.assert_called_once_with(c, tc, var, Source.TRUTH)
-        netcdf_from_stageiv.assert_not_called()
-
-
-@mark.parametrize(
-    ("stat", "expected"),
-    [
-        (MET.CSI, "CSI"),
-        (MET.FSS, "FSS"),
-        (MET.HSS, "HSS"),
-        (MET.ME, "ME (m)"),
-        (MET.RMSE, "RMSE (m)"),
-    ],
-)
-def test_workflow__stat_ylabel(stat, expected):
-    assert workflow._stat_ylabel(variables.VARMETA[EC.gh], stat) == expected
+    with patch.object(workflow, "_stageiv_file", side_effect=noop) as stageiv_file:
+        result = workflow._stageiv_files(c, tc, var)
+    assert len(result) == 6
+    assert [x.args[1].validtime.isoformat() for x in stageiv_file.call_args_list] == [
+        "2026-06-16T21:00:00",
+        "2026-06-16T22:00:00",
+        "2026-06-16T23:00:00",
+        "2026-06-17T00:00:00",
+        "2026-06-17T01:00:00",
+        "2026-06-17T02:00:00",
+    ]
 
 
 def test_workflow__stat_args(c, statkit, utc):
@@ -1524,6 +1475,20 @@ def test_workflow__stat_reqs(baseline_name, c, statkit, utc):
     assert callargs[5] == Source.FORECAST
 
 
+@mark.parametrize(
+    ("stat", "expected"),
+    [
+        (MET.CSI, "CSI"),
+        (MET.FSS, "FSS"),
+        (MET.HSS, "HSS"),
+        (MET.ME, "ME (m)"),
+        (MET.RMSE, "RMSE (m)"),
+    ],
+)
+def test_workflow__stat_ylabel(stat, expected):
+    assert workflow._stat_ylabel(variables.VARMETA[EC.gh], stat) == expected
+
+
 def test_workflow__stats_widths(c):
     assert list(workflow._stats_widths(c=c, varname=NOAA.REFC)) == [
         (MET.FSS, 3),
@@ -1543,6 +1508,41 @@ def test_workflow__stats_widths(c):
         (MET.ME, None),
         (MET.RMSE, None),
     ]
+
+
+@mark.parametrize("truth_name", [S.GFS, S.STAGEIV])
+def test_workflow__truth_grid(c, noop, tc, truth_name):
+    c.truth = replace(c.truth, name=truth_name)
+    var = Var(name=EC.tp, level_type=S.surface)
+    with (
+        patch.object(workflow, "_grid_grib", side_effect=noop) as grid_grib,
+        patch.object(workflow, "_netcdf_from_stageiv", side_effect=noop) as netcdf_from_stageiv,
+    ):
+        workflow._truth_grid(c, tc, var)
+    if truth_name == S.STAGEIV:
+        netcdf_from_stageiv.assert_called_once_with(c, tc, var)
+        grid_grib.assert_not_called()
+    else:
+        grid_grib.assert_called_once_with(c, tc, var, Source.TRUTH)
+        netcdf_from_stageiv.assert_not_called()
+
+
+@mark.parametrize(
+    ("truth_name", "name", "expected_leadtime"),
+    [
+        (S.GFS, EC.t2, timedelta(0)),
+        (S.GFS, EC.tp, timedelta(hours=6)),
+        (S.HRRR, EC.tp, timedelta(hours=6)),
+        (S.STAGEIV, EC.tp, timedelta(0)),
+    ],
+)
+def test_workflow__truth_timecoords(c, truth_name, name, expected_leadtime, tc):
+    c.truth = replace(c.truth, name=truth_name)
+    tc = TimeCoords(cycle=tc.cycle, leadtime=timedelta(hours=6))
+    result = workflow._truth_timecoords(c, tc, Var(name=name, level_type=S.surface))
+    assert result.cycle == tc.validtime - expected_leadtime
+    assert result.leadtime == expected_leadtime
+    assert result.validtime == tc.validtime
 
 
 def test_workflow__var(c, testvars):
