@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class VarMeta:
+    # Required:
     cf_standard_name: str
     description: str
     level_type: str
@@ -32,11 +33,11 @@ class VarMeta:
     name: str
     units: str
     # Optional:
+    accumulation_hours: int = 0
     cat_thresh: list[str] | None = None
     cnt_thresh: list[str] | None = None
     nbrhd_shape: str | None = None
     nbrhd_width: list[int] | None = None
-    accumulation_hours: int = 0
 
     def __post_init__(self):
         assert self.cf_standard_name
@@ -74,6 +75,7 @@ VARMETA = {
     for x in [  # blocks ordered by description
         VarMeta(
             description="Accumulated Total Precipitation",
+            accumulation_hours=6,
             cat_thresh=[">=1", ">=5", ">=10", ">=25"],
             cf_standard_name="precipitation_amount",
             level_type=S.surface,
@@ -81,7 +83,6 @@ VARMETA = {
             name=EC.tp,
             nbrhd_shape=MET.CIRCLE,
             nbrhd_width=[3, 5, 11],
-            accumulation_hours=6,
             units="kg m-2",
         ),
         VarMeta(
