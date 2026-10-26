@@ -172,6 +172,13 @@ def test_util_mpexec__fail(tmp_path):
     assert result.returncode == 1
 
 
+def test_util_quoted():
+    assert util.quoted("/foo/bar baz") == "'/foo/bar baz'"
+    assert util.quoted("/foo/bar_baz") == "/foo/bar_baz"
+    assert util.quoted(Path("/foo/bar baz")) == "'/foo/bar baz'"
+    assert util.quoted(Path("/foo/bar_baz")) == "/foo/bar_baz"
+
+
 def test_util_render(utc):
     template = "{{ yyyymmdd }}-{{ yyyymmdd[:4] }}-{{ hh }}-{{ '%03d' % fh }}"
     tc = TimeCoords(cycle=utc(2025, 8, 21, 6), leadtime=1)
