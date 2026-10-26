@@ -11,6 +11,7 @@ from functools import cache
 from importlib import resources
 from multiprocessing.pool import Pool
 from pathlib import Path
+from shlex import quote
 from signal import SIG_IGN, SIGINT, signal
 from subprocess import CompletedProcess, run
 from typing import TYPE_CHECKING, NoReturn, cast, overload
@@ -171,6 +172,10 @@ def mpexec(cmd: str, rundir: Path, taskname: str, env: dict | None = None) -> Co
     if result.returncode != 0:
         logging.error("%s: %s", taskname, result)
     return result
+
+
+def quoted(path: Path | str) -> str:
+    return quote(str(path))
 
 
 def render(template: str, tc: TimeCoords, context: dict | None = None) -> str:

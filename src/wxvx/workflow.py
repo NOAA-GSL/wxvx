@@ -11,7 +11,6 @@ from enum import Enum, auto
 from functools import cache
 from itertools import chain, pairwise, product
 from pathlib import Path
-from shlex import quote
 from stat import S_IEXEC
 from textwrap import dedent
 from threading import Lock
@@ -45,6 +44,7 @@ from wxvx.util import (
     classify_data_format,
     classify_url,
     mpexec,
+    quoted,
     render,
     resource,
     version,
@@ -549,10 +549,10 @@ def _netcdf_from_obs(c: Config, tc: TimeCoords):
     yield {"cfgfile": cfgfile, "prepbufr": prepbufr}
     runscript = cfgfile.ref.with_suffix(".sh")
     content = "exec time pb2nc -v 4 {prepbufr} {netcdf} {config} >{log} 2>&1".format(
-        prepbufr=prepbufr.ref.resolve(),
-        netcdf=path,
-        config=cfgfile.ref,
-        log=f"{path.stem}.log",
+        prepbufr=quoted(prepbufr.ref.resolve()),
+        netcdf=quoted(path),
+        config=quoted(cfgfile.ref),
+        log=quoted(f"{path.stem}.log"),
     )
     _write_runscript(runscript, content)
     mpexec(_bash(runscript), rundir, taskname)
@@ -568,19 +568,18 @@ def _netcdf_from_stageiv(c: Config, tc: TimeCoords, var: Var):
     yield Asset(path, path.is_file)
     hourly_files = _stageiv_files(c, tc, var)
     yield hourly_files
-
     rundir = c.paths.run / "pcp_combine" / yyyymmdd / hh / leadtime
     runscript = rundir / f"{var}.sh"
     with atomic(path) as tmp:
-        inputs = " ".join(quote(str(node.ref.resolve())) for node in hourly_files)
+        inputs = " ".join(quoted(node.ref.resolve()) for node in hourly_files)
         content = """
         export OMP_NUM_THREADS=1
-        exec time pcp_combine -add {inputs} {output} \\
-          -field 'name="APCP"; level="A1";' -name APCP >{log} 2>&1
+        exec time pcp_combine -add {inputs} {output} -field {field} -name APCP >{log} 2>&1
         """.format(
             inputs=inputs,
-            output=quote(str(tmp)),
-            log=quote(f"{path.stem}.log"),
+            output=quoted(tmp),
+            field=quoted('name="APCP"; level="A1";'),
+            log=quoted(f"{path.stem}.log"),
         )
         _write_runscript(runscript, content)
         mpexec(_bash(runscript), rundir, taskname)
@@ -672,10 +671,10 @@ def _stats_vs_grid(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: st
     export OMP_NUM_THREADS=1
     exec time grid_stat -v 4 {fcst} {obs} {config} >{log} 2>&1
     """.format(
-        fcst=fcst.ref.resolve(),
-        obs=obs.ref,
-        config=config.ref,
-        log=f"{path.stem}.log",
+        fcst=quoted(fcst.ref.resolve()),
+        obs=quoted(obs.ref),
+        config=quoted(config.ref),
+        log=quoted(f"{path.stem}.log"),
     )
     _write_runscript(runscript, content)
     mpexec(_bash(runscript), rundir, taskname)
@@ -710,11 +709,11 @@ def _stats_vs_obs(c: Config, varname: str, tc: TimeCoords, var: Var, prefix: str
     yield reqs
     runscript = path.with_suffix(".sh")
     content = "exec time point_stat -v 4 {fcst} {obs} {config} -outdir {rundir} >{log} 2>&1".format(
-        fcst=fcst.ref.resolve(),
-        obs=obs.ref,
-        config=config.ref,
-        rundir=rundir,
-        log=f"{path.stem}.log",
+        fcst=quoted(fcst.ref.resolve()),
+        obs=quoted(obs.ref),
+        config=quoted(config.ref),
+        rundir=quoted(rundir),
+        log=quoted(f"{path.stem}.log"),
     )
     _write_runscript(runscript, content)
     mpexec(_bash(runscript), rundir, taskname)
