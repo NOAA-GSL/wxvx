@@ -452,7 +452,7 @@ def _grib_index_file_eccodes(c: Config, grib_path: Path, tc: TimeCoords, source:
     taskname = "GRIB index file %s %s" % (path, _at_validtime(tc))
     yield taskname
     yield Asset(path, path.is_file)
-    yield [_timegate(c.timegate, tc.validtime), _existing(grib_path)]
+    yield _existing(grib_path)
     # Keep index creation here in-sync with index selection in _grid_grib_from_local.
     keys = [
         f"{S.shortName}:s",
