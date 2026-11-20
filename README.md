@@ -24,7 +24,7 @@ conda activate wxvx
 wxvx --version
 ```
 
-The activated virtual environment includes the [`met2go`](https://github.com/maddenp-cu/met2go) package, which provides [MET](https://github.com/dtcenter/MET), select [METplus](https://github.com/dtcenter/METplus) executables, and data files. See the `met2go` [docs](https://github.com/maddenp-cu/met2go/blob/main/README.md) for more information.
+The activated virtual environment includes the [`metplus`](https://anaconda.org/channels/conda-forge/packages/metplus/overview) package that provides, among other things, the core [MET](https://github.com/dtcenter/MET) executables called by `wxvx`.
 
 ## Configuration
 
